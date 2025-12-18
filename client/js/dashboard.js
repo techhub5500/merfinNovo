@@ -53,7 +53,7 @@ async function calculateDashboardCards() {
 
     try {
         // Buscar dados de múltiplos meses do backend
-        const response = await fetchAPI('/api/financas/multiplos-meses', {
+        const response = await fetchAPI('/api/financas/buscar-multiplos-meses', {
             method: 'POST',
             body: JSON.stringify({ meses: periodMonths })
         });

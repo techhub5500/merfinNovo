@@ -1,0 +1,239 @@
+{
+    "receitasCategorias": {
+        "Salário e Rendimentos do Trabalho": [
+            "Salário fixo",
+            "Horas extras",
+            "Bônus e comissões",
+            "Férias recebidas",
+            "Participação nos lucros",
+            "Vale-refeição",
+            "Trabalho autônomo",
+            "Freelance",
+            "Diárias e gratificações"
+        ],
+        "Renda de Empreendimentos": [
+            "Lucro de empresa própria",
+            "Distribuição de lucros",
+            "Venda de produtos",
+            "Prestação de serviços"
+        ],
+        "Renda de Aluguéis": [
+            "Aluguel de imóvel residencial",
+            "Aluguel de imóvel comercial",
+            "Aluguel por temporada (Airbnb)"
+        ],
+        "Investimentos": [
+            "Dividendos de ações",
+            "Juros sobre capital próprio",
+            "Rendimentos de fundos imobiliários",
+            "Ganhos com venda de ações",
+            "Renda de CDBs e RDBs",
+            "Renda de Tesouro Direto",
+            "Renda de criptomoedas",
+            "Renda de ETFs",
+            "Renda de debêntures",
+            "Renda de previdência privada"
+        ],
+        "Juros e Rendimentos Financeiros": [
+            "Juros de poupança",
+            "Juros de aplicações bancárias",
+            "Juros de empréstimos concedidos",
+            "Juros de títulos públicos",
+            "Juros de contas remuneradas",
+            "Juros de consórcios"
+        ],
+        "Presentes, Doações e Heranças": [
+            "Presentes em dinheiro",
+            "Doações familiares",
+            "Herança recebida",
+            "Transferência de bens",
+            "Doações de amigos",
+            "Presentes de casamento",
+            "Presentes de aniversário",
+            "Prêmios em sorteios"
+        ],
+        "Venda de Bens e Ativos": [
+            "Venda de carro",
+            "Venda de imóvel",
+            "Venda de eletrônicos",
+            "Venda de móveis",
+            "Venda de roupas",
+            "Venda de joias",
+            "Venda de obras de arte",
+            "Venda de instrumentos musicais",
+            "Venda de equipamentos",
+            "Venda de itens colecionáveis"
+        ]
+    },
+    "despesasCategorias": {
+        "Moradia": [
+            "Aluguel",
+            "Financiamento imobiliário",
+            "Condomínio",
+            "Energia elétrica",
+            "Água e esgoto",
+            "Gás encanado ou botijão",
+            "Internet residencial",
+            "Manutenção e reparos",
+            "Móveis e decoração",
+            "Produtos de limpeza"
+        ],
+        "Transporte": [
+            "Combustível",
+            "Manutenção do veículo",
+            "Seguro do carro",
+            "IPVA e licenciamento",
+            "Estacionamento",
+            "Transporte público",
+            "Aplicativos de transporte (Uber, 99)",
+            "Pedágios",
+            "Lavagem e estética automotiva",
+            "Financiamento de veículo"
+        ],
+        "Alimentação": [
+            "Supermercado",
+            "Restaurantes",
+            "Delivery",
+            "Lanches e cafés",
+            "Refeições no trabalho",
+            "Bebidas alcoólicas",
+            "Suplementos alimentares"
+        ],
+        "Saúde": [
+            "Plano de saúde",
+            "Medicamentos",
+            "Consultas médicas",
+            "Exames laboratoriais",
+            "Terapias (fisioterapia, psicologia)",
+            "Odontologia",
+            "Óculos e lentes",
+            "Academia e atividades físicas"
+        ],
+        "Educação": [
+            "Mensalidade escolar/universitária",
+            "Cursos de idiomas",
+            "Cursos profissionalizantes",
+            "Material escolar",
+            "Livros e e-books",
+            "Plataformas de ensino online",
+            "Transporte escolar",
+            "Uniformes",
+            "Aulas particulares",
+            "Inscrição em provas e concursos"
+        ],
+        "Lazer e Entretenimento": [
+            "Cinema e teatro",
+            "Assinaturas de streaming",
+            "Viagens e turismo",
+            "Passeios e eventos",
+            "Hobbies (instrumentos, artesanato)",
+            "Jogos e videogames",
+            "Parques e atrações",
+            "Festas e comemorações",
+            "Clube ou associação recreativa",
+            "Livros de entretenimento"
+        ],
+        "Vestuário e Cuidados Pessoais": [
+            "Roupas",
+            "Calçados",
+            "Acessórios (bolsas, cintos)",
+            "Salão de beleza",
+            "Barbearia",
+            "Cosméticos",
+            "Perfumes",
+            "Cuidados com a pele"
+        ],
+        "Seguros e Proteção": [
+            "Seguro de vida",
+            "Seguro residencial",
+            "Seguro automotivo",
+            "Seguro viagem",
+            "Seguro saúde complementar",
+            "Seguro de equipamentos eletrônicos",
+            "Seguro de acidentes pessoais",
+            "Seguro para pets",
+            "Assistência 24h",
+            "Planos de proteção digital"
+        ],
+        "Serviços Financeiros": [
+            "Tarifas bancárias",
+            "Anuidade de cartão de crédito",
+            "Consultoria financeira",
+            "Contabilidade",
+            "Investimentos (ações, fundos)",
+            "Previdência privada",
+            "Taxas de corretagem",
+            "Juros e encargos",
+            "Empréstimos e financiamentos",
+            "Aplicativos de controle financeiro"
+        ],
+        "Tecnologia e Comunicação": [
+            "Celular (aparelho)",
+            "Plano de celular",
+            "Internet residencial",
+            "Assinaturas de apps",
+            "Softwares e licenças",
+            "Equipamentos eletrônicos",
+            "Manutenção de eletrônicos",
+            "Acessórios (fones, cabos)",
+            "Serviços de nuvem"
+        ],
+        "Filhos e Dependentes": [
+            "Creche",
+            "Escola",
+            "Roupas infantis",
+            "Brinquedos",
+            "Fraldas e higiene",
+            "Alimentação infantil",
+            "Atividades extracurriculares",
+            "Mesada",
+            "Transporte escolar"
+        ],
+        "Impostos e Obrigações Legais": [
+            "Imposto de Renda",
+            "IPVA",
+            "IPTU",
+            "Taxas municipais",
+            "Contribuições sindicais",
+            "Multas de trânsito",
+            "Taxas de cartório",
+            "Custas judiciais",
+            "Contribuições previdenciárias",
+            "Parcelamentos de débitos"
+        ],
+        "Serviços Domésticos": [
+            "Faxina",
+            "Lavanderia",
+            "Jardinagem",
+            "Piscineiro",
+            "Diarista",
+            "Babá",
+            "Cuidador de idosos",
+            "Reparos elétricos",
+            "Reparos hidráulicos",
+            "Instalações e montagens"
+        ],
+        "Compras e Consumo": [
+            "Eletrodomésticos",
+            "Eletrônicos",
+            "Móveis",
+            "Utensílios domésticos",
+            "Artigos de papelaria",
+            "Itens de decoração",
+            "Ferramentas",
+            "Produtos de pet shop",
+            "Compras online",
+            "Produtos sazonais (Natal, Páscoa)"
+        ],
+        "Outros": [
+            "Presentes",
+            "Doações",
+            "Gorjetas",
+            "Multas e penalidades",
+            "Compras por impulso",
+            "Gastos com animais de estimação",
+            "Despesas judiciais",
+            "Taxas de cartório"
+        ]
+    }
+}

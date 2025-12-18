@@ -807,3 +807,14 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Estilos específicos para campo de valor monetário */
+.valor-input {
+    text-align: right;
+    font-weight: 500;
+    color: var(--color-success);
+}
+
+.valor-input:focus {
+    color: var(--color-text-primary);
+}

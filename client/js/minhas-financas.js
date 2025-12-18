@@ -1,37 +1,32 @@
 // minhas-financas.js - Script específico para a página Minhas Finanças
 
-// Dados das categorias e subcategorias
-const receitasCategorias = {
-    "Salário/Renda Principal": ["Salário CLT", "Pró-labore (sócios)", "Aposentadoria/Pensão", "Salário líquido (após descontos)", "13º salário"],
-    "Trabalho Extra/Freelance": ["Freelas pontuais", "Consultoria", "Trabalhos aos finais de semana", "Projetos por fora", "Bicos/Extras"],
-    "Renda Passiva": ["Aluguel recebido", "Dividendos de investimentos", "Royalties", "Direitos autorais", "Renda de aplicações"],
-    "Negócio Próprio": ["Vendas de produtos", "Prestação de serviços", "Comissões", "Lucro da empresa", "Faturamento mensal"],
-    "Benefícios Trabalhistas": ["Vale alimentação", "Vale refeição", "Vale transporte", "PLR (Participação nos Lucros)", "Bônus/Gratificações"],
-    "Vendas e Revendas": ["Venda de itens usados", "Revenda de produtos", "Marketplace (Mercado Livre, OLX)", "Brechó/Desapego", "Vendas online"],
-    "Presentes/Ajuda Financeira": ["Mesada/Pensão alimentícia recebida", "Presente em dinheiro", "Ajuda de familiares", "Doações recebidas", "Empréstimo recebido"],
-    "Restituição/Reembolsos": ["Restituição de IR", "Reembolso de despesas", "Cashback", "Devolução de produtos", "Reembolso de plano de saúde"],
-    "Rendimentos Extras": ["Prêmios/Sorteios", "Horas extras", "Adicional noturno", "Insalubridade/Periculosidade", "Comissões de vendas"],
-    "Outras Receitas": ["Renda não categorizada", "Valores inesperados", "Herança/Doação", "Indenizações", "Receitas eventuais"]
-};
+// Dados das categorias e subcategorias (carregados do arquivo JSON)
+let receitasCategorias = {};
+let despesasCategorias = {};
 
-const despesasCategorias = {
-    "Moradia": ["Aluguel/Financiamento", "Condomínio", "IPTU", "Seguro residencial", "Manutenção/Reparos"],
-    "Contas Básicas": ["Energia elétrica", "Água", "Gás", "Internet", "Telefone fixo/celular"],
-    "Alimentação": ["Supermercado", "Feira/Hortifrúti", "Açougue/Padaria", "Delivery de comida", "Lanche no trabalho"],
-    "Transporte": ["Combustível", "Transporte público", "Aplicativos (Uber/99)", "Manutenção do veículo", "IPVA/Licenciamento/Seguro"],
-    "Saúde": ["Plano de saúde", "Medicamentos", "Consultas médicas", "Exames", "Dentista"],
-    "Educação": ["Mensalidade escolar/faculdade", "Cursos/Capacitações", "Material didático/Livros", "Transporte escolar", "Uniforme"],
-    "Lazer e Entretenimento": ["Streamings (Netflix, Spotify, etc)", "Cinema/Teatro", "Restaurantes/Bares", "Viagens/Passeios", "Hobbies"],
-    "Cuidados Pessoais": ["Salão/Barbearia", "Academia", "Produtos de higiene/beleza", "Roupas/Calçados", "Acessórios"],
-    "Despesas Financeiras": ["Juros/Multas", "Tarifa bancária", "Anuidade cartão de crédito", "Empréstimos/Financiamentos", "Dívidas parceladas"],
-    "Outras Despesas": ["Presentes/Datas comemorativas", "Pet (ração, veterinário)", "Doações/Contribuições", "Imprevistos", "Despesas eventuais"]
-};
+// Função para carregar categorias do JSON
+async function loadCategories() {
+    try {
+        const response = await fetch('/js/categories.json');
+        const data = await response.json();
+        receitasCategorias = data.receitasCategorias;
+        despesasCategorias = data.despesasCategorias;
+    } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+        // Fallback vazio se não conseguir carregar
+        receitasCategorias = {};
+        despesasCategorias = {};
+    }
+}
 
 // Armazenamento de dados por mês (formato YYYY-MM)
 let monthData = {};
 let currentMonthDate = new Date();
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Carregar categorias primeiro
+    await loadCategories();
+
     // Inicializar navegação por abas
     initializeTabs();
 
@@ -42,8 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMonthData();
 
     // Adicionar botões para adicionar linhas
-    addAddRowButton('receitas-table', ['date', 'description', 'category', 'subcategory', 'value', 'status']);
-    addAddRowButton('despesas-table', ['date', 'description', 'category', 'subcategory', 'value', 'payment', 'status']);
+    addAddRowButton('receitas-table', ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'status']);
+    addAddRowButton('despesas-table', ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'formaPagamento', 'status']);
     
     // Auto-save ao sair de uma célula
     document.addEventListener('change', function(e) {
@@ -153,16 +148,46 @@ async function loadMonthData() {
         monthData[monthId].receitas.forEach(rowData => addRowToTable('receitas-table', rowData));
         monthData[monthId].despesas.forEach(rowData => addRowToTable('despesas-table', rowData));
 
-        // Se vazio, adicionar 3 linhas vazias
-        if (monthData[monthId].receitas.length === 0) {
-            for (let i = 0; i < 3; i++) {
-                addEmptyRow('receitas-table', ['date', 'description', 'category', 'subcategory', 'value', 'status']);
+        // Garantir que sempre tenha pelo menos 3 linhas (preenchidas ou vazias)
+        const receitasRows = document.querySelectorAll('#receitas-table tbody tr');
+        const despesasRows = document.querySelectorAll('#despesas-table tbody tr');
+
+        // Contar linhas preenchidas (que têm pelo menos data, descrição ou valor)
+        let receitasPreenchidas = 0;
+        receitasRows.forEach(row => {
+            const inputs = row.querySelectorAll('input, select');
+            const rowData = {};
+            inputs.forEach((input, index) => {
+                const col = ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'status'][index];
+                rowData[col] = input.value;
+            });
+            if (rowData.data || rowData.descricao || rowData.valor) {
+                receitasPreenchidas++;
             }
+        });
+
+        let despesasPreenchidas = 0;
+        despesasRows.forEach(row => {
+            const inputs = row.querySelectorAll('input, select');
+            const rowData = {};
+            inputs.forEach((input, index) => {
+                const col = ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'formaPagamento', 'status'][index];
+                rowData[col] = input.value;
+            });
+            if (rowData.data || rowData.descricao || rowData.valor) {
+                despesasPreenchidas++;
+            }
+        });
+
+        // Adicionar linhas vazias se necessário para chegar a pelo menos 3
+        const linhasReceitasNecessarias = Math.max(0, 3 - receitasPreenchidas);
+        const linhasDespesasNecessarias = Math.max(0, 3 - despesasPreenchidas);
+
+        for (let i = 0; i < linhasReceitasNecessarias; i++) {
+            addEmptyRow('receitas-table', ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'status']);
         }
-        if (monthData[monthId].despesas.length === 0) {
-            for (let i = 0; i < 3; i++) {
-                addEmptyRow('despesas-table', ['date', 'description', 'category', 'subcategory', 'value', 'payment', 'status']);
-            }
+        for (let i = 0; i < linhasDespesasNecessarias; i++) {
+            addEmptyRow('despesas-table', ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'formaPagamento', 'status']);
         }
     } catch (error) {
         console.error('Erro ao carregar dados do mês:', error);
@@ -175,14 +200,32 @@ function addRowToTable(tableId, rowData) {
     const tbody = table.querySelector('tbody');
     const row = document.createElement('tr');
 
-    const columns = tableId.includes('receitas') ? ['date', 'description', 'category', 'subcategory', 'value', 'status'] : ['date', 'description', 'category', 'subcategory', 'value', 'payment', 'status'];
+    const columns = tableId.includes('receitas') ? ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'status'] : ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'formaPagamento', 'status'];
 
     columns.forEach(col => {
         const cell = document.createElement('td');
         const input = createInputForColumn(col, tableId);
         if (rowData[col]) {
             if (input.type === 'date') {
-                input.value = rowData[col];
+                // Garantir que a data esteja no formato YYYY-MM-DD
+                let dateValue = rowData[col];
+                if (dateValue instanceof Date) {
+                    const year = dateValue.getFullYear();
+                    const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateValue.getDate()).padStart(2, '0');
+                    dateValue = `${year}-${month}-${day}`;
+                } else if (typeof dateValue === 'string' && dateValue.includes('T')) {
+                    // Se for uma string ISO, converter para YYYY-MM-DD
+                    dateValue = dateValue.split('T')[0];
+                }
+                input.value = dateValue;
+            } else if (col === 'valor') {
+                // Formatar valor como moeda brasileira
+                if (rowData[col]) {
+                    const valorNumerico = parseFloat(rowData[col]).toFixed(2);
+                    const valorFormatado = valorNumerico.replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                    input.value = 'R$ ' + valorFormatado;
+                }
             } else if (input.tagName === 'SELECT') {
                 input.value = rowData[col];
             } else {
@@ -192,6 +235,17 @@ function addRowToTable(tableId, rowData) {
         cell.appendChild(input);
         row.appendChild(cell);
     });
+
+    // Após adicionar todos os inputs, atualizar subcategorias se houver categoria selecionada
+    const categoriaInput = row.querySelector('.category-select');
+    const subcategoriaInput = row.querySelector('.subcategory-select');
+    if (categoriaInput && categoriaInput.value && subcategoriaInput) {
+        updateSubcategories(row, categoriaInput.value, tableId.includes('receitas'));
+        // Re-selecionar a subcategoria após popular as opções
+        if (rowData.subcategoria) {
+            subcategoriaInput.value = rowData.subcategoria;
+        }
+    }
 
     // Adicionar célula com botão de excluir
     const actionCell = document.createElement('td');
@@ -247,11 +301,17 @@ async function saveMonthData() {
         const rowData = {};
         const inputs = row.querySelectorAll('input, select');
         inputs.forEach((input, index) => {
-            const col = ['date', 'description', 'category', 'subcategory', 'value', 'status'][index];
-            rowData[col] = input.value;
+            const col = ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'status'][index];
+            if (col === 'valor' && input.value) {
+                // Desformatar valor monetário para número
+                const valorDesformatado = input.value.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+                rowData[col] = parseFloat(valorDesformatado) || 0;
+            } else {
+                rowData[col] = input.value;
+            }
         });
         // Só salvar se tiver algum valor preenchido
-        if (rowData.date || rowData.description || rowData.value) {
+        if (rowData.data || rowData.descricao || rowData.valor) {
             data.receitas.push(rowData);
         }
     });
@@ -262,11 +322,17 @@ async function saveMonthData() {
         const rowData = {};
         const inputs = row.querySelectorAll('input, select');
         inputs.forEach((input, index) => {
-            const col = ['date', 'description', 'category', 'subcategory', 'value', 'payment', 'status'][index];
-            rowData[col] = input.value;
+            const col = ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'formaPagamento', 'status'][index];
+            if (col === 'valor' && input.value) {
+                // Desformatar valor monetário para número
+                const valorDesformatado = input.value.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+                rowData[col] = parseFloat(valorDesformatado) || 0;
+            } else {
+                rowData[col] = input.value;
+            }
         });
         // Só salvar se tiver algum valor preenchido
-        if (rowData.date || rowData.description || rowData.value) {
+        if (rowData.data || rowData.descricao || rowData.valor) {
             data.despesas.push(rowData);
         }
     });
@@ -312,17 +378,82 @@ function initializeTable(tableId, columns, numRows) {
 function createInputForColumn(column, tableId) {
     let input;
     switch (column) {
-        case 'date':
+        case 'data':
             input = document.createElement('input');
             input.type = 'date';
+            // Definir data atual como padrão
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            input.value = `${year}-${month}-${day}`;
             break;
-        case 'value':
+        case 'valor':
             input = document.createElement('input');
-            input.type = 'number';
-            input.step = '0.01';
+            input.type = 'text';
             input.placeholder = 'R$ 0,00';
+            input.className = 'valor-input';
+            
+            // Função para formatar valor como moeda brasileira
+            function formatarMoeda(valor) {
+                // Remove tudo que não é dígito
+                valor = valor.replace(/\D/g, '');
+                
+                // Converte para número e divide por 100 para considerar centavos
+                valor = (parseFloat(valor) / 100).toFixed(2);
+                
+                // Formata como moeda brasileira
+                valor = valor.replace('.', ',');
+                valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                
+                return 'R$ ' + valor;
+            }
+            
+            // Evento de foco - permite edição
+            input.addEventListener('focus', function() {
+                if (this.value === '') {
+                    this.value = '';
+                }
+                // Mantém o valor formatado para edição
+            });
+            
+            // Evento de blur - garante formatação final
+            input.addEventListener('blur', function() {
+                if (this.value && !this.value.includes('R$')) {
+                    // Converte para número e divide por 100 para considerar centavos
+                    let valor = (parseFloat(this.value) / 100).toFixed(2);
+                    
+                    // Formata como moeda brasileira
+                    valor = valor.replace('.', ',');
+                    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                    
+                    this.value = 'R$ ' + valor;
+                } else if (!this.value) {
+                    this.value = '';
+                }
+            });
+            
+            // Evento de input - permite apenas números e formata em tempo real
+            input.addEventListener('input', function(e) {
+                // Remove caracteres não numéricos
+                let valor = this.value.replace(/\D/g, '');
+                
+                if (valor) {
+                    // Converte para número e divide por 100 para considerar centavos
+                    valor = (parseFloat(valor) / 100).toFixed(2);
+                    
+                    // Formata como moeda brasileira
+                    valor = valor.replace('.', ',');
+                    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                    
+                    this.value = 'R$ ' + valor;
+                } else {
+                    this.value = '';
+                }
+            });
+            
             break;
-        case 'category':
+        case 'categoria':
             input = document.createElement('select');
             input.className = 'category-select';
             const categorias = tableId.includes('receitas') ? Object.keys(receitasCategorias) : Object.keys(despesasCategorias);
@@ -340,7 +471,7 @@ function createInputForColumn(column, tableId) {
                 updateSubcategories(this.closest('tr'), this.value, tableId.includes('receitas'));
             };
             break;
-        case 'subcategory':
+        case 'subcategoria':
             input = document.createElement('select');
             input.className = 'subcategory-select';
             const defaultSubOption = document.createElement('option');
@@ -348,22 +479,24 @@ function createInputForColumn(column, tableId) {
             defaultSubOption.textContent = 'Selecione uma subcategoria';
             input.appendChild(defaultSubOption);
             break;
-        case 'description':
+        case 'descricao':
             input = document.createElement('input');
             input.type = 'text';
             input.placeholder = 'Descrição';
             break;
         case 'status':
             input = document.createElement('select');
-            const options = ['Recebido', 'A receber', 'Pago', 'A pagar'];
-            options.forEach(opt => {
+            // Opções específicas por tipo de tabela
+            const isReceita = tableId.includes('receitas');
+            const statusOptions = isReceita ? ['Recebido', 'A receber'] : ['Pago', 'A pagar'];
+            statusOptions.forEach(opt => {
                 const option = document.createElement('option');
                 option.value = opt;
                 option.textContent = opt;
                 input.appendChild(option);
             });
             break;
-        case 'payment':
+        case 'formaPagamento':
             input = document.createElement('select');
             const paymentOptions = ['Dinheiro', 'Débito', 'Crédito', 'PIX'];
             paymentOptions.forEach(opt => {

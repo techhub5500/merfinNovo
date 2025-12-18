@@ -45,6 +45,7 @@ const User = mongoose.model('User', userSchema);
 // Schema de Perfil
 const perfilSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    isFirstLogin: { type: Boolean, default: true }, // Flag para verificar primeira vez
     nome: String,
     idade: Number,
     profissao: String,
@@ -107,7 +108,7 @@ const financasMensaisSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     mesAno: { type: String, required: true }, // Formato: "YYYY-MM"
     receitas: [{
-        data: Date,
+        data: { type: String, required: false }, // Alterado para String para manter formato YYYY-MM-DD
         descricao: String,
         categoria: String,
         subcategoria: String,
@@ -115,7 +116,7 @@ const financasMensaisSchema = new mongoose.Schema({
         status: String
     }],
     despesas: [{
-        data: Date,
+        data: { type: String, required: false }, // Alterado para String para manter formato YYYY-MM-DD
         descricao: String,
         categoria: String,
         subcategoria: String,
@@ -280,7 +281,10 @@ app.get('/api/perfil', authMiddleware, async (req, res) => {
         
         // Se não existir, criar um perfil vazio
         if (!perfil) {
-            perfil = new Perfil({ userId: req.userId });
+            perfil = new Perfil({ 
+                userId: req.userId,
+                isFirstLogin: true // Marca como primeira vez
+            });
             await perfil.save();
         }
 
@@ -297,6 +301,11 @@ app.post('/api/perfil', authMiddleware, async (req, res) => {
         const perfilData = req.body;
         perfilData.userId = req.userId;
         perfilData.updatedAt = new Date();
+        
+        // Marcar isFirstLogin como false após primeiro salvamento
+        if (perfilData.isFirstLogin !== undefined) {
+            perfilData.isFirstLogin = false;
+        }
 
         const perfil = await Perfil.findOneAndUpdate(
             { userId: req.userId },

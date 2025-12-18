@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Merfin - Perfil</title>
+    <link rel="icon" type="image/x-icon" href="../../favicon.png">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/perfil.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar persistente -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo">Merfin</span>
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="chat.html" data-tooltip="Chat"><i class="fas fa-comments"></i></a>
+            <a href="minhas-financas.html" data-tooltip="Minhas Finanças"><i class="fas fa-chart-line"></i></a>
+            <a href="perfil.html" data-tooltip="Perfil"><i class="fas fa-user"></i></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://api.whatsapp.com/send/?phone=5511915381876&text&type=phone_number&app_absent=0" target="_blank" data-tooltip="Fale Conosco" class="sidebar-contact">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+            </a>
+            <a href="#" onclick="logout()" data-tooltip="Sair"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </div>
+
+    <!-- Conteúdo da página Perfil -->
+    <div class="content" id="content">
+        <main class="perfil-container">
+            <header class="perfil-header">
+                <h1>Perfil</h1>
+            </header>
+            
+            <!-- Seções lado a lado (50% cada) -->
+            <div class="perfil-grid">
+                <!-- Informações Pessoais -->
+                <section class="perfil-section">
+                    <h2>Informações Pessoais</h2>
+                    <div class="form-group">
+                        <label for="nome">Nome</label>
+                        <input type="text" id="nome" placeholder="Digite seu nome">
+                    </div>
+                    <div class="form-group">
+                        <label for="idade">Idade</label>
+                        <input type="number" id="idade" placeholder="Digite sua idade">
+                    </div>
+                    <div class="form-group">
+                        <label for="profissao">Profissão</label>
+                        <input type="text" id="profissao" placeholder="Digite sua profissão">
+                    </div>
+                    <div class="form-group-inline">
+                        <div class="form-group">
+                            <label for="cidade">Cidade</label>
+                            <input type="text" id="cidade" placeholder="Cidade">
+                        </div>
+                        <div class="form-group">
+                            <label for="estado">Estado</label>
+                            <input type="text" id="estado" placeholder="Estado">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="sobre">Nos conte mais sobre você</label>
+                        <textarea id="sobre" rows="4" placeholder="Escreva um pouco sobre você..."></textarea>
+                    </div>
+                </section>
+
+                <!-- Objetivos Financeiros -->
+                <section class="perfil-section">
+                    <h2>Objetivos Financeiros</h2>
+                    <div class="form-group">
+                        <label for="fundo-emergencia">Fundo de Emergência Desejado (R$)</label>
+                        <input type="number" id="fundo-emergencia" placeholder="0,00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="prazo-fundo">Prazo para Atingir o Fundo (meses)</label>
+                        <input type="number" id="prazo-fundo" placeholder="0">
+                    </div>
+                    
+                    <h3>Meta de Curto Prazo</h3>
+                    <div class="form-group">
+                        <label for="meta-curto-desc">Descrição</label>
+                        <input type="text" id="meta-curto-desc" placeholder="Ex: Viagem, compra de equipamento">
+                    </div>
+                    <div class="form-group">
+                        <label for="meta-curto-valor">Valor Estimado (R$)</label>
+                        <input type="number" id="meta-curto-valor" placeholder="0,00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="meta-curto-prazo">Prazo (meses)</label>
+                        <input type="number" id="meta-curto-prazo" placeholder="0">
+                    </div>
+                    
+                    <h3>Meta de Longo Prazo</h3>
+                    <div class="form-group">
+                        <label for="meta-longo-desc">Descrição</label>
+                        <input type="text" id="meta-longo-desc" placeholder="Ex: Aposentadoria, compra de imóvel">
+                    </div>
+                    <div class="form-group">
+                        <label for="meta-longo-valor">Valor Estimado (R$)</label>
+                        <input type="number" id="meta-longo-valor" placeholder="0,00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="meta-longo-prazo">Prazo (meses)</label>
+                        <input type="number" id="meta-longo-prazo" placeholder="0">
+                    </div>
+                </section>
+
+                <!-- Patrimônio -->
+                <section class="perfil-section">
+                    <h2>Patrimônio</h2>
+                    <p class="section-description">Informe seu patrimônio e como está alocado</p>
+                    
+                    <div class="patrimonio-item">
+                        <label>Ações</label>
+                        <input type="number" class="patrimonio-input" data-tipo="acoes" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Fundos de Investimento</label>
+                        <input type="number" class="patrimonio-input" data-tipo="fundos" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Tesouro Direto</label>
+                        <input type="number" class="patrimonio-input" data-tipo="tesouro" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>CDB/LCI/LCA</label>
+                        <input type="number" class="patrimonio-input" data-tipo="cdb" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Poupança</label>
+                        <input type="number" class="patrimonio-input" data-tipo="poupanca" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Imóveis</label>
+                        <input type="number" class="patrimonio-input" data-tipo="imoveis" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Veículos</label>
+                        <input type="number" class="patrimonio-input" data-tipo="veiculos" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Criptomoedas</label>
+                        <input type="number" class="patrimonio-input" data-tipo="cripto" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Previdência Privada</label>
+                        <input type="number" class="patrimonio-input" data-tipo="previdencia" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    <div class="patrimonio-item">
+                        <label>Outros</label>
+                        <input type="number" class="patrimonio-input" data-tipo="outros" placeholder="R$ 0,00" step="0.01">
+                    </div>
+                    
+                    <div class="patrimonio-total">
+                        <strong>Total:</strong>
+                        <span id="patrimonio-total-valor">R$ 0,00</span>
+                    </div>
+                </section>
+
+                <!-- Dependentes -->
+                <section class="perfil-section">
+                    <h2>Dependentes</h2>
+                    <div class="form-group">
+                        <label for="num-dependentes">Quantas pessoas dependem dessa renda?</label>
+                        <input type="number" id="num-dependentes" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="unica-renda">Você é a única fonte de renda da casa?</label>
+                        <select id="unica-renda">
+                            <option value="">Selecione</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="renda-conjugue">Renda do Cônjuge (R$)</label>
+                        <input type="number" id="renda-conjugue" placeholder="0,00" step="0.01">
+                    </div>
+                </section>
+            </div>
+
+            <!-- Dívidas (seção completa) -->
+            <section class="perfil-section perfil-section-full">
+                <div class="section-header">
+                    <h2>Dívidas</h2>
+                    <button class="btn-add-divida" id="btn-add-divida">
+                        <i class="fas fa-plus"></i> Adicionar Dívida
+                    </button>
+                </div>
+                <div id="dividas-list">
+                    <p class="empty-message">Nenhuma dívida cadastrada. Clique em "Adicionar Dívida" para começar.</p>
+                </div>
+            </section>
+
+            <div class="perfil-actions">
+                <button class="btn-save" id="btn-save-perfil">Salvar Perfil</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Adicionar Dívida -->
+    <div id="modal-divida" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adicionar Dívida</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="divida-nome">Nome da Dívida</label>
+                    <input type="text" id="divida-nome" placeholder="Ex: Cartão de Crédito">
+                </div>
+                <div class="form-group">
+                    <label for="divida-tipo">Tipo</label>
+                    <select id="divida-tipo">
+                        <option value="">Selecione</option>
+                        <option value="cartao">Cartão de Crédito</option>
+                        <option value="emprestimo">Empréstimo Pessoal</option>
+                        <option value="financiamento">Financiamento</option>
+                        <option value="cheque">Cheque Especial</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="divida-valor">Valor Total (R$)</label>
+                    <input type="number" id="divida-valor" placeholder="0,00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="divida-parcelas">Número de Parcelas</label>
+                    <input type="number" id="divida-parcelas" placeholder="0" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="divida-data-fim">Data Final de Pagamento</label>
+                    <input type="date" id="divida-data-fim">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="btn-cancel-divida">Cancelar</button>
+                <button class="btn-confirm" id="btn-confirm-divida">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Autenticação -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-modal-content">
+            <div class="auth-modal-header">
+                <h2>Bem-vindo ao Merfin</h2>
+                <p>Faça login ou cadastre-se para continuar</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-login">Login</button>
+                <button class="auth-tab" id="tab-cadastro">Cadastro</button>
+            </div>
+            
+            <!-- Formulário de Login -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn-auth">Entrar</button>
+            </form>
+            
+            <!-- Formulário de Cadastro -->
+            <form id="cadastro-form" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="cadastro-nome">Nome</label>
+                    <input type="text" id="cadastro-nome" placeholder="Digite seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-email">Email</label>
+                    <input type="email" id="cadastro-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-senha">Senha</label>
+                    <input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-confirmar-senha">Confirmar Senha</label>
+                    <input type="password" id="cadastro-confirmar-senha" placeholder="Digite a senha novamente" required>
+                </div>
+                <button type="submit" class="btn-auth">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/perfil.js"></script>
+</body>
+</html>

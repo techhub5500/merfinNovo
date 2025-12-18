@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Merfin - Chat</title>
+    <link rel="icon" type="image/x-icon" href="../../favicon.png">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/chat.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar persistente -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo">Merfin</span>
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="chat.html" data-tooltip="Chat"><i class="fas fa-comments"></i></a>
+            <a href="minhas-financas.html" data-tooltip="Minhas Finanças"><i class="fas fa-chart-line"></i></a>
+            <a href="perfil.html" data-tooltip="Perfil"><i class="fas fa-user"></i></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://api.whatsapp.com/send/?phone=5511915381876&text&type=phone_number&app_absent=0" target="_blank" data-tooltip="Fale Conosco" class="sidebar-contact">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+            </a>
+            <a href="#" onclick="logout()" data-tooltip="Sair"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </div>
+
+    <!-- Conteúdo do chat -->
+    <div class="content" id="content">
+        <main class="chat-container">
+            <section id="messages" class="messages" aria-live="polite"></section>
+        </main>
+
+        <form id="chat-form" class="input-area" autocomplete="off">
+            <div class="input-wrapper">
+                <textarea id="message-input" placeholder="Escreva sua mensagem..." aria-label="Mensagem"></textarea>
+                <button type="submit" id="send-btn" aria-label="Enviar"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </form>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/dashboard.js"></script>
+
+    <script>
+    (function () {
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('message-input');
+        const messages = document.getElementById('messages');
+
+        function addMessage(text, who = 'user') {
+            const el = document.createElement('div');
+            el.className = 'message ' + who;
+            el.innerText = text;
+            messages.appendChild(el);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const txt = input.value.trim();
+            if (!txt) return;
+            addMessage(txt, 'user');
+            input.value = '';
+            // resposta demo
+            setTimeout(() => addMessage('Resposta automática: recebemos sua mensagem.', 'bot'), 700);
+        });
+
+        // Ctrl/Cmd + Enter enviar
+        input.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                form.requestSubmit();
+            }
+        });
+    })();
+    </script>
+
+    <!-- Modal de Autenticação -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-modal-content">
+            <div class="auth-modal-header">
+                <h2>Bem-vindo ao Merfin</h2>
+                <p>Faça login ou cadastre-se para continuar</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-login">Login</button>
+                <button class="auth-tab" id="tab-cadastro">Cadastro</button>
+            </div>
+            
+            <!-- Formulário de Login -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn-auth">Entrar</button>
+            </form>
+            
+            <!-- Formulário de Cadastro -->
+            <form id="cadastro-form" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="cadastro-nome">Nome</label>
+                    <input type="text" id="cadastro-nome" placeholder="Digite seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-email">Email</label>
+                    <input type="email" id="cadastro-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-senha">Senha</label>
+                    <input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-confirmar-senha">Confirmar Senha</label>
+                    <input type="password" id="cadastro-confirmar-senha" placeholder="Digite a senha novamente" required>
+                </div>
+                <button type="submit" class="btn-auth">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

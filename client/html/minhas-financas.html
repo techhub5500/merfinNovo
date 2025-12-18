@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Merfin - Minhas Finanças</title>
+    <link rel="icon" type="image/x-icon" href="../../favicon.png">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/minhas-financas.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar persistente -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo">Merfin</span>
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="chat.html" data-tooltip="Chat"><i class="fas fa-comments"></i></a>
+            <a href="minhas-financas.html" data-tooltip="Minhas Finanças"><i class="fas fa-chart-line"></i></a>
+            <a href="perfil.html" data-tooltip="Perfil"><i class="fas fa-user"></i></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="https://api.whatsapp.com/send/?phone=5511915381876&text&type=phone_number&app_absent=0" target="_blank" data-tooltip="Fale Conosco" class="sidebar-contact">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+            </a>
+            <a href="#" onclick="logout()" data-tooltip="Sair"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </div>
+
+    <!-- Conteúdo da página Minhas Finanças -->
+    <div class="content" id="content">
+        <main class="financas-container">
+            <header class="financas-header">
+                <h1>Minhas Finanças</h1>
+            </header>
+            <nav class="subpage-tabs">
+                <button class="tab-btn active" data-tab="planilhas">Minhas Finanças</button>
+                <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+            </nav>
+            
+            <!-- Subpágina: Minhas Finanças (Planilhas) -->
+            <div class="subpage-content" id="planilhas-page">
+                <div class="month-selector top-selector">
+                    <button class="prev-month">&lt;</button>
+                    <span class="current-month">Dezembro 2025</span>
+                    <button class="next-month">&gt;</button>
+                </div>
+                <section class="financas-tables">
+                <div class="table-container">
+                    <h2>Planilha de Receitas</h2>
+                    <table id="receitas-table">
+                        <thead>
+                            <tr>
+                                <th class="col-data">Data</th>
+                                <th class="col-descricao">Descrição</th>
+                                <th class="col-categoria">Categoria</th>
+                                <th class="col-subcategoria">Subcategoria</th>
+                                <th class="col-valor">Valor</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-acoes">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dados serão adicionados dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-container">
+                    <h2>Planilha de Despesas</h2>
+                    <table id="despesas-table">
+                        <thead>
+                            <tr>
+                                <th class="col-data">Data</th>
+                                <th class="col-descricao">Descrição</th>
+                                <th class="col-categoria">Categoria</th>
+                                <th class="col-subcategoria">Subcategoria</th>
+                                <th class="col-valor">Valor</th>
+                                <th class="col-pagamento">Forma de Pagamento</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-acoes">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dados serão adicionados dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                </section>
+            </div>
+            
+            <!-- Subpágina: Dashboard -->
+            <div class="subpage-content" id="dashboard-page" style="display: none;">
+                <div class="dashboard-header">
+                    <h2>Dashboard</h2>
+                    <button id="filter-button" class="filter-btn">Filtro</button>
+                </div>
+                <div class="month-selector top-selector">
+                    <button class="prev-month">&lt;</button>
+                    <span class="current-month">Dezembro 2025</span>
+                    <button class="next-month">&gt;</button>
+                </div>
+                <section class="financas-overview">
+                    <div class="card">
+                        <h3>Saldo Líquido</h3>
+                        <p>R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Receita Total</h3>
+                        <p>R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Despesa Total</h3>
+                        <p>R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Patrimônio</h3>
+                        <p>R$ 0,00</p>
+                    </div>
+                </section>
+                
+                <!-- Seções de Principais Gastos e Receitas -->
+                <div class="dashboard-grid">
+                    <section class="dashboard-section">
+                        <h3>Principais Gastos do Mês</h3>
+                        <div id="principais-gastos" class="categoria-list">
+                            <p class="empty-message">Sem dados para o mês selecionado.</p>
+                        </div>
+                    </section>
+                    
+                    <section class="dashboard-section">
+                        <h3>Principais Receitas do Mês</h3>
+                        <div id="principais-receitas" class="categoria-list">
+                            <p class="empty-message">Sem dados para o mês selecionado.</p>
+                        </div>
+                    </section>
+                </div>
+                
+                <!-- Seções de Metas e Anotações -->
+                <div class="dashboard-grid">
+                    <section class="dashboard-section">
+                        <h3>Metas Financeiras</h3>
+                        <div id="metas-container">
+                            <div class="meta-item">
+                                <h4>Fundo de Emergência</h4>
+                                <div class="meta-info">
+                                    <span class="meta-label">Meta:</span>
+                                    <span class="meta-valor" id="meta-fundo-valor">R$ 0,00</span>
+                                </div>
+                                <div class="meta-info">
+                                    <span class="meta-label">Progresso:</span>
+                                    <span class="meta-valor" id="meta-fundo-progresso">R$ 0,00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="meta-fundo-bar" style="width: 0%"></div>
+                                </div>
+                                <span class="meta-percent" id="meta-fundo-percent">0%</span>
+                            </div>
+                            
+                            <div class="meta-item">
+                                <h4>Meta de Curto Prazo</h4>
+                                <p class="meta-descricao" id="meta-curto-desc">-</p>
+                                <div class="meta-info">
+                                    <span class="meta-label">Meta:</span>
+                                    <span class="meta-valor" id="meta-curto-valor">R$ 0,00</span>
+                                </div>
+                                <div class="meta-info">
+                                    <span class="meta-label">Progresso:</span>
+                                    <span class="meta-valor" id="meta-curto-progresso">R$ 0,00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="meta-curto-bar" style="width: 0%"></div>
+                                </div>
+                                <span class="meta-percent" id="meta-curto-percent">0%</span>
+                            </div>
+                            
+                            <div class="meta-item">
+                                <h4>Meta de Longo Prazo</h4>
+                                <p class="meta-descricao" id="meta-longo-desc">-</p>
+                                <div class="meta-info">
+                                    <span class="meta-label">Meta:</span>
+                                    <span class="meta-valor" id="meta-longo-valor">R$ 0,00</span>
+                                </div>
+                                <div class="meta-info">
+                                    <span class="meta-label">Progresso:</span>
+                                    <span class="meta-valor" id="meta-longo-progresso">R$ 0,00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="meta-longo-bar" style="width: 0%"></div>
+                                </div>
+                                <span class="meta-percent" id="meta-longo-percent">0%</span>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="dashboard-section">
+                        <h3>Anotações</h3>
+                        <div class="notas-container">
+                            <button class="nota-nav nota-prev">‹</button>
+                            <div class="nota-page">
+                                <textarea class="nota-textarea" id="nota-atual" placeholder="Escreva suas anotações aqui..."></textarea>
+                                <div class="nota-footer">
+                                    <span class="nota-numero">Página <span id="nota-numero-atual">1</span> de <span id="nota-total">1</span></span>
+                                </div>
+                            </div>
+                            <button class="nota-nav nota-next">›</button>
+                        </div>
+                        <div class="nota-actions">
+                            <button class="btn-add-nota" id="btn-add-nota">
+                                <i class="fas fa-plus"></i> Nova Página
+                            </button>
+                            <button class="btn-save-nota" id="btn-save-nota">
+                                <i class="fas fa-save"></i> Salvar
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Autenticação -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-modal-content">
+            <div class="auth-modal-header">
+                <h2>Bem-vindo ao Merfin</h2>
+                <p>Faça login ou cadastre-se para continuar</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-login">Login</button>
+                <button class="auth-tab" id="tab-cadastro">Cadastro</button>
+            </div>
+            
+            <!-- Formulário de Login -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn-auth">Entrar</button>
+            </form>
+            
+            <!-- Formulário de Cadastro -->
+            <form id="cadastro-form" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="cadastro-nome">Nome</label>
+                    <input type="text" id="cadastro-nome" placeholder="Digite seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-email">Email</label>
+                    <input type="email" id="cadastro-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-senha">Senha</label>
+                    <input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-confirmar-senha">Confirmar Senha</label>
+                    <input type="password" id="cadastro-confirmar-senha" placeholder="Digite a senha novamente" required>
+                </div>
+                <button type="submit" class="btn-auth">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/dashboard.js"></script>
+    <script src="../js/minhas-financas.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -10,65 +11,281 @@ const PORT = process.env.AGENT_PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
-// Histórico de conversas por sessão (em produção, usar Redis ou DB)
-const conversationHistory = new Map();
+// ========== CONFIGURAÇÃO ==========
+const OPERATIONAL_SERVER_URL = process.env.OPERATIONAL_SERVER_URL || 'http://localhost:5000';
+const JWT_SECRET = process.env.JWT_SECRET || 'merfin_secret_key_2025';
 
-// Sistema de prompts para o assistente financeiro
-const SYSTEM_PROMPT = `Você é Merfin, um assistente de finanças pessoais inteligente e amigável. Suas características:
+// ========== SEÇÕES DE DADOS DISPONÍVEIS ==========
+const AVAILABLE_SECTIONS = {
+    perfil: {
+        title: "Perfil do Usuário",
+        description: "Informações pessoais, metas financeiras com progresso acumulado, patrimônio e contexto familiar. Use para análises personalizadas sobre metas e progresso.",
+        endpoint: "/api/perfil"
+    },
+    financas: {
+        title: "Receitas e Despesas",
+        description: "Dados detalhados de entradas e saídas financeiras, incluindo categorias e subcategorias.",
+        endpoint: "/api/financas"
+    },
+    dividas: {
+        title: "Dívidas e Parcelamentos",
+        description: "Informações sobre dívidas ativas, parcelas e status de pagamento.",
+        endpoint: "/api/dividas"
+    },
+    notas: {
+        title: "Notas e Anotações",
+        description: "Observações pessoais do usuário sobre suas finanças.",
+        endpoint: "/api/notas"
+    }
+};
 
-- Você ajuda usuários a gerenciar suas finanças, investimentos e orçamento
-- Você é educado, profissional, mas também acessível e empático
-- Você fornece conselhos financeiros práticos e personalizados
-- Você usa linguagem clara e evita jargões desnecessários
-- Quando apropriado, você faz perguntas para entender melhor a situação financeira do usuário
-- Você celebra conquistas financeiras e motiva nos momentos difíceis
-- Você é responsável e sempre lembra que suas dicas não substituem consultoria financeira profissional certificada
+// ========== AUTENTICAÇÃO ==========
+const verifyUserToken = (req, res, next) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+    }
 
-Mantenha suas respostas concisas mas informativas. Use emojis ocasionalmente para tornar a conversa mais amigável.`;
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.userId = decoded.userId;
+        req.userToken = token;
+        next();
+    } catch (error) {
+        return res.status(401).json({ error: 'Token inválido' });
+    }
+};
 
-// Rota de health check
+// ========== FUNÇÕES AUXILIARES ==========
+
+function getCurrentMonth() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}-${month}`;
+}
+
+function calculateMonthsList(currentMonth, monthsBack) {
+    const [currentYear, currentMonthNum] = currentMonth.split('-').map(Number);
+    const months = [];
+
+    for (let i = 0; i < monthsBack; i++) {
+        let targetMonth = currentMonthNum - i;
+        let targetYear = currentYear;
+
+        while (targetMonth <= 0) {
+            targetMonth += 12;
+            targetYear -= 1;
+        }
+
+        const monthId = `${targetYear}-${targetMonth.toString().padStart(2, '0')}`;
+        months.unshift(monthId);
+    }
+
+    return months;
+}
+
+async function fetchOrganizedData(userToken, requiredSections, timeframe) {
+    const result = {
+        currentMonth: getCurrentMonth(),
+        sections: {},
+        metadata: {
+            requestedSections: requiredSections,
+            timeframe,
+            timestamp: new Date().toISOString()
+        }
+    };
+
+    try {
+        // Buscar cada seção solicitada
+        for (const section of requiredSections) {
+            console.log(`   📦 Buscando seção: ${section}`);
+            
+            if (section === 'perfil') {
+                const response = await axios.get(`${OPERATIONAL_SERVER_URL}/api/perfil`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                result.sections.perfil = response.data;
+                console.log(`      ✅ Perfil carregado`);
+            }
+            
+            else if (section === 'financas') {
+                const financas = {};
+                let monthsToFetch = [];
+
+                // Determinar meses a buscar baseado no timeframe
+                if (timeframe.type === 'current_only') {
+                    monthsToFetch = [getCurrentMonth()];
+                } else if (timeframe.type === 'specific_months' && timeframe.months) {
+                    monthsToFetch = timeframe.months;
+                } else if (timeframe.type === 'last_n_months' && timeframe.count) {
+                    monthsToFetch = calculateMonthsList(getCurrentMonth(), timeframe.count);
+                }
+
+                console.log(`      📅 Meses a buscar: ${monthsToFetch.join(', ')}`);
+
+                // Buscar dados de cada mês
+                if (monthsToFetch.length === 1) {
+                    const response = await axios.get(
+                        `${OPERATIONAL_SERVER_URL}/api/financas/${monthsToFetch[0]}`,
+                        { headers: { 'Authorization': `Bearer ${userToken}` } }
+                    );
+                    financas[monthsToFetch[0]] = response.data;
+                    console.log(`      ✅ Mês ${monthsToFetch[0]} carregado`);
+                } else {
+                    const response = await axios.post(
+                        `${OPERATIONAL_SERVER_URL}/api/financas/multiplos-meses`,
+                        { meses: monthsToFetch },
+                        { headers: { 'Authorization': `Bearer ${userToken}` } }
+                    );
+                    
+                    // Organizar por mês
+                    response.data.forEach(mesData => {
+                        financas[mesData.mesAno] = mesData;
+                    });
+                    console.log(`      ✅ ${response.data.length} meses carregados`);
+                }
+
+                result.sections.financas = financas;
+            }
+            
+            else if (section === 'dividas') {
+                const response = await axios.get(`${OPERATIONAL_SERVER_URL}/api/dividas`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                result.sections.dividas = response.data;
+                console.log(`      ✅ ${response.data.length} dívidas carregadas`);
+            }
+            
+            else if (section === 'notas') {
+                const response = await axios.get(`${OPERATIONAL_SERVER_URL}/api/notas`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                result.sections.notas = response.data;
+                console.log(`      ✅ ${response.data.length} notas carregadas`);
+            }
+        }
+
+    } catch (error) {
+        console.error('   ❌ Erro ao buscar dados do servidor operacional:');
+        console.error('      Mensagem:', error.message);
+        if (error.response) {
+            console.error('      Status:', error.response.status);
+            console.error('      Dados:', error.response.data);
+        }
+    }
+
+    return result;
+}
+
+// ========== PROMPTS DO SISTEMA ==========
+
+const DECISION_PROMPT = `Você é um assistente financeiro que precisa decidir quais dados buscar para responder perguntas.
+
+SEÇÕES DISPONÍVEIS:
+${Object.entries(AVAILABLE_SECTIONS).map(([key, section]) => 
+    `- ${key}: ${section.description}`
+).join('\n')}
+
+Analise a pergunta do usuário e responda APENAS com JSON válido neste formato:
+{
+  "requiredSections": ["perfil", "financas"],
+  "timeframe": {
+    "type": "current_only",
+    "months": ["YYYY-MM"],
+    "count": 2,
+    "reasoning": "explicação"
+  }
+}
+
+TIPOS DE TIMEFRAME:
+- "current_only": apenas mês atual, use months: ["mês-atual"]
+- "specific_months": meses específicos, use months: ["YYYY-MM", ...]
+- "last_n_months": últimos N meses, use count: N
+
+REGRA IMPORTANTE - ANO:
+- SEMPRE use o ANO ATUAL fornecido quando o usuário não especificar o ano
+- Se o usuário mencionar "janeiro" e estamos em dezembro, considere janeiro do ANO ATUAL (passado recente)
+- Apenas use anos anteriores se o usuário especificar explicitamente (ex: "em 2024", "no ano passado")
+
+EXEMPLOS:
+Pergunta: "Quanto gastei este mês?" (Data: 2025-12-19)
+Resposta: {"requiredSections": ["financas"], "timeframe": {"type": "current_only", "months": ["MÊS-ATUAL"], "reasoning": "Apenas dados do mês atual"}}
+
+Pergunta: "Compare este mês com o anterior" (Data: 2025-12-19)
+Resposta: {"requiredSections": ["financas"], "timeframe": {"type": "last_n_months", "count": 2, "reasoning": "Últimos 2 meses para comparação"}}
+
+Pergunta: "Gastos em outubro, novembro e dezembro" (Data: 2025-12-19)
+Resposta: {"requiredSections": ["financas"], "timeframe": {"type": "specific_months", "months": ["2025-10", "2025-11", "2025-12"], "reasoning": "Meses específicos do ano atual 2025"}}
+
+Pergunta: "Gastos em janeiro, fevereiro e março" (Data: 2025-12-19)
+Resposta: {"requiredSections": ["financas"], "timeframe": {"type": "specific_months", "months": ["2025-01", "2025-02", "2025-03"], "reasoning": "Meses específicos do início do ano atual 2025"}}
+
+Pergunta: "Minha situação financeira geral" (Data: 2025-12-19)
+Resposta: {"requiredSections": ["perfil", "financas", "dividas"], "timeframe": {"type": "current_only", "months": ["MÊS-ATUAL"], "reasoning": "Visão completa do contexto atual"}}`;
+
+const RESPONSE_PROMPT = `Você é Merfin, um assistente financeiro inteligente e empático.
+
+CARACTERÍSTICAS:
+- Analise os dados reais do usuário fornecidos
+- Seja específico com valores e categorias
+- Use linguagem clara e acessível
+- Sugira ações práticas quando apropriado
+- Celebre conquistas e motive em desafios
+
+Os dados estão organizados por mês. Use a estrutura "userData.sections.financas[MÊS]" para acessar dados específicos.
+
+Forneça uma resposta personalizada, útil e baseada nos dados reais.`;
+
+// ========== ROTA DE HEALTH CHECK ==========
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', service: 'Merfin Agent' });
+    res.json({ 
+        status: 'ok', 
+        service: 'Merfin Agent Inteligente',
+        availableSections: Object.keys(AVAILABLE_SECTIONS)
+    });
 });
 
-// Rota principal do chat
-app.post('/api/chat', async (req, res) => {
+// ========== ROTA PRINCIPAL DO CHAT ==========
+app.post('/api/chat', verifyUserToken, async (req, res) => {
     try {
-        const { message, sessionId = 'default' } = req.body;
+        const { message } = req.body;
+        const currentMonth = getCurrentMonth();
+        const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
         if (!message || typeof message !== 'string') {
-            return res.status(400).json({ 
-                error: 'Mensagem inválida' 
-            });
+            return res.status(400).json({ error: 'Mensagem inválida' });
         }
 
-        // Obter ou criar histórico da conversa
-        if (!conversationHistory.has(sessionId)) {
-            conversationHistory.set(sessionId, [
-                { role: 'system', content: SYSTEM_PROMPT }
-            ]);
-        }
+        console.log('\n┌─────────────────────────────────────────────────────────');
+        console.log(`│ 🤖 NOVA CONSULTA`);
+        console.log(`│ 👤 Usuário: ${req.userId}`);
+        console.log(`│ 📅 Data atual: ${currentDate}`);
+        console.log(`│ 📆 Mês atual: ${currentMonth}`);
+        console.log(`│ 💬 Pergunta: "${message}"`);
+        console.log('└─────────────────────────────────────────────────────────\n');
 
-        const history = conversationHistory.get(sessionId);
+        // ========== PASSO 1: IA DECIDE QUAIS DADOS PRECISA ==========
+        console.log('🔍 PASSO 1: Analisando quais dados são necessários...');
         
-        // Adicionar mensagem do usuário
-        history.push({ role: 'user', content: message });
+        const decisionPrompt = `${DECISION_PROMPT}
 
-        // Limitar histórico a últimas 20 mensagens + system prompt
-        if (history.length > 21) {
-            history.splice(1, history.length - 21);
-        }
+DATA ATUAL: ${currentDate}
+MÊS ATUAL: ${currentMonth}
+PERGUNTA DO USUÁRIO: "${message}"
 
-        // Chamar API do ChatGPT
-        const response = await axios.post(
+Responda apenas com JSON válido.`;
+
+        console.log('   ⏳ Consultando OpenAI para decisão...');
+        
+        const decisionResponse = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
                 model: 'gpt-4o-mini',
-                messages: history,
-                max_tokens: 500,
-                temperature: 0.7,
-                presence_penalty: 0.6,
-                frequency_penalty: 0.3
+                messages: [{ role: 'system', content: decisionPrompt }],
+                max_tokens: 300,
+                temperature: 0.1
             },
             {
                 headers: {
@@ -78,53 +295,144 @@ app.post('/api/chat', async (req, res) => {
             }
         );
 
-        const aiMessage = response.data.choices[0].message.content;
+        let decision;
+        try {
+            const decisionText = decisionResponse.data.choices[0].message.content;
+            console.log('   📄 Resposta bruta da IA:');
+            console.log('   ', decisionText);
+            
+            // Limpar possível markdown
+            const cleanJson = decisionText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            decision = JSON.parse(cleanJson);
+            
+            // Substituir MÊS-ATUAL pelo mês real
+            if (decision.timeframe?.months) {
+                decision.timeframe.months = decision.timeframe.months.map(m => 
+                    m === 'MÊS-ATUAL' ? currentMonth : m
+                );
+            }
+            
+            console.log('\n   ✅ Decisão interpretada:');
+            console.log('   📊 Seções necessárias:', decision.requiredSections);
+            console.log('   📅 Timeframe:', JSON.stringify(decision.timeframe));
+            console.log('   💭 Raciocínio:', decision.timeframe.reasoning);
+            
+        } catch (error) {
+            console.error('   ❌ Erro ao parsear decisão da IA:', error.message);
+            console.log('   🔄 Usando fallback: dados do mês atual');
+            
+            // Fallback: usar dados do mês atual
+            decision = {
+                requiredSections: ['financas'],
+                timeframe: { 
+                    type: 'current_only', 
+                    months: [currentMonth],
+                    reasoning: 'Fallback - erro ao interpretar decisão da IA'
+                }
+            };
+        }
+
+        // ========== PASSO 2: BUSCAR DADOS ORGANIZADOS ==========
+        console.log('\n🔍 PASSO 2: Buscando dados do usuário...');
+        console.log('   📥 Conectando ao servidor operacional:', OPERATIONAL_SERVER_URL);
         
-        // Adicionar resposta da IA ao histórico
-        history.push({ role: 'assistant', content: aiMessage });
+        const userData = await fetchOrganizedData(
+            req.userToken,
+            decision.requiredSections,
+            decision.timeframe
+        );
+
+        console.log('   ✅ Dados recuperados com sucesso');
+        console.log('   📦 Seções carregadas:', Object.keys(userData.sections));
+        
+        if (userData.sections.financas) {
+            const mesesCarregados = Object.keys(userData.sections.financas);
+            console.log('   📅 Meses financeiros carregados:', mesesCarregados);
+        }
+
+        // ========== PASSO 3: IA GERA RESPOSTA COM OS DADOS ==========
+        console.log('\n🔍 PASSO 3: Gerando resposta personalizada...');
+        
+        const finalPrompt = `${RESPONSE_PROMPT}
+
+DATA ATUAL: ${currentDate}
+
+DADOS DO USUÁRIO:
+${JSON.stringify(userData, null, 2)}
+
+PERGUNTA: "${message}"
+
+Forneça uma resposta completa, personalizada e útil baseada nos dados reais do usuário.`;
+
+        console.log('   ⏳ Consultando OpenAI para resposta final...');
+
+        const finalResponse = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'system', content: finalPrompt }],
+                max_tokens: 1000,
+                temperature: 0.7
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        const aiMessage = finalResponse.data.choices[0].message.content;
+        
+        console.log('   ✅ Resposta gerada com sucesso');
+        console.log('   📝 Tamanho da resposta:', aiMessage.length, 'caracteres');
+        console.log('\n┌─────────────────────────────────────────────────────────');
+        console.log('│ ✨ CONSULTA FINALIZADA COM SUCESSO');
+        console.log('└─────────────────────────────────────────────────────────\n');
 
         res.json({
             success: true,
             response: aiMessage,
-            sessionId
+            debug: {
+                sectionsUsed: decision.requiredSections,
+                timeframe: decision.timeframe,
+                currentDate: currentDate
+            }
         });
 
     } catch (error) {
-        console.error('Erro no chat:', error.response?.data || error.message);
-        
-        // Tratar erros específicos da API
+        console.error('\n❌ ERRO NO PROCESSAMENTO DO CHAT:');
+        console.error('   Tipo:', error.name);
+        console.error('   Mensagem:', error.message);
+        if (error.response?.data) {
+            console.error('   Detalhes:', JSON.stringify(error.response.data, null, 2));
+        }
+        console.log('└─────────────────────────────────────────────────────────\n');
+
         if (error.response?.status === 429) {
             return res.status(429).json({
-                error: 'Muitas requisições. Por favor, aguarde um momento.'
+                error: 'Muitas requisições. Aguarde um momento.'
             });
         }
 
         if (error.response?.status === 401) {
             return res.status(500).json({
-                error: 'Erro de configuração do servidor.'
+                error: 'Erro de autenticação com OpenAI.'
             });
         }
 
         res.status(500).json({
-            error: 'Desculpe, tive um problema ao processar sua mensagem. Tente novamente.'
+            error: 'Desculpe, tive um problema ao processar sua mensagem.',
+            details: error.message
         });
     }
 });
 
-// Rota para limpar histórico de uma sessão
-app.delete('/api/chat/history/:sessionId', (req, res) => {
-    const { sessionId } = req.params;
-    
-    if (conversationHistory.has(sessionId)) {
-        conversationHistory.delete(sessionId);
-        res.json({ success: true, message: 'Histórico limpo' });
-    } else {
-        res.status(404).json({ error: 'Sessão não encontrada' });
-    }
-});
-
-// Iniciar servidor
+// ========== INICIAR SERVIDOR ==========
 app.listen(PORT, () => {
-    console.log(`🤖 Servidor Merfin Agent rodando na porta ${PORT}`);
-    console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✓ Configurada' : '✗ Não configurada'}`);
+    console.log(`\n🤖 Servidor Merfin Agent Inteligente`);
+    console.log(`📡 Porta: ${PORT}`);
+    console.log(`🔑 OpenAI: ${process.env.OPENAI_API_KEY ? '✓' : '✗'}`);
+    console.log(`🔗 Server Operacional: ${OPERATIONAL_SERVER_URL}`);
+    console.log(`📊 Seções disponíveis: ${Object.keys(AVAILABLE_SECTIONS).join(', ')}\n`);
 });

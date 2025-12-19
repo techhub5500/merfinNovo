@@ -214,6 +214,9 @@ async function calculateDashboardCards() {
         console.log('🏛️ Saldo Excedente:', saldoParaPatrimonio);
         console.log('🏛️ Patrimônio Total Acumulado:', patrimonioAcumulado);
         
+        // Salvar progresso das metas no banco de dados
+        await salvarProgressoMetas(curtoProgresso, longoProgresso);
+        
     } catch (error) {
         console.error('Erro ao calcular patrimônio:', error);
     }
@@ -337,62 +340,27 @@ async function renderMetas() {
         
         updateMetaDisplay('fundo', fundoMeta, fundoProgresso);
         
-        // 2. Redistribuir saldo restante para metas de curto e longo prazo
+        // 2. Usar progresso salvo no banco de dados (calculado no dashboard)
         const curtoDesc = perfilData.metaCurto?.descricao || '-';
         const curtoMeta = parseFloat(perfilData.metaCurto?.valor) || 0;
+        const curtoProgresso = parseFloat(perfilData.metaCurto?.progresso) || 0;
+
         const longoDesc = perfilData.metaLongo?.descricao || '-';
         const longoMeta = parseFloat(perfilData.metaLongo?.valor) || 0;
-        
-        let curtoProgresso = 0;
-        let longoProgresso = 0;
-        let saldoParaPatrimonio = 0;
-        
-        if (saldoRestante > 0) {
-            const temMetaCurto = curtoMeta > 0;
-            const temMetaLongo = longoMeta > 0;
-            
-            if (temMetaCurto || temMetaLongo) {
-                // Tem pelo menos uma meta cadastrada
-                if (temMetaCurto && temMetaLongo) {
-                    // Tem ambas as metas: 30% curto + 70% longo
-                    const valorCurto = saldoRestante * 0.30;
-                    const valorLongo = saldoRestante * 0.70;
-                    
-                    curtoProgresso = Math.min(valorCurto, curtoMeta);
-                    longoProgresso = Math.min(valorLongo, longoMeta);
-                    
-                    // Se alguma meta for atingida, o excedente vira patrimônio
-                    const excedenteCurto = Math.max(0, valorCurto - curtoMeta);
-                    const excedenteLongo = Math.max(0, valorLongo - longoMeta);
-                    saldoParaPatrimonio = excedenteCurto + excedenteLongo;
-                    
-                    console.log('📊 Ambas metas - Curto:', curtoProgresso, '| Longo:', longoProgresso, '| Excedente:', saldoParaPatrimonio);
-                    
-                } else if (temMetaCurto) {
-                    // Só tem meta de curto prazo: 100% para curto
-                    curtoProgresso = Math.min(saldoRestante, curtoMeta);
-                    saldoParaPatrimonio = Math.max(0, saldoRestante - curtoMeta);
-                    
-                    console.log('📊 Só meta curto - Progresso:', curtoProgresso, '| Excedente:', saldoParaPatrimonio);
-                    
-                } else if (temMetaLongo) {
-                    // Só tem meta de longo prazo: 100% para longo
-                    longoProgresso = Math.min(saldoRestante, longoMeta);
-                    saldoParaPatrimonio = Math.max(0, saldoRestante - longoMeta);
-                    
-                    console.log('📊 Só meta longo - Progresso:', longoProgresso, '| Excedente:', saldoParaPatrimonio);
-                }
-            } else {
-                // Não tem nenhuma meta cadastrada: todo saldo vira patrimônio
-                saldoParaPatrimonio = saldoRestante;
-                console.log('📊 Sem metas - Todo saldo vira patrimônio:', saldoParaPatrimonio);
-            }
-        }
-        
+        const longoProgresso = parseFloat(perfilData.metaLongo?.progresso) || 0;
+
+        // Calcular saldo restante para patrimônio (simulação baseada nos valores salvos)
+        const saldoParaPatrimonio = Math.max(0, saldoRestante - curtoProgresso - longoProgresso);
+
+        console.log('📊 Progresso das metas (do banco):');
+        console.log('   Curto:', curtoProgresso.toFixed(2), 'de', curtoMeta.toFixed(2));
+        console.log('   Longo:', longoProgresso.toFixed(2), 'de', longoMeta.toFixed(2));
+        console.log('   Saldo para patrimônio:', saldoParaPatrimonio.toFixed(2));
+
         // Atualizar displays das metas
         document.getElementById('meta-curto-desc').textContent = curtoDesc;
         updateMetaDisplay('curto', curtoMeta, curtoProgresso);
-        
+
         document.getElementById('meta-longo-desc').textContent = longoDesc;
         updateMetaDisplay('longo', longoMeta, longoProgresso);
         
@@ -685,3 +653,44 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDashboard();
     initializeNotas();
 });
+
+// Função para salvar progresso das metas no banco de dados
+async function salvarProgressoMetas(curtoProgresso, longoProgresso) {
+    try {
+        // Buscar perfil atual
+        const perfilResponse = await fetchAPI('/api/perfil');
+        const perfilAtual = await perfilResponse.json();
+        
+        // Preparar dados atualizados
+        const dadosAtualizados = {
+            ...perfilAtual,
+            metaCurto: {
+                ...perfilAtual.metaCurto,
+                progresso: curtoProgresso,
+                ultimaAtualizacao: new Date().toISOString()
+            },
+            metaLongo: {
+                ...perfilAtual.metaLongo,
+                progresso: longoProgresso,
+                ultimaAtualizacao: new Date().toISOString()
+            }
+        };
+        
+        // Salvar no banco
+        const saveResponse = await fetchAPI('/api/perfil', {
+            method: 'POST',
+            body: JSON.stringify(dadosAtualizados)
+        });
+        
+        if (saveResponse.ok) {
+            console.log('💾 Progresso das metas salvo com sucesso');
+            console.log('   Meta Curto:', curtoProgresso.toFixed(2));
+            console.log('   Meta Longo:', longoProgresso.toFixed(2));
+        } else {
+            console.error('❌ Erro ao salvar progresso das metas');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao salvar progresso das metas:', error);
+    }
+}

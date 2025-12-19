@@ -57,12 +57,16 @@ const perfilSchema = new mongoose.Schema({
     metaCurto: {
         descricao: String,
         valor: Number,
-        prazo: Number
+        prazo: Number,
+        progresso: { type: Number, default: 0 }, // Valor acumulado atual
+        ultimaAtualizacao: { type: Date, default: Date.now }
     },
     metaLongo: {
         descricao: String,
         valor: Number,
-        prazo: Number
+        prazo: Number,
+        progresso: { type: Number, default: 0 }, // Valor acumulado atual
+        ultimaAtualizacao: { type: Date, default: Date.now }
     },
     patrimonio: {
         acoes: { type: Number, default: 0 },

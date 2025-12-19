@@ -449,6 +449,24 @@ app.get('/api/financas/:mesAno', authMiddleware, async (req, res) => {
     }
 });
 
+// Buscar múltiplos meses (para dashboard com filtros)
+// IMPORTANTE: Esta rota deve vir ANTES de /api/financas/:mesAno
+app.post('/api/financas/multiplos-meses', authMiddleware, async (req, res) => {
+    try {
+        const { meses } = req.body; // Array de strings: ["2025-12", "2025-11", ...]
+
+        const financas = await FinancasMensais.find({
+            userId: req.userId,
+            mesAno: { $in: meses }
+        });
+
+        res.json(financas);
+    } catch (error) {
+        console.error('Erro ao buscar múltiplos meses:', error);
+        res.status(500).json({ error: 'Erro ao buscar múltiplos meses' });
+    }
+});
+
 // Salvar/Atualizar dados financeiros de um mês
 app.post('/api/financas/:mesAno', authMiddleware, async (req, res) => {
     try {
@@ -469,23 +487,6 @@ app.post('/api/financas/:mesAno', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Erro ao salvar finanças:', error);
         res.status(500).json({ error: 'Erro ao salvar finanças' });
-    }
-});
-
-// Buscar múltiplos meses (para dashboard com filtros)
-app.post('/api/financas/multiplos-meses', authMiddleware, async (req, res) => {
-    try {
-        const { meses } = req.body; // Array de strings: ["2025-12", "2025-11", ...]
-
-        const financas = await FinancasMensais.find({
-            userId: req.userId,
-            mesAno: { $in: meses }
-        });
-
-        res.json(financas);
-    } catch (error) {
-        console.error('Erro ao buscar múltiplos meses:', error);
-        res.status(500).json({ error: 'Erro ao buscar múltiplos meses' });
     }
 });
 

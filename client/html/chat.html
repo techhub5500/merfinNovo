@@ -57,23 +57,133 @@
         const form = document.getElementById('chat-form');
         const input = document.getElementById('message-input');
         const messages = document.getElementById('messages');
+        const sendBtn = document.getElementById('send-btn');
+        
+        let sessionId = localStorage.getItem('merfin_chat_session') || 
+                        'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('merfin_chat_session', sessionId);
 
-        function addMessage(text, who = 'user') {
+        // Adicionar mensagem do usuário
+        function addUserMessage(text) {
             const el = document.createElement('div');
-            el.className = 'message ' + who;
+            el.className = 'message user';
             el.innerText = text;
             messages.appendChild(el);
             messages.scrollTop = messages.scrollHeight;
         }
 
+        // Criar elemento de "pensando"
+        function showThinkingIndicator() {
+            const thinkingEl = document.createElement('div');
+            thinkingEl.className = 'message bot thinking';
+            thinkingEl.id = 'thinking-indicator';
+            thinkingEl.innerHTML = `
+                <div class="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            messages.appendChild(thinkingEl);
+            messages.scrollTop = messages.scrollHeight;
+            return thinkingEl;
+        }
+
+        // Remover indicador de "pensando"
+        function removeThinkingIndicator() {
+            const thinkingEl = document.getElementById('thinking-indicator');
+            if (thinkingEl) {
+                thinkingEl.remove();
+            }
+        }
+
+        // Adicionar mensagem do bot com efeito de digitação
+        function addBotMessageTyping(text) {
+            removeThinkingIndicator();
+            
+            const el = document.createElement('div');
+            el.className = 'message bot typing';
+            messages.appendChild(el);
+            
+            // Dividir em palavras
+            const words = text.split(' ');
+            let currentIndex = 0;
+            
+            // Mostrar 3 palavras por vez
+            const typingInterval = setInterval(() => {
+                const wordsToShow = words.slice(currentIndex, currentIndex + 3);
+                
+                if (wordsToShow.length > 0) {
+                    if (currentIndex === 0) {
+                        el.innerText = wordsToShow.join(' ');
+                    } else {
+                        el.innerText += ' ' + wordsToShow.join(' ');
+                    }
+                    
+                    currentIndex += 3;
+                    messages.scrollTop = messages.scrollHeight;
+                } else {
+                    clearInterval(typingInterval);
+                    el.classList.remove('typing');
+                }
+            }, 150); // 150ms entre cada grupo de 3 palavras
+        }
+
+        // Desabilitar input durante processamento
+        function setLoading(isLoading) {
+            input.disabled = isLoading;
+            sendBtn.disabled = isLoading;
+            
+            if (isLoading) {
+                sendBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+            } else {
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        // Enviar mensagem para a API
+        async function sendMessage(messageText) {
+            try {
+                setLoading(true);
+                showThinkingIndicator();
+
+                const response = await fetch('http://localhost:5001/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: messageText,
+                        sessionId: sessionId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.response) {
+                    addBotMessageTyping(data.response);
+                } else {
+                    throw new Error(data.error || 'Erro ao processar mensagem');
+                }
+
+            } catch (error) {
+                console.error('Erro no chat:', error);
+                removeThinkingIndicator();
+                addBotMessageTyping('Desculpe, tive um problema ao processar sua mensagem. Verifique se o servidor está rodando e tente novamente. 😔');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Handler do formulário
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const txt = input.value.trim();
-            if (!txt) return;
-            addMessage(txt, 'user');
+            if (!txt || input.disabled) return;
+            
+            addUserMessage(txt);
             input.value = '';
-            // resposta demo
-            setTimeout(() => addMessage('Resposta automática: recebemos sua mensagem.', 'bot'), 700);
+            sendMessage(txt);
         });
 
         // Ctrl/Cmd + Enter enviar
@@ -82,6 +192,12 @@
                 e.preventDefault();
                 form.requestSubmit();
             }
+        });
+
+        // Auto-resize do textarea
+        input.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
         });
     })();
     </script>

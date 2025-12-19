@@ -189,6 +189,9 @@ async function loadMonthData() {
         for (let i = 0; i < linhasDespesasNecessarias; i++) {
             addEmptyRow('despesas-table', ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'formaPagamento', 'status']);
         }
+
+        // Atualizar cards de resumo
+        updateMonthSummary();
     } catch (error) {
         console.error('Erro ao carregar dados do mês:', error);
         alert('Erro ao carregar dados financeiros.');
@@ -355,6 +358,9 @@ async function saveMonthData() {
         if (typeof updateDashboard === 'function') {
             updateDashboard();
         }
+
+        // Atualizar cards de resumo
+        updateMonthSummary();
     } catch (error) {
         console.error('Erro ao salvar dados:', error);
         alert('Erro ao salvar dados financeiros.');
@@ -571,4 +577,54 @@ function addAddRowButton(tableId, columns) {
         saveMonthData(); // Salvar após adicionar
     };
     tableContainer.appendChild(button);
+}
+
+// Função para atualizar os cards de resumo do mês
+function updateMonthSummary() {
+    const monthId = getCurrentMonthId();
+    const data = monthData[monthId];
+
+    if (!data) return;
+
+    let totalReceitas = 0;
+    let totalDespesas = 0;
+
+    // Calcular total de receitas
+    data.receitas.forEach(receita => {
+        if (receita.valor && typeof receita.valor === 'number') {
+            totalReceitas += receita.valor;
+        }
+    });
+
+    // Calcular total de despesas
+    data.despesas.forEach(despesa => {
+        if (despesa.valor && typeof despesa.valor === 'number') {
+            totalDespesas += despesa.valor;
+        }
+    });
+
+    const saldo = totalReceitas - totalDespesas;
+
+    // Formatar valores em reais
+    const formatarMoeda = (valor) => {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
+    };
+
+    // Atualizar os elementos HTML
+    document.getElementById('receitas-total').textContent = formatarMoeda(totalReceitas);
+    document.getElementById('despesas-total').textContent = formatarMoeda(totalDespesas);
+    document.getElementById('saldo-total').textContent = formatarMoeda(saldo);
+
+    // Mudar cor do saldo baseado no valor
+    const saldoElement = document.getElementById('saldo-total');
+    if (saldo > 0) {
+        saldoElement.style.color = '#10b981'; // Verde para positivo
+    } else if (saldo < 0) {
+        saldoElement.style.color = '#ef4444'; // Vermelho para negativo
+    } else {
+        saldoElement.style.color = '#6b7280'; // Cinza para zero
+    }
 }

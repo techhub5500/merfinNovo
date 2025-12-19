@@ -58,14 +58,33 @@ async function calculateDashboardCards() {
 
     console.log('📆 Todos os meses até agora:', allMonths);
 
+    // Gerar lista de meses baseada no filtro selecionado (para receitas/despesas)
+    const filterMonths = [];
+    for (let i = 0; i < currentFilterMonths; i++) {
+        let targetMonth = currentMonth - i;
+        let targetYear = currentYear;
+        
+        // Ajustar ano se necessário
+        while (targetMonth <= 0) {
+            targetMonth += 12;
+            targetYear -= 1;
+        }
+        
+        const monthId = `${targetYear}-${targetMonth.toString().padStart(2, '0')}`;
+        filterMonths.unshift(monthId); // Adicionar no início para manter ordem cronológica
+    }
+
+    console.log(`📅 Filtro ativo: ${currentFilterMonths} ${currentFilterMonths === 1 ? 'mês' : 'meses'}`);
+    console.log('📆 Meses do filtro:', filterMonths);
+
     let totalReceitasAcumuladas = 0;
     let totalDespesasAcumuladas = 0;
-    let receitaMensal = 0;
-    let despesaMensal = 0;
+    let receitaFiltrada = 0;
+    let despesaFiltrada = 0;
     let financasDataAcumulado = null;
 
     try {
-        // Buscar TODOS os dados financeiros desde o início (para acumulado)
+        // Buscar TODOS os dados financeiros desde o início (para acumulado de Saldo e Patrimônio)
         const response = await fetchAPI('/api/financas/multiplos-meses', {
             method: 'POST',
             body: JSON.stringify({ meses: allMonths })
@@ -88,25 +107,33 @@ async function calculateDashboardCards() {
             });
         }
         
-        // Buscar dados do MÊS ATUAL para receita/despesa mensal
-        const responseMensal = await fetchAPI(`/api/financas/${currentMonthId}`);
-        const financasMensal = await responseMensal.json();
+        // Buscar dados dos meses FILTRADOS para receita/despesa
+        const responseFiltrado = await fetchAPI('/api/financas/multiplos-meses', {
+            method: 'POST',
+            body: JSON.stringify({ meses: filterMonths })
+        });
         
-        (financasMensal.receitas || []).forEach(row => {
-            receitaMensal += parseFloat(row.valor) || 0;
-        });
-        (financasMensal.despesas || []).forEach(row => {
-            despesaMensal += parseFloat(row.valor) || 0;
-        });
+        const financasFiltradas = await responseFiltrado.json();
+        
+        if (Array.isArray(financasFiltradas)) {
+            financasFiltradas.forEach(mesData => {
+                (mesData.receitas || []).forEach(row => {
+                    receitaFiltrada += parseFloat(row.valor) || 0;
+                });
+                (mesData.despesas || []).forEach(row => {
+                    despesaFiltrada += parseFloat(row.valor) || 0;
+                });
+            });
+        }
         
     } catch (error) {
         console.error('❌ Erro ao calcular dashboard:', error);
     }
 
-    console.log('💰 Total Receitas Acumuladas:', totalReceitasAcumuladas);
-    console.log('💸 Total Despesas Acumuladas:', totalDespesasAcumuladas);
-    console.log('📊 Receita Mensal:', receitaMensal);
-    console.log('📊 Despesa Mensal:', despesaMensal);
+    console.log('💰 Total Receitas Acumuladas (Saldo):', totalReceitasAcumuladas);
+    console.log('💸 Total Despesas Acumuladas (Saldo):', totalDespesasAcumuladas);
+    console.log(`📊 Receita Filtrada (${currentFilterMonths} ${currentFilterMonths === 1 ? 'mês' : 'meses'}):`, receitaFiltrada);
+    console.log(`📊 Despesa Filtrada (${currentFilterMonths} ${currentFilterMonths === 1 ? 'mês' : 'meses'}):`, despesaFiltrada);
 
     const saldoLiquidoAcumulado = totalReceitasAcumuladas - totalDespesasAcumuladas;
 
@@ -197,10 +224,10 @@ async function calculateDashboardCards() {
         const cards = dashboardPage.querySelectorAll('.card p');
         if (cards.length >= 4) {
             // Formatar valores com separador de milhares
-            cards[0].textContent = formatarMoeda(saldoLiquidoAcumulado); // Saldo Líquido ACUMULADO
-            cards[1].textContent = formatarMoeda(receitaMensal); // Receita Total MENSAL
-            cards[2].textContent = formatarMoeda(despesaMensal); // Despesa Total MENSAL
-            cards[3].textContent = formatarMoeda(patrimonioAcumulado); // Patrimônio ACUMULADO
+            cards[0].textContent = formatarMoeda(saldoLiquidoAcumulado); // Saldo Líquido ACUMULADO (sempre)
+            cards[1].textContent = formatarMoeda(receitaFiltrada); // Receita Total FILTRADA
+            cards[2].textContent = formatarMoeda(despesaFiltrada); // Despesa Total FILTRADA
+            cards[3].textContent = formatarMoeda(patrimonioAcumulado); // Patrimônio ACUMULADO (sempre)
             
             // Adicionar classe de cor para saldo líquido
             if (saldoLiquidoAcumulado >= 0) {

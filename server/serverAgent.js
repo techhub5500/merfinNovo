@@ -406,6 +406,15 @@ REGRAS PARA CATEGORIAS:
 REGRAS INTELIGENTES PARA DATA:
 VOCÊ DEVE INTERPRETAR EXPRESSÕES NATURAIS DE DATA. Data de referência: ${currentDate}
 
+IMPORTANTE SOBRE COMPETÊNCIA:
+- A competência (mês de lançamento) é determinada automaticamente pela DATA do lançamento
+- Se o usuário mencionar "16 de julho", a data será 2025-07-16 E a competência será 2025-07
+- Se o usuário mencionar "ontem" (19/12), a data será 2025-12-19 E a competência será 2025-12
+- O sistema salvará automaticamente no mês correto baseado na data informada
+- SEMPRE extraia a data mais específica possível
+
+EXPRESSÕES DE DATA:
+
 - "hoje" → ${currentDate}
 - "ontem" → calcular data de 1 dia antes de ${currentDate}
 - "amanhã" → calcular data de 1 dia depois de ${currentDate}
@@ -491,7 +500,25 @@ async function executeAction(intent, entities, userToken, currentMonth) {
     console.log('\n⚡ EXECUTANDO AÇÃO');
     console.log(`   🎬 Intent: ${intent}`);
     
-    const monthId = entities.month || currentMonth;
+    // Determinar mês de competência baseado na data do lançamento
+    let monthId = currentMonth;
+    
+    if (entities.date) {
+        // Extrair YYYY-MM da data (formato: YYYY-MM-DD)
+        const dateMatch = entities.date.match(/^(\d{4})-(\d{2})/);
+        if (dateMatch) {
+            monthId = `${dateMatch[1]}-${dateMatch[2]}`;
+            console.log(`   📆 Competência identificada pela data: ${monthId}`);
+        }
+    }
+    
+    // Permitir override manual se entities.month for fornecido
+    if (entities.month) {
+        monthId = entities.month;
+        console.log(`   📆 Competência manual especificada: ${monthId}`);
+    }
+    
+    console.log(`   📂 Salvando no mês: ${monthId}`);
     
     try {
         switch (intent) {

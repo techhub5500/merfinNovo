@@ -470,6 +470,9 @@ Saída: {"intent": "INTENT_ADD_INCOME", "confidence": 0.98, "reasoning": "Usuár
 Entrada: "Recebi R$ 3000 de freelance"
 Saída: {"intent": "INTENT_ADD_INCOME", "confidence": 0.98, "reasoning": "Usuário quer adicionar receita de freelance", "entities": {"amount": 3000, "category": "Salário e Rendimentos do Trabalho", "subcategory": "Freelance", "description": "Freelance", "status": "Recebido"}}
 
+Entrada: "No dia 16 de julho eu recebi 4000 de bônus" (Data atual: 2025-12-20)
+Saída: {"intent": "INTENT_ADD_INCOME", "confidence": 0.98, "reasoning": "Usuário recebeu bônus em julho", "entities": {"amount": 4000, "category": "Salário e Rendimentos do Trabalho", "subcategory": "Bônus", "description": "Bônus", "status": "Recebido", "date": "2025-07-16"}}
+
 Entrada: "Vou receber R$ 2000 de bônus"
 Saída: {"intent": "INTENT_ADD_INCOME", "confidence": 0.98, "reasoning": "Usuário quer adicionar receita futura", "entities": {"amount": 2000, "category": "Salário e Rendimentos do Trabalho", "subcategory": "Bônus", "description": "Bônus", "status": "A receber"}}
 

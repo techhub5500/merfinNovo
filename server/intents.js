@@ -21,6 +21,7 @@ const INTENTS = {
     REPLACE_EXPENSE: "INTENT_REPLACE_EXPENSE",            // Substituir despesa inteira
     CLEAR_ALL_INCOMES: "INTENT_CLEAR_ALL_INCOMES",        // Limpar todas as receitas
     CLEAR_ALL_EXPENSES: "INTENT_CLEAR_ALL_EXPENSES",      // Limpar todas as despesas
+    BULK_ADD: "INTENT_BULK_ADD",                          // Adicionar múltiplos itens de uma vez
     
     // ===== CONSULTAS E ANÁLISES =====
     ANALYZE_SPENDING: "INTENT_ANALYZE_SPENDING",          // Analisar gastos
@@ -400,17 +401,50 @@ INTENTS DISPONÍVEIS:
 - INTENT_UNKNOWN: Quando não conseguir identificar
 
 REGRAS IMPORTANTES:
-1. Se a mensagem mencionar adicionar/registrar RECEITA/GANHO/RENDA → INTENT_ADD_INCOME
-2. Se mencionar adicionar/registrar DESPESA/GASTO/PAGAMENTO → INTENT_ADD_EXPENSE
-3. Se mencionar EDITAR/ALTERAR/MUDAR TUDO → use EDIT
-4. Se mencionar EDITAR/ALTERAR apenas UM CAMPO → use UPDATE_FIELD
-5. Se mencionar APAGAR/DELETAR/REMOVER → use DELETE
-6. Se mencionar ANÁLISE/QUANTO GASTEI/RESUMO → use análises apropriadas
-7. Se for saudação simples → INTENT_GREETING
-8. Se for despedida → INTENT_FAREWELL
-9. Se for agradecimento → INTENT_THANKS
+1. Se o usuário enviar MÚLTIPLAS RECEITAS E/OU DESPESAS EM UMA LISTA → use INTENT_BULK_ADD
+2. Se a mensagem mencionar adicionar/registrar RECEITA/GANHO/RENDA (apenas UMA) → INTENT_ADD_INCOME
+3. Se mencionar adicionar/registrar DESPESA/GASTO/PAGAMENTO (apenas UMA) → INTENT_ADD_EXPENSE
+4. Se mencionar EDITAR/ALTERAR/MUDAR TUDO → use EDIT
+5. Se mencionar EDITAR/ALTERAR apenas UM CAMPO → use UPDATE_FIELD
+6. Se mencionar APAGAR/DELETAR/REMOVER → use DELETE
+7. Se mencionar ANÁLISE/QUANTO GASTEI/RESUMO → use análises apropriadas
+8. Se for saudação simples → INTENT_GREETING
+9. Se for despedida → INTENT_FAREWELL
+10. Se for agradecimento → INTENT_THANKS
 
-RESPONDA APENAS COM JSON NESTE FORMATO:
+FORMATO DE RESPOSTA:
+
+Para INTENT_BULK_ADD (múltiplos itens), use este formato:
+{
+  "intent": "INTENT_BULK_ADD",
+  "confidence": 0.98,
+  "reasoning": "Usuário enviou lista com múltiplas receitas e despesas",
+  "entities": {
+    "items": [
+      {
+        "type": "income",
+        "amount": 8000,
+        "description": "Salário do responsável 1",
+        "category": "Salário e Rendimentos do Trabalho",
+        "subcategory": "Salário fixo",
+        "status": "Recebido",
+        "date": "2025-12-20"
+      },
+      {
+        "type": "expense",
+        "amount": 3000,
+        "description": "Aluguel da casa",
+        "category": "Moradia",
+        "subcategory": "Aluguel",
+        "status": "Pago",
+        "paymentMethod": "PIX",
+        "date": "2025-12-20"
+      }
+    ]
+  }
+}
+
+Para itens ÚNICOS, use o formato normal:
 {
   "intent": "INTENT_XXX",
   "confidence": 0.95,

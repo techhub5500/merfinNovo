@@ -7,20 +7,27 @@
             "Férias recebidas",
             "Participação nos lucros",
             "Vale-refeição",
-            "Trabalho autônomo",
             "Freelance",
-            "Diárias e gratificações"
+            "Diárias e gratificações",
+            "Décimo terceiro salário"
         ],
         "Renda de Empreendimentos": [
             "Lucro de empresa própria",
             "Distribuição de lucros",
             "Venda de produtos",
-            "Prestação de serviços"
+            "Prestação de serviços",
+            "Consultoria",
+            "Franquia",
+            "E-commerce"
         ],
         "Renda de Aluguéis": [
             "Aluguel de imóvel residencial",
             "Aluguel de imóvel comercial",
-            "Aluguel por temporada (Airbnb)"
+            "Aluguel por temporada (Airbnb)",
+            "Aluguel de vagas de garagem",
+            "Aluguel de equipamentos",
+            "Aluguel de espaços para eventos",
+            "Sublocação"
         ],
         "Investimentos": [
             "Dividendos de ações",
@@ -40,7 +47,9 @@
             "Juros de empréstimos concedidos",
             "Juros de títulos públicos",
             "Juros de contas remuneradas",
-            "Juros de consórcios"
+            "Juros de consórcios",
+            "Rendimentos de LCIs e LCAs",
+            "Rendimentos de fundos de investimento"
         ],
         "Presentes, Doações e Heranças": [
             "Presentes em dinheiro",
@@ -63,6 +72,36 @@
             "Venda de instrumentos musicais",
             "Venda de equipamentos",
             "Venda de itens colecionáveis"
+        ],
+        "Pensões e Benefícios Sociais": [
+            "Aposentadoria",
+            "Pensão por morte",
+            "Auxílio-doença",
+            "Seguro-desemprego",
+            "Bolsa família",
+            "Benefício previdenciário",
+            "Auxílio-reclusão",
+            "Salário-maternidade"
+        ],
+        "Royalties e Licenciamentos": [
+            "Royalties de livros",
+            "Royalties de músicas",
+            "Licenciamento de patentes",
+            "Direitos autorais",
+            "Royalties de softwares",
+            "Licenciamento de marcas",
+            "Royalties de fotografias",
+            "Renda de propriedade intelectual"
+        ],
+        "Renda de Parcerias e Afiliados": [
+            "Programa de afiliados",
+            "Comissões de vendas",
+            "Parcerias de conteúdo",
+            "Marketing de influência",
+            "Referências pagas",
+            "Bonificações de parcerias",
+
+            "Ganhos com publicidade"
         ]
     },
     "despesasCategorias": {
@@ -73,7 +112,6 @@
             "Energia elétrica",
             "Água e esgoto",
             "Gás encanado ou botijão",
-            "Internet residencial",
             "Manutenção e reparos",
             "Móveis e decoração",
             "Produtos de limpeza"
@@ -97,7 +135,9 @@
             "Lanches e cafés",
             "Refeições no trabalho",
             "Bebidas alcoólicas",
-            "Suplementos alimentares"
+            "Suplementos alimentares",
+            "Produtos orgânicos",
+            "Cestas básicas"
         ],
         "Saúde": [
             "Plano de saúde",
@@ -123,15 +163,13 @@
         ],
         "Lazer e Entretenimento": [
             "Cinema e teatro",
-            "Assinaturas de streaming",
             "Viagens e turismo",
             "Passeios e eventos",
             "Hobbies (instrumentos, artesanato)",
             "Jogos e videogames",
             "Parques e atrações",
             "Festas e comemorações",
-            "Clube ou associação recreativa",
-            "Livros de entretenimento"
+            "Clube ou associação recreativa"
         ],
         "Vestuário e Cuidados Pessoais": [
             "Roupas",
@@ -140,8 +178,7 @@
             "Salão de beleza",
             "Barbearia",
             "Cosméticos",
-            "Perfumes",
-            "Cuidados com a pele"
+            "Perfumes"
         ],
         "Seguros e Proteção": [
             "Seguro de vida",
@@ -151,7 +188,6 @@
             "Seguro saúde complementar",
             "Seguro de equipamentos eletrônicos",
             "Seguro de acidentes pessoais",
-            "Seguro para pets",
             "Assistência 24h",
             "Planos de proteção digital"
         ],
@@ -186,8 +222,7 @@
             "Fraldas e higiene",
             "Alimentação infantil",
             "Atividades extracurriculares",
-            "Mesada",
-            "Transporte escolar"
+            "Mesada"
         ],
         "Impostos e Obrigações Legais": [
             "Imposto de Renda",
@@ -215,23 +250,64 @@
         ],
         "Compras e Consumo": [
             "Eletrodomésticos",
-            "Eletrônicos",
             "Móveis",
             "Utensílios domésticos",
             "Artigos de papelaria",
             "Itens de decoração",
             "Ferramentas",
-            "Produtos de pet shop",
             "Compras online",
             "Produtos sazonais (Natal, Páscoa)"
         ],
+        "Doações e Caridade": [
+            "Doações para instituições",
+            "Campanhas de arrecadação",
+            "Ajuda humanitária",
+            "Doações religiosas",
+            "Contribuições para ONGs",
+            "Ajuda a amigos/familiares",
+            "Campanhas sociais",
+            "Doações de sangue",
+            "Voluntariado com custos"
+        ],
+        "Gastos com Animais de Estimação": [
+            "Ração e alimentos",
+            "Veterinário",
+            "Vacinas e medicações",
+            "Acessórios (coleiras, camas)",
+            "Brinquedos para pets",
+            "Banho e tosa",
+            "Produtos de pet shop",
+            "Seguro para pets",
+            "Adestramento",
+            "Hospedagem para pets"
+        ],
+        "Assinaturas e Serviços Digitais": [
+            "Streaming de vídeo",
+            "Streaming de música",
+            "Revistas e jornais digitais",
+            "Softwares em nuvem",
+            "Aplicativos de produtividade",
+            "Serviços de armazenamento",
+            "Redes sociais premium",
+            "Jogos online",
+            "Assinaturas de newsletters"
+        ],
+        "Higiene e Skin Care": [
+            "Sabonetes e produtos de banho",
+            "Shampoos e condicionadores",
+            "Produtos para barba e depilação",
+            "Cremes hidratantes",
+            "Produtos para acne",
+            "Máscaras faciais",
+            "Protetor solar",
+            "Produtos anti-idade",
+            "Cuidados com os lábios"
+        ],
         "Outros": [
             "Presentes",
-            "Doações",
             "Gorjetas",
             "Multas e penalidades",
             "Compras por impulso",
-            "Gastos com animais de estimação",
             "Despesas judiciais",
             "Taxas de cartório"
         ]

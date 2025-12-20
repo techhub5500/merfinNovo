@@ -467,7 +467,7 @@ Certifique-se de usar a data correta (${currentDate} se "hoje"), categorias da l
             {
                 model: 'gpt-4o-mini',
                 messages: [{ role: 'system', content: prompt }],
-                max_tokens: 400,
+                max_tokens: 2000,
                 temperature: 0.2
             },
             {
@@ -659,6 +659,93 @@ async function executeAction(intent, entities, userToken, currentMonth) {
                     monthId
                 );
             
+            case INTENTS.BULK_ADD:
+                console.log('\n📦 AÇÃO: Adicionar Múltiplos Itens');
+                console.log(`   📊 Total de itens: ${entities.items?.length || 0}`);
+                
+                const results = {
+                    success: true,
+                    incomes: { added: 0, failed: 0 },
+                    expenses: { added: 0, failed: 0 },
+                    details: []
+                };
+                
+                if (!entities.items || entities.items.length === 0) {
+                    return {
+                        success: false,
+                        message: 'Nenhum item para adicionar.'
+                    };
+                }
+                
+                for (const item of entities.items) {
+                    try {
+                        if (item.type === 'income') {
+                            const result = await spreadsheetActions.addIncome(
+                                userToken,
+                                OPERATIONAL_SERVER_URL,
+                                monthId,
+                                {
+                                    amount: item.amount,
+                                    description: item.description,
+                                    category: item.category,
+                                    subcategory: item.subcategory,
+                                    date: item.date,
+                                    status: item.status
+                                }
+                            );
+                            if (result.success) {
+                                results.incomes.added++;
+                                results.details.push(`✅ Receita: ${item.description} (R$ ${item.amount})`);
+                            } else {
+                                results.incomes.failed++;
+                                results.details.push(`❌ Receita: ${item.description} - ${result.message}`);
+                            }
+                        } else if (item.type === 'expense') {
+                            const result = await spreadsheetActions.addExpense(
+                                userToken,
+                                OPERATIONAL_SERVER_URL,
+                                monthId,
+                                {
+                                    amount: item.amount,
+                                    description: item.description,
+                                    category: item.category,
+                                    subcategory: item.subcategory,
+                                    date: item.date,
+                                    paymentMethod: item.paymentMethod || 'Dinheiro',
+                                    status: item.status
+                                }
+                            );
+                            if (result.success) {
+                                results.expenses.added++;
+                                results.details.push(`✅ Despesa: ${item.description} (R$ ${item.amount})`);
+                            } else {
+                                results.expenses.failed++;
+                                results.details.push(`❌ Despesa: ${item.description} - ${result.message}`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`   ❌ Erro ao processar item ${item.description}:`, error.message);
+                        results.details.push(`❌ ${item.description} - Erro: ${error.message}`);
+                    }
+                }
+                
+                const summary = `✅ Lançamentos concluídos!\n\n` +
+                    `📊 Resumo:\n` +
+                    `- Receitas adicionadas: ${results.incomes.added}\n` +
+                    `- Despesas adicionadas: ${results.expenses.added}\n` +
+                    `- Total processado: ${results.incomes.added + results.expenses.added}\n\n` +
+                    `Detalhes:\n${results.details.join('\n')}`;
+                
+                console.log(`   ✅ Processamento concluído!`);
+                console.log(`   📊 Receitas: ${results.incomes.added} adicionadas`);
+                console.log(`   💸 Despesas: ${results.expenses.added} adicionadas`);
+                
+                return {
+                    success: true,
+                    message: summary,
+                    data: results
+                };
+            
             default:
                 console.log('   ℹ️ Intent não requer ação direta na planilha');
                 return { requiresAIResponse: true };
@@ -735,7 +822,8 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
             INTENTS.DELETE_INCOME,
             INTENTS.DELETE_EXPENSE,
             INTENTS.CLEAR_ALL_INCOMES,
-            INTENTS.CLEAR_ALL_EXPENSES
+            INTENTS.CLEAR_ALL_EXPENSES,
+            INTENTS.BULK_ADD
         ];
         
         if (spreadsheetIntents.includes(intentData.intent)) {

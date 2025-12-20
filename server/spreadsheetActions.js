@@ -148,7 +148,20 @@ async function editIncome(userToken, operationalServerUrl, monthId, identifier, 
     const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
     
     // Encontrar a receita pelo identificador
-    const index = findItemIndex(currentData.receitas, identifier);
+    let index = -1;
+    
+    if (!identifier || identifier === 'undefined' || identifier === '') {
+        console.log('   🤔 Identificador vazio - usando contexto inteligente');
+        if (currentData.receitas.length === 1) {
+            index = 0;
+            console.log('   ✅ Encontrada 1 receita no mês - usando essa');
+        } else if (currentData.receitas.length > 1) {
+            index = currentData.receitas.length - 1;
+            console.log(`   ✅ Usando última receita adicionada (${currentData.receitas[index].descricao})`);
+        }
+    } else {
+        index = findItemIndex(currentData.receitas, identifier);
+    }
     
     if (index === -1) {
         console.log('   ❌ Receita não encontrada');
@@ -201,8 +214,20 @@ async function editExpense(userToken, operationalServerUrl, monthId, identifier,
     
     const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
     
-    // Encontrar a despesa pelo identificador
-    const index = findItemIndex(currentData.despesas, identifier);
+    let index = -1;
+    
+    if (!identifier || identifier === 'undefined' || identifier === '') {
+        console.log('   🤔 Identificador vazio - usando contexto inteligente');
+        if (currentData.despesas.length === 1) {
+            index = 0;
+            console.log('   ✅ Encontrada 1 despesa no mês - usando essa');
+        } else if (currentData.despesas.length > 1) {
+            index = currentData.despesas.length - 1;
+            console.log(`   ✅ Usando última despesa adicionada (${currentData.despesas[index].descricao})`);
+        }
+    } else {
+        index = findItemIndex(currentData.despesas, identifier);
+    }
     
     if (index === -1) {
         console.log('   ❌ Despesa não encontrada');
@@ -256,7 +281,33 @@ async function updateIncomeField(userToken, operationalServerUrl, monthId, ident
     console.log('   ✨ Novo valor:', newValue);
     
     const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
-    const index = findItemIndex(currentData.receitas, identifier);
+    
+    // Se não há identificador, tentar usar contexto inteligente
+    let index = -1;
+    
+    if (!identifier || identifier === 'undefined' || identifier === '') {
+        console.log('   🤔 Identificador vazio - usando contexto inteligente');
+        
+        // Se há apenas 1 receita no mês, usar essa
+        if (currentData.receitas.length === 1) {
+            index = 0;
+            console.log('   ✅ Encontrada 1 receita no mês - usando essa');
+        } 
+        // Se há várias, usar a última adicionada (mais recente no array)
+        else if (currentData.receitas.length > 1) {
+            index = currentData.receitas.length - 1;
+            console.log(`   ✅ Usando última receita adicionada (${currentData.receitas[index].descricao})`);
+        }
+        else {
+            console.log('   ❌ Nenhuma receita encontrada no mês');
+            return {
+                success: false,
+                message: `Não encontrei nenhuma receita no mês ${monthId}.`
+            };
+        }
+    } else {
+        index = findItemIndex(currentData.receitas, identifier);
+    }
     
     if (index === -1) {
         console.log('   ❌ Receita não encontrada');
@@ -327,7 +378,33 @@ async function updateExpenseField(userToken, operationalServerUrl, monthId, iden
     console.log('   ✨ Novo valor:', newValue);
     
     const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
-    const index = findItemIndex(currentData.despesas, identifier);
+    
+    // Se não há identificador, tentar usar contexto inteligente
+    let index = -1;
+    
+    if (!identifier || identifier === 'undefined' || identifier === '') {
+        console.log('   🤔 Identificador vazio - usando contexto inteligente');
+        
+        // Se há apenas 1 despesa no mês, usar essa
+        if (currentData.despesas.length === 1) {
+            index = 0;
+            console.log('   ✅ Encontrada 1 despesa no mês - usando essa');
+        } 
+        // Se há várias, usar a última adicionada (mais recente no array)
+        else if (currentData.despesas.length > 1) {
+            index = currentData.despesas.length - 1;
+            console.log(`   ✅ Usando última despesa adicionada (${currentData.despesas[index].descricao})`);
+        }
+        else {
+            console.log('   ❌ Nenhuma despesa encontrada no mês');
+            return {
+                success: false,
+                message: `Não encontrei nenhuma despesa no mês ${monthId}.`
+            };
+        }
+    } else {
+        index = findItemIndex(currentData.despesas, identifier);
+    }
     
     if (index === -1) {
         console.log('   ❌ Despesa não encontrada');
@@ -551,6 +628,88 @@ async function listExpenses(userToken, operationalServerUrl, monthId) {
     };
 }
 
+/**
+ * Limpa todas as receitas de um mês
+ */
+async function clearAllIncomes(userToken, operationalServerUrl, monthId) {
+    console.log('\n🗑️ AÇÃO: Limpar Todas as Receitas');
+    console.log('   📅 Mês:', monthId);
+    
+    const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
+    const quantidadeAntes = currentData.receitas.length;
+    
+    if (quantidadeAntes === 0) {
+        console.log('   ℹ️ Nenhuma receita para deletar');
+        return {
+            success: false,
+            message: `Não há receitas registradas em ${monthId} para deletar.`
+        };
+    }
+    
+    // Limpar todas as receitas
+    currentData.receitas = [];
+    
+    // Salvar
+    const result = await saveMonthData(userToken, operationalServerUrl, monthId, currentData);
+    
+    if (result.success) {
+        console.log(`   ✅ ${quantidadeAntes} receita(s) deletada(s) com sucesso!`);
+        return {
+            success: true,
+            message: `${quantidadeAntes} receita(s) de ${monthId} deletada(s) com sucesso!`,
+            count: quantidadeAntes
+        };
+    } else {
+        console.log('   ❌ Falha ao limpar receitas');
+        return {
+            success: false,
+            message: 'Não consegui limpar as receitas. Tente novamente.',
+            error: result.error
+        };
+    }
+}
+
+/**
+ * Limpa todas as despesas de um mês
+ */
+async function clearAllExpenses(userToken, operationalServerUrl, monthId) {
+    console.log('\n🗑️ AÇÃO: Limpar Todas as Despesas');
+    console.log('   📅 Mês:', monthId);
+    
+    const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
+    const quantidadeAntes = currentData.despesas.length;
+    
+    if (quantidadeAntes === 0) {
+        console.log('   ℹ️ Nenhuma despesa para deletar');
+        return {
+            success: false,
+            message: `Não há despesas registradas em ${monthId} para deletar.`
+        };
+    }
+    
+    // Limpar todas as despesas
+    currentData.despesas = [];
+    
+    // Salvar
+    const result = await saveMonthData(userToken, operationalServerUrl, monthId, currentData);
+    
+    if (result.success) {
+        console.log(`   ✅ ${quantidadeAntes} despesa(s) deletada(s) com sucesso!`);
+        return {
+            success: true,
+            message: `${quantidadeAntes} despesa(s) de ${monthId} deletada(s) com sucesso!`,
+            count: quantidadeAntes
+        };
+    } else {
+        console.log('   ❌ Falha ao limpar despesas');
+        return {
+            success: false,
+            message: 'Não consegui limpar as despesas. Tente novamente.',
+            error: result.error
+        };
+    }
+}
+
 module.exports = {
     addIncome,
     addExpense,
@@ -561,5 +720,7 @@ module.exports = {
     deleteIncome,
     deleteExpense,
     listIncomes,
-    listExpenses
+    listExpenses,
+    clearAllIncomes,
+    clearAllExpenses
 };

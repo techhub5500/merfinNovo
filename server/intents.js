@@ -430,6 +430,11 @@ IMPORTANTE SOBRE ENTITIES:
 - amount: valor numérico (ex: R$ 150 → 150)
 - category: categoria mencionada (OBRIGATÓRIO para ADD_INCOME e ADD_EXPENSE)
 - subcategory: subcategoria (OBRIGATÓRIO quando tiver categoria - escolha da lista fornecida)
+- month: mês de competência no formato YYYY-MM - REGRAS CRÍTICAS:
+  * Se o usuário mencionar mês explicitamente (ex: "em julho", "de outubro") → extraia no formato "2025-07"
+  * Se for REFERÊNCIA CONTEXTUAL ("essa receita", "essa despesa") E o contexto menciona um mês específico → extraia esse mês
+  * Se não houver menção a mês, deixe como null (será usado mês atual)
+  * Exemplos: "julho" → "2025-07", "janeiro" → "2025-01", "dezembro" → "2025-12"
 - date: data mencionada ou null - REGRAS DE INTERPRETAÇÃO INTELIGENTE:
   * "hoje" → data atual (fornecida no contexto)
   * "ontem" → data atual - 1 dia
@@ -453,7 +458,17 @@ IMPORTANTE SOBRE ENTITIES:
   * Se o usuário não mencionar tempo verbal, considere o contexto ou use o status padrão baseado no verbo
 - field: qual campo atualizar (se for UPDATE_FIELD)
 - newValue: novo valor do campo (se for UPDATE_FIELD)
-- identifier: identificador da linha (data, descrição, índice) para EDIT/DELETE
+- identifier: identificador da linha (data, descrição, índice) para EDIT/DELETE - REGRAS:
+  * Use descrição quando mencionada explicitamente (ex: "receita de salário", "despesa do mercado")
+  * Use data quando mencionada (ex: "receita do dia 15", "despesa de ontem")
+  * Para REFERÊNCIAS CONTEXTUAIS ("essa receita", "essa despesa", "o último lançamento"):
+    - Deixe identifier como null ou vazio ("")
+    - O sistema usará contexto inteligente (última adicionada ou única do mês)
+  * Exemplos válidos: "Salário", "Mercado", "2025-12-15", "Aluguel"
+  * Para DELETE/CLEAR: Sempre extraia o mês mencionado em entities.month se especificado
+    - "Apague meu salário de julho" → identifier: "Salário", month: "2025-07"
+    - "Apague minhas receitas de julho" → month: "2025-07"
+    - "Delete a despesa de outubro" → month: "2025-10"
 
 REGRA CRÍTICA SOBRE SUBCATEGORIA:
 - SEMPRE que definir uma "category", DEVE definir também uma "subcategory"
@@ -494,8 +509,23 @@ Saída: {"intent": "INTENT_ADD_EXPENSE", "confidence": 0.98, "reasoning": "Usuá
 Entrada: "Altera a categoria da despesa do mercado para Transporte"
 Saída: {"intent": "INTENT_UPDATE_EXPENSE_FIELD", "confidence": 0.95, "reasoning": "Usuário quer atualizar apenas o campo categoria", "entities": {"identifier": "Mercado", "field": "categoria", "newValue": "Transporte"}}
 
+Entrada: "Edite o valor dessa receita para 4500" (contexto: usuário acabou de ver receita de Salário)
+Saída: {"intent": "INTENT_UPDATE_INCOME_FIELD", "confidence": 0.95, "reasoning": "Usuário quer corrigir valor da receita mencionada no contexto", "entities": {"identifier": "", "field": "valor", "newValue": 4500}}
+
+Entrada: "Mude o valor dessa receita para 1500" (contexto: "O usuário recebeu um bônus de R$ 4.000,00 em julho de 2025")
+Saída: {"intent": "INTENT_UPDATE_INCOME_FIELD", "confidence": 0.95, "reasoning": "Usuário quer atualizar valor da receita de julho mencionada no contexto", "entities": {"identifier": "", "field": "valor", "newValue": 1500, "month": "2025-07"}}
+
+Entrada: "Muda a descrição da última despesa para 'Compra supermercado'"
+Saída: {"intent": "INTENT_UPDATE_EXPENSE_FIELD", "confidence": 0.95, "reasoning": "Usuário quer atualizar descrição da última despesa", "entities": {"identifier": "", "field": "descricao", "newValue": "Compra supermercado"}}
+
 Entrada: "Apaga a receita de freelance"
 Saída: {"intent": "INTENT_DELETE_INCOME", "confidence": 0.97, "reasoning": "Usuário quer deletar receita específica", "entities": {"identifier": "freelance"}}
+
+Entrada: "Apague meu salário de julho" (Data atual: 2025-12-20)
+Saída: {"intent": "INTENT_DELETE_INCOME", "confidence": 0.97, "reasoning": "Usuário quer deletar salário de julho", "entities": {"identifier": "Salário", "month": "2025-07"}}
+
+Entrada: "Apague minhas receitas de julho" (Data atual: 2025-12-20)
+Saída: {"intent": "INTENT_CLEAR_ALL_INCOMES", "confidence": 0.95, "reasoning": "Usuário quer apagar todas receitas de julho", "entities": {"month": "2025-07"}}
 
 Entrada: "Quanto gastei este mês?"
 Saída: {"intent": "INTENT_ANALYZE_SPENDING", "confidence": 0.96, "reasoning": "Usuário quer análise de gastos do mês", "entities": {}}

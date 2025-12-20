@@ -374,7 +374,7 @@ function loadCategories() {
 }
 
 // ========== DETECTOR DE INTENT ==========
-async function detectIntent(message, currentDate) {
+async function detectIntent(message, currentDate, conversationContext = '') {
     console.log('🔍 DETECÇÃO DE INTENT');
     console.log('   💬 Analisando mensagem...');
     
@@ -382,10 +382,19 @@ async function detectIntent(message, currentDate) {
         // Carregar categorias
         const categories = loadCategories();
         
+        let contextualInfo = '';
+        if (conversationContext) {
+            contextualInfo = `\n\nCONTEXTO DA CONVERSA ANTERIOR:
+${conversationContext}
+
+IMPORTANTE: Se o usuário fizer referência contextual ("essa receita", "essa despesa", "mude o valor") e o contexto menciona um MÊS ESPECÍFICO, você DEVE extrair esse mês e incluir em entities.month no formato YYYY-MM.
+Exemplo: Se o contexto menciona "julho" ou "julho de 2025" e o usuário diz "edite essa receita", inclua "month": "2025-07" nas entities.`;
+        }
+        
         const prompt = `${INTENT_DETECTION_PROMPT}
 
 DATA ATUAL: ${currentDate}
-IMPORTANTE: Se o usuário mencionar "hoje", use EXATAMENTE esta data: ${currentDate}
+IMPORTANTE: Se o usuário mencionar "hoje", use EXATAMENTE esta data: ${currentDate}${contextualInfo}
 
 CATEGORIAS DISPONÍVEIS DE RECEITAS:
 ${JSON.stringify(categories.receitasCategorias, null, 2)}
@@ -636,6 +645,20 @@ async function executeAction(intent, entities, userToken, currentMonth) {
                     monthId
                 );
             
+            case INTENTS.CLEAR_ALL_INCOMES:
+                return await spreadsheetActions.clearAllIncomes(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId
+                );
+            
+            case INTENTS.CLEAR_ALL_EXPENSES:
+                return await spreadsheetActions.clearAllExpenses(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId
+                );
+            
             default:
                 console.log('   ℹ️ Intent não requer ação direta na planilha');
                 return { requiresAIResponse: true };
@@ -672,12 +695,34 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         
         console.log('─────────────────────────────────────────────────────────\n');
         
-        // ========== PASSO 0: DETECTAR INTENT ==========
+        // ========== BUSCAR CONVERSAÇÃO E RESUMO ANTES DE DETECTAR INTENT ==========
+        console.log('🔍 Verificando conversa ativa e resumo...');
+        let conversaId = req.body.conversaId;
+        let resumoContexto = '';
+        
+        if (conversaId) {
+            try {
+                const resumoResponse = await axios.get(
+                    `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/resumo`,
+                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                );
+                resumoContexto = resumoResponse.data.resumo || '';
+                if (resumoContexto) {
+                    console.log('   📚 Resumo carregado:', resumoContexto.substring(0, 100) + '...');
+                }
+            } catch (error) {
+                console.log('   ⚠️ Erro ao buscar resumo:', error.message);
+            }
+        } else {
+            console.log('   ℹ️ Nova conversa - será criada após resposta');
+        }
+        
+        // ========== PASSO 0: DETECTAR INTENT COM CONTEXTO ==========
         console.log('╔═════════════════════════════════════════════════════════╗');
         console.log('║             PASSO 0: DETECÇÃO DE INTENT                 ║');
         console.log('╚═════════════════════════════════════════════════════════╝');
         
-        const intentData = await detectIntent(message, currentDate);
+        const intentData = await detectIntent(message, currentDate, resumoContexto);
         
         // ========== VERIFICAR SE É AÇÃO DIRETA NA PLANILHA ==========
         const spreadsheetIntents = [
@@ -688,7 +733,9 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
             INTENTS.UPDATE_INCOME_FIELD,
             INTENTS.UPDATE_EXPENSE_FIELD,
             INTENTS.DELETE_INCOME,
-            INTENTS.DELETE_EXPENSE
+            INTENTS.DELETE_EXPENSE,
+            INTENTS.CLEAR_ALL_INCOMES,
+            INTENTS.CLEAR_ALL_EXPENSES
         ];
         
         if (spreadsheetIntents.includes(intentData.intent)) {
@@ -761,31 +808,6 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         // ========== CONTINUAR COM FLUXO NORMAL PARA OUTROS INTENTS ==========
         console.log('\n💬 Intent requer resposta conversacional');
         console.log('   🔄 Continuando com fluxo normal...\n');
-        
-        // ========== BUSCAR CONVERSAÇÃO E RESUMO ==========
-        console.log('🔍 Verificando conversa ativa e resumo...');
-        let conversaId = req.body.conversaId;
-        let resumoContexto = '';
-        
-        if (conversaId) {
-            try {
-                const resumoResponse = await axios.get(
-                    `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/resumo`,
-                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
-                );
-                
-                if (resumoResponse.data.resumo) {
-                    resumoContexto = resumoResponse.data.resumo;
-                    console.log(`   📚 Resumo carregado: ${resumoResponse.data.palavrasResumo} palavras`);
-                } else {
-                    console.log('   ℹ️ Conversa nova - sem resumo anterior');
-                }
-            } catch (error) {
-                console.log('   ⚠️ Erro ao buscar resumo, continuando sem contexto:', error.message);
-            }
-        } else {
-            console.log('   ℹ️ Nova conversa - será criada após resposta');
-        }
 
         // ========== PASSO 1: IA DECIDE QUAIS DADOS PRECISA ==========
         console.log('╔═════════════════════════════════════════════════════════╗');

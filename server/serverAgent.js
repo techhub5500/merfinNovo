@@ -2,7 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
+
+// Importar sistema de intents e ações
+const { INTENTS, INTENT_DETECTION_PROMPT } = require('./intents');
+const spreadsheetActions = require('./spreadsheetActions');
 
 const app = express();
 const PORT = process.env.AGENT_PORT || 5001;
@@ -36,130 +42,6 @@ const AVAILABLE_SECTIONS = {
         title: "Notas e Anotações",
         description: "Observações pessoais do usuário sobre suas finanças.",
         endpoint: "/api/notas"
-    }
-};
-
-// ========== SISTEMA DE INTENTS ==========
-const INTENT_DEFINITIONS = {
-    // Transaction Intents
-    'add_income': {
-        description: 'Adicionar receita/entrada de dinheiro',
-        keywords: ['adicionar receita', 'registrar entrada', 'recebi', 'salário', 'ganho', 'entrada'],
-        action: 'addTransaction',
-        type: 'receita',
-        requiredParams: ['valor']
-    },
-    
-    'add_expense': {
-        description: 'Adicionar despesa/gasto',
-        keywords: ['adicionar despesa', 'gastei', 'paguei', 'comprei', 'registrar gasto', 'pagar'],
-        action: 'addTransaction',
-        type: 'despesa',
-        requiredParams: ['valor']
-    },
-    
-    'edit_transaction': {
-        description: 'Editar transação existente',
-        keywords: ['editar', 'alterar', 'modificar', 'corrigir', 'mudar valor', 'atualizar transação'],
-        action: 'editTransaction',
-        requiredParams: ['identificador', 'campo']
-    },
-    
-    'delete_transaction': {
-        description: 'Deletar transação',
-        keywords: ['deletar', 'remover', 'apagar', 'excluir', 'cancelar registro'],
-        action: 'deleteTransaction',
-        requiredParams: ['identificador']
-    },
-    
-    // Goal Management Intents
-    'update_goal_progress': {
-        description: 'Atualizar progresso de meta',
-        keywords: ['adicionar à meta', 'atualizar progresso', 'progredir meta', 'avançar meta'],
-        action: 'updateGoalProgress',
-        requiredParams: ['valor']
-    },
-    
-    'update_goal_info': {
-        description: 'Atualizar informações da meta',
-        keywords: ['mudar meta', 'alterar objetivo', 'redefinir meta'],
-        action: 'updateGoalInfo',
-        requiredParams: ['campo']
-    },
-    
-    // Profile Update Intents
-    'update_profile': {
-        description: 'Atualizar informações do perfil',
-        keywords: ['atualizar perfil', 'mudar informações', 'alterar dados', 'modificar perfil'],
-        action: 'updateProfile',
-        requiredParams: ['campo']
-    },
-    
-    'update_patrimony': {
-        description: 'Atualizar patrimônio',
-        keywords: ['atualizar patrimônio', 'adicionar investimento', 'registrar ativo', 'patrimônio'],
-        action: 'updatePatrimony',
-        requiredParams: ['campo', 'valor']
-    },
-    
-    // Debt Management Intents
-    'add_debt': {
-        description: 'Adicionar nova dívida',
-        keywords: ['registrar dívida', 'adicionar parcelamento', 'nova dívida', 'parcelar'],
-        action: 'addDebt',
-        requiredParams: ['nome', 'valorTotal', 'numParcelas']
-    },
-    
-    'mark_payment': {
-        description: 'Marcar parcela como paga',
-        keywords: ['pagar parcela', 'marcar como pago', 'paguei parcela', 'quitar parcela'],
-        action: 'markPayment',
-        requiredParams: ['dividaId', 'parcelaNumero']
-    },
-    
-    'delete_debt': {
-        description: 'Remover dívida',
-        keywords: ['remover dívida', 'excluir dívida', 'deletar dívida'],
-        action: 'deleteDebt',
-        requiredParams: ['dividaId']
-    },
-    
-    // Query and Analysis Intents
-    'query_financial': {
-        description: 'Consultar informações financeiras',
-        keywords: ['quanto', 'qual', 'onde', 'quando', 'mostrar', 'listar', 'ver'],
-        action: 'query',
-        requiredParams: []
-    },
-    
-    'financial_analysis': {
-        description: 'Análise financeira detalhada',
-        keywords: ['analisar', 'análise', 'avaliar', 'revisar', 'diagnóstico'],
-        action: 'analyze',
-        requiredParams: []
-    },
-    
-    'calculate': {
-        description: 'Fazer cálculos matemáticos',
-        keywords: ['calcular', 'quanto é', 'soma', 'multiplicar', 'dividir'],
-        action: 'calculate',
-        requiredParams: []
-    },
-    
-    // Education Intents
-    'financial_education': {
-        description: 'Educação financeira',
-        keywords: ['explicar', 'ensinar', 'aprender', 'o que é', 'como funciona'],
-        action: 'educate',
-        requiredParams: []
-    },
-    
-    // General Chat
-    'chat': {
-        description: 'Conversa casual',
-        keywords: ['olá', 'oi', 'bom dia', 'obrigado', 'tchau'],
-        action: 'chat',
-        requiredParams: []
     }
 };
 
@@ -208,444 +90,6 @@ function calculateMonthsList(currentMonth, monthsBack) {
     }
 
     return months;
-}
-
-// ========== EXTRAÇÃO DE ENTIDADES ==========
-
-function extractEntities(message) {
-    const entities = {
-        valor: null,
-        data: null,
-        descricao: null,
-        categoria: null,
-        subcategoria: null,
-        formaPagamento: null,
-        goalType: null,
-        campo: null,
-        identificador: null
-    };
-    
-    // Extract money values (R$ 100, 100 reais, cem reais, 1000, 1k, 1 mil)
-    const moneyPatterns = [
-        /R\$\s*(\d+(?:[.,]\d{2})?)/i,
-        /(\d+(?:[.,]\d{2})?)\s*reais?/i,
-        /(\d+)\s*(?:mil|k)/i,
-        /valor\s+(?:de\s+)?(\d+(?:[.,]\d{2})?)/i
-    ];
-    
-    for (const pattern of moneyPatterns) {
-        const match = message.match(pattern);
-        if (match) {
-            entities.valor = parseFloat(match[1].replace(',', '.'));
-            if (message.toLowerCase().includes('mil') || message.toLowerCase().includes('k')) {
-                entities.valor *= 1000;
-            }
-            break;
-        }
-    }
-    
-    // Extract dates (hoje, ontem, 15/12, dezembro)
-    const datePatterns = {
-        'hoje': new Date(),
-        'ontem': new Date(Date.now() - 86400000),
-        'anteontem': new Date(Date.now() - 172800000)
-    };
-    
-    for (const [keyword, date] of Object.entries(datePatterns)) {
-        if (message.toLowerCase().includes(keyword)) {
-            entities.data = date.toISOString().split('T')[0];
-            break;
-        }
-    }
-    
-    // Extract date in DD/MM format
-    const dateMatch = message.match(/(\d{1,2})\/(\d{1,2})/);
-    if (dateMatch) {
-        const [_, day, month] = dateMatch;
-        const year = new Date().getFullYear();
-        entities.data = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-    
-    // Extract description (words after "de" or "em" or "para" or "com")
-    const descPatterns = [
-        /(?:de|em|para|com|no|na)\s+([^,\.]+)/i,
-        /descri[çc][ãa]o[:\s]+([^,\.]+)/i
-    ];
-    
-    for (const pattern of descPatterns) {
-        const match = message.match(pattern);
-        if (match) {
-            entities.descricao = match[1].trim();
-            break;
-        }
-    }
-    
-    // Extract goal type (meta curto prazo, meta longo prazo)
-    if (message.toLowerCase().includes('curto')) {
-        entities.goalType = 'metaCurto';
-    } else if (message.toLowerCase().includes('longo')) {
-        entities.goalType = 'metaLongo';
-    }
-    
-    // Extract payment method
-    const paymentMethods = ['pix', 'dinheiro', 'débito', 'crédito', 'cartão'];
-    for (const method of paymentMethods) {
-        if (message.toLowerCase().includes(method)) {
-            entities.formaPagamento = method.charAt(0).toUpperCase() + method.slice(1);
-            break;
-        }
-    }
-    
-    return entities;
-}
-
-// ========== CLASSIFICADOR DE INTENTS ==========
-
-async function classifyIntent(message, conversaResumo = '') {
-    const prompt = `Você é um classificador de intenções para um assistente financeiro.
-
-CONTEXTO DA CONVERSA:
-${conversaResumo || 'Início da conversa'}
-
-INTENÇÕES DISPONÍVEIS:
-- add_income: usuário quer adicionar/registrar uma receita
-- add_expense: usuário quer adicionar/registrar uma despesa
-- edit_transaction: usuário quer editar uma transação existente
-- delete_transaction: usuário quer deletar uma transação
-- update_goal_progress: usuário quer adicionar progresso a uma meta
-- update_goal_info: usuário quer alterar informações de uma meta (valor, prazo, descrição)
-- update_profile: usuário quer atualizar informações pessoais do perfil
-- update_patrimony: usuário quer atualizar patrimônio/investimentos
-- add_debt: usuário quer registrar uma nova dívida
-- mark_payment: usuário quer marcar uma parcela como paga
-- delete_debt: usuário quer remover uma dívida
-- query_financial: usuário quer apenas consultar/perguntar sobre seus dados
-- financial_analysis: usuário quer uma análise detalhada das finanças
-- calculate: usuário quer fazer cálculos matemáticos
-- financial_education: usuário quer aprender sobre conceitos financeiros
-- chat: conversa casual ou não relacionada a ações
-
-MENSAGEM DO USUÁRIO: "${message}"
-
-Responda APENAS com JSON válido:
-{
-  "intent": "nome_da_intencao",
-  "confidence": 0.95,
-  "entities": {
-    "valor": 100.50,
-    "descricao": "supermercado",
-    "data": "2025-12-19",
-    "goalType": "metaCurto"
-  },
-  "reasoning": "explicação breve"
-}`;
-
-    try {
-        const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-                model: 'gpt-4o-mini',
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.1,
-                max_tokens: 300
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        const content = response.data.choices[0].message.content;
-        const result = JSON.parse(content);
-        
-        // Merge with local entity extraction
-        const localEntities = extractEntities(message);
-        result.entities = { ...localEntities, ...result.entities };
-        
-        console.log('🎯 Intent detectado:', result.intent, `(${(result.confidence * 100).toFixed(0)}%)`);
-        console.log('📦 Entidades:', JSON.stringify(result.entities, null, 2));
-        
-        return result;
-    } catch (error) {
-        console.error('❌ Erro ao classificar intent:', error.message);
-        // Fallback to query intent
-        return { 
-            intent: 'query_financial', 
-            confidence: 0.5, 
-            entities: extractEntities(message),
-            reasoning: 'Fallback due to classification error'
-        };
-    }
-}
-
-// ========== ACTION HANDLERS ==========
-
-async function addTransaction(userId, userToken, tipo, entities) {
-    try {
-        // Validate required fields
-        if (!entities.valor) {
-            return {
-                success: false,
-                needsInfo: true,
-                missing: ['valor'],
-                message: 'Por favor, informe o valor da transação.'
-            };
-        }
-        
-        // Determine month
-        const mesAno = entities.data 
-            ? entities.data.substring(0, 7) 
-            : getCurrentMonth();
-        
-        // Prepare transaction data
-        const transactionData = {
-            data: entities.data || new Date().toISOString().split('T')[0],
-            descricao: entities.descricao || 'Sem descrição',
-            categoria: entities.categoria || '',
-            subcategoria: entities.subcategoria || '',
-            valor: entities.valor,
-            status: 'Confirmado'
-        };
-        
-        if (tipo === 'despesa') {
-            transactionData.formaPagamento = entities.formaPagamento || '';
-        }
-        
-        // Fetch current month data
-        const response = await axios.get(
-            `${OPERATIONAL_SERVER_URL}/api/financas/${mesAno}`,
-            {
-                headers: { 'Authorization': `Bearer ${userToken}` }
-            }
-        );
-        
-        const financasData = response.data;
-        
-        // Add new transaction
-        if (tipo === 'receita') {
-            financasData.receitas.push(transactionData);
-        } else {
-            financasData.despesas.push(transactionData);
-        }
-        
-        // Save updated data
-        await axios.post(
-            `${OPERATIONAL_SERVER_URL}/api/financas/${mesAno}`,
-            financasData,
-            {
-                headers: { 'Authorization': `Bearer ${userToken}` }
-            }
-        );
-        
-        return {
-            success: true,
-            message: `✅ ${tipo === 'receita' ? 'Receita' : 'Despesa'} de R$ ${entities.valor.toFixed(2)} adicionada com sucesso${entities.descricao ? ' em ' + entities.descricao : ''}!`,
-            data: transactionData
-        };
-        
-    } catch (error) {
-        console.error('❌ Erro ao adicionar transação:', error.message);
-        return {
-            success: false,
-            message: 'Erro ao adicionar transação. Tente novamente.'
-        };
-    }
-}
-
-async function editTransaction(userId, userToken, entities) {
-    try {
-        // This would require identification logic
-        return {
-            success: false,
-            needsInfo: true,
-            message: 'Para editar uma transação, preciso saber qual é. Pode me dizer a data e descrição?'
-        };
-    } catch (error) {
-        console.error('❌ Erro ao editar transação:', error.message);
-        return {
-            success: false,
-            message: 'Erro ao editar transação.'
-        };
-    }
-}
-
-async function deleteTransaction(userId, userToken, entities) {
-    try {
-        return {
-            success: false,
-            needsInfo: true,
-            message: 'Para deletar uma transação, preciso identificá-la. Qual a data e descrição?'
-        };
-    } catch (error) {
-        console.error('❌ Erro ao deletar transação:', error.message);
-        return {
-            success: false,
-            message: 'Erro ao deletar transação.'
-        };
-    }
-}
-
-async function updateGoalProgress(userId, userToken, entities) {
-    try {
-        // Fetch current profile
-        const response = await axios.get(
-            `${OPERATIONAL_SERVER_URL}/api/perfil`,
-            {
-                headers: { 'Authorization': `Bearer ${userToken}` }
-            }
-        );
-        
-        const perfil = response.data;
-        
-        // Determine which goal to update
-        const goalType = entities.goalType || 'metaCurto';
-        const valorAdicionar = entities.valor || 0;
-        
-        if (!perfil[goalType] || !perfil[goalType].valor) {
-            return {
-                success: false,
-                message: 'Meta não encontrada ou não configurada. Configure suas metas primeiro na página de Perfil.'
-            };
-        }
-        
-        // Update progress
-        perfil[goalType].progresso = (perfil[goalType].progresso || 0) + valorAdicionar;
-        perfil[goalType].ultimaAtualizacao = new Date();
-        
-        // Save updated profile
-        await axios.post(
-            `${OPERATIONAL_SERVER_URL}/api/perfil`,
-            perfil,
-            {
-                headers: { 'Authorization': `Bearer ${userToken}` }
-            }
-        );
-        
-        const percentual = ((perfil[goalType].progresso / perfil[goalType].valor) * 100).toFixed(1);
-        
-        return {
-            success: true,
-            message: `✅ Progresso atualizado! Você já tem R$ ${perfil[goalType].progresso.toFixed(2)} (${percentual}%) da sua meta de R$ ${perfil[goalType].valor.toFixed(2)}. 🎯`,
-            data: perfil[goalType]
-        };
-        
-    } catch (error) {
-        console.error('❌ Erro ao atualizar meta:', error.message);
-        return {
-            success: false,
-            message: 'Erro ao atualizar progresso da meta.'
-        };
-    }
-}
-
-async function updateProfile(userId, userToken, entities) {
-    try {
-        return {
-            success: false,
-            needsInfo: true,
-            message: 'Qual informação do perfil você gostaria de atualizar?'
-        };
-    } catch (error) {
-        return {
-            success: false,
-            message: 'Erro ao atualizar perfil.'
-        };
-    }
-}
-
-async function updatePatrimony(userId, userToken, entities) {
-    try {
-        return {
-            success: false,
-            needsInfo: true,
-            message: 'Qual ativo você gostaria de atualizar? (ações, fundos, imóveis, etc.)'
-        };
-    } catch (error) {
-        return {
-            success: false,
-            message: 'Erro ao atualizar patrimônio.'
-        };
-    }
-}
-
-async function addDebt(userId, userToken, entities) {
-    try {
-        return {
-            success: false,
-            needsInfo: true,
-            message: 'Para registrar uma dívida, preciso do nome, valor total e número de parcelas.'
-        };
-    } catch (error) {
-        return {
-            success: false,
-            message: 'Erro ao adicionar dívida.'
-        };
-    }
-}
-
-async function markDebtPayment(userId, userToken, entities) {
-    try {
-        return {
-            success: false,
-            needsInfo: true,
-            message: 'Qual dívida e qual parcela você pagou?'
-        };
-    } catch (error) {
-        return {
-            success: false,
-            message: 'Erro ao marcar pagamento.'
-        };
-    }
-}
-
-async function executeAction(intent, entities, userToken, userId) {
-    console.log('🎬 Executando ação:', intent);
-    
-    const handlers = {
-        add_income: async () => {
-            return await addTransaction(userId, userToken, 'receita', entities);
-        },
-        
-        add_expense: async () => {
-            return await addTransaction(userId, userToken, 'despesa', entities);
-        },
-        
-        edit_transaction: async () => {
-            return await editTransaction(userId, userToken, entities);
-        },
-        
-        delete_transaction: async () => {
-            return await deleteTransaction(userId, userToken, entities);
-        },
-        
-        update_goal_progress: async () => {
-            return await updateGoalProgress(userId, userToken, entities);
-        },
-        
-        update_profile: async () => {
-            return await updateProfile(userId, userToken, entities);
-        },
-        
-        update_patrimony: async () => {
-            return await updatePatrimony(userId, userToken, entities);
-        },
-        
-        add_debt: async () => {
-            return await addDebt(userId, userToken, entities);
-        },
-        
-        mark_payment: async () => {
-            return await markDebtPayment(userId, userToken, entities);
-        }
-    };
-    
-    if (handlers[intent]) {
-        return await handlers[intent]();
-    }
-    
-    return { success: false, message: 'Ação não implementada' };
 }
 
 async function fetchOrganizedData(userToken, requiredSections, timeframe) {
@@ -917,26 +361,383 @@ app.get('/health', (req, res) => {
     });
 });
 
+// ========== CARREGAR CATEGORIAS ==========
+function loadCategories() {
+    try {
+        const categoriesPath = path.join(__dirname, '../client/js/categories.json');
+        const categoriesData = fs.readFileSync(categoriesPath, 'utf8');
+        return JSON.parse(categoriesData);
+    } catch (error) {
+        console.error('   ⚠️ Erro ao carregar categorias:', error.message);
+        return { receitasCategorias: {}, despesasCategorias: {} };
+    }
+}
+
+// ========== DETECTOR DE INTENT ==========
+async function detectIntent(message, currentDate) {
+    console.log('🔍 DETECÇÃO DE INTENT');
+    console.log('   💬 Analisando mensagem...');
+    
+    try {
+        // Carregar categorias
+        const categories = loadCategories();
+        
+        const prompt = `${INTENT_DETECTION_PROMPT}
+
+DATA ATUAL: ${currentDate}
+IMPORTANTE: Se o usuário mencionar "hoje", use EXATAMENTE esta data: ${currentDate}
+
+CATEGORIAS DISPONÍVEIS DE RECEITAS:
+${JSON.stringify(categories.receitasCategorias, null, 2)}
+
+CATEGORIAS DISPONÍVEIS DE DESPESAS:
+${JSON.stringify(categories.despesasCategorias, null, 2)}
+
+REGRAS PARA CATEGORIAS:
+- SEMPRE escolha uma categoria E subcategoria da lista acima
+- A subcategoria DEVE estar dentro da categoria escolhida
+- Use a categoria e subcategoria mais adequada baseada na descrição
+- Se for receita de freelance, use categoria "Salário e Rendimentos do Trabalho" e subcategoria "Freelance"
+- Se for despesa de mercado, use categoria "Alimentação" e subcategoria "Supermercado"
+- Se for despesa de uber/99, use categoria "Transporte" e subcategoria "Aplicativos de transporte (Uber, 99)"
+- NUNCA retorne uma categoria sem sua respectiva subcategoria
+- Se não tiver certeza da subcategoria, escolha a primeira opção da categoria
+
+REGRAS INTELIGENTES PARA DATA:
+VOCÊ DEVE INTERPRETAR EXPRESSÕES NATURAIS DE DATA. Data de referência: ${currentDate}
+
+- "hoje" → ${currentDate}
+- "ontem" → calcular data de 1 dia antes de ${currentDate}
+- "amanhã" → calcular data de 1 dia depois de ${currentDate}
+- "semana passada" → calcular 7 dias antes de ${currentDate}
+- "mês passado" → mês anterior (mesmo dia)
+- "dia X" ou "todo dia X" → dia X do mês atual (ex: "dia 15" = 2025-12-15)
+- "próxima segunda/terça/quarta/quinta/sexta" → calcular próximo dia da semana
+- "último dia útil" → último dia útil do mês atual (pular sábados/domingos)
+- "primeiro dia útil" → primeiro dia útil do mês atual
+- "quinto dia útil" ou "5º dia útil" → CALCULAR o 5º dia útil do mês atual:
+  * Começar no dia 1 do mês
+  * Contar apenas dias úteis (segunda a sexta, pular sábados e domingos)
+  * Retornar o 5º dia útil em formato YYYY-MM-DD
+  * Exemplo: Se dezembro/2025 começa em segunda (dia 1), então:
+    1º útil = 01/12, 2º útil = 02/12, 3º útil = 03/12, 4º útil = 04/12, 5º útil = 05/12
+- "Xº dia útil" (onde X é qualquer número) → aplicar mesma lógica para qualquer dia útil
+- Se não mencionar data, use: ${currentDate}
+- NUNCA use datas de anos anteriores a menos que explicitamente mencionado
+
+IMPORTANTE: Você DEVE fazer o cálculo e retornar uma data concreta no formato YYYY-MM-DD
+
+REGRAS CRÍTICAS PARA STATUS:
+- Para DESPESAS: Apenas "Pago" ou "A pagar"
+- Para RECEITAS: Apenas "Recebido" ou "A receber"
+- VERBOS NO PASSADO = Ação concluída:
+  * "paguei", "gastei", "comprei", "paguei" → status: "Pago"
+  * "recebi", "ganhei", "entrou" → status: "Recebido"
+- VERBOS NO FUTURO = Ação pendente:
+  * "vou pagar", "vou gastar", "preciso pagar" → status: "A pagar"
+  * "vou receber", "vai entrar" → status: "A receber"
+- ATENÇÃO: "paguei meu aluguel" = status DEVE ser "Pago" (não "A pagar")
+- ATENÇÃO: "recebi meu salário" = status DEVE ser "Recebido" (não "A receber")
+
+MENSAGEM DO USUÁRIO: "${message}"
+
+Analise e retorne o JSON com intent, confidence, reasoning e entities.
+Certifique-se de usar a data correta (${currentDate} se "hoje"), categorias da lista fornecida, e STATUS CORRETO baseado no tempo verbal.`;
+
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'system', content: prompt }],
+                max_tokens: 400,
+                temperature: 0.2
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        const intentText = response.data.choices[0].message.content;
+        console.log('   📄 Resposta da IA:', intentText);
+        
+        // Limpar JSON
+        const cleanJson = intentText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const intentData = JSON.parse(cleanJson);
+        
+        console.log(`   ✅ Intent detectado: ${intentData.intent}`);
+        console.log(`   🎯 Confiança: ${(intentData.confidence * 100).toFixed(0)}%`);
+        console.log(`   💭 Raciocínio: ${intentData.reasoning}`);
+        if (Object.keys(intentData.entities || {}).length > 0) {
+            console.log(`   📊 Entidades extraídas:`, JSON.stringify(intentData.entities, null, 2));
+        }
+        
+        return intentData;
+    } catch (error) {
+        console.error('   ❌ Erro ao detectar intent:', error.message);
+        return {
+            intent: INTENTS.UNKNOWN,
+            confidence: 0,
+            reasoning: 'Erro ao processar',
+            entities: {}
+        };
+    }
+}
+
+// ========== EXECUTOR DE AÇÕES ==========
+async function executeAction(intent, entities, userToken, currentMonth) {
+    console.log('\n⚡ EXECUTANDO AÇÃO');
+    console.log(`   🎬 Intent: ${intent}`);
+    
+    const monthId = entities.month || currentMonth;
+    
+    try {
+        switch (intent) {
+            case INTENTS.ADD_INCOME:
+                return await spreadsheetActions.addIncome(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    {
+                        amount: entities.amount,
+                        description: entities.description,
+                        category: entities.category,
+                        subcategory: entities.subcategory,
+                        date: entities.date,
+                        status: entities.status
+                    }
+                );
+            
+            case INTENTS.ADD_EXPENSE:
+                return await spreadsheetActions.addExpense(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    {
+                        amount: entities.amount,
+                        description: entities.description,
+                        category: entities.category,
+                        subcategory: entities.subcategory,
+                        date: entities.date,
+                        paymentMethod: entities.paymentMethod,
+                        status: entities.status
+                    }
+                );
+            
+            case INTENTS.EDIT_INCOME:
+                return await spreadsheetActions.editIncome(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    entities.identifier,
+                    {
+                        amount: entities.amount,
+                        description: entities.description,
+                        category: entities.category,
+                        subcategory: entities.subcategory,
+                        date: entities.date,
+                        status: entities.status
+                    }
+                );
+            
+            case INTENTS.EDIT_EXPENSE:
+                return await spreadsheetActions.editExpense(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    entities.identifier,
+                    {
+                        amount: entities.amount,
+                        description: entities.description,
+                        category: entities.category,
+                        subcategory: entities.subcategory,
+                        date: entities.date,
+                        paymentMethod: entities.paymentMethod,
+                        status: entities.status
+                    }
+                );
+            
+            case INTENTS.UPDATE_INCOME_FIELD:
+                return await spreadsheetActions.updateIncomeField(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    entities.identifier,
+                    entities.field,
+                    entities.newValue
+                );
+            
+            case INTENTS.UPDATE_EXPENSE_FIELD:
+                return await spreadsheetActions.updateExpenseField(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    entities.identifier,
+                    entities.field,
+                    entities.newValue
+                );
+            
+            case INTENTS.DELETE_INCOME:
+                return await spreadsheetActions.deleteIncome(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    entities.identifier
+                );
+            
+            case INTENTS.DELETE_EXPENSE:
+                return await spreadsheetActions.deleteExpense(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId,
+                    entities.identifier
+                );
+            
+            case INTENTS.LIST_INCOMES:
+                return await spreadsheetActions.listIncomes(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId
+                );
+            
+            case INTENTS.LIST_EXPENSES:
+                return await spreadsheetActions.listExpenses(
+                    userToken,
+                    OPERATIONAL_SERVER_URL,
+                    monthId
+                );
+            
+            default:
+                console.log('   ℹ️ Intent não requer ação direta na planilha');
+                return { requiresAIResponse: true };
+        }
+    } catch (error) {
+        console.error('   ❌ Erro ao executar ação:', error.message);
+        return {
+            success: false,
+            message: 'Ocorreu um erro ao executar a ação.',
+            error: error.message
+        };
+    }
+}
+
 // ========== ROTA PRINCIPAL DO CHAT ==========
 app.post('/api/chat', verifyUserToken, async (req, res) => {
     try {
-        const { message, conversaId } = req.body;
+        const { message } = req.body;
         const currentMonth = getCurrentMonth();
-        const currentDate = new Date().toISOString().split('T')[0];
+        const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
         if (!message || typeof message !== 'string') {
             return res.status(400).json({ error: 'Mensagem inválida' });
         }
 
-        console.log('\n┌─────────────────────────────────────────────────────────');
-        console.log(`│ 🤖 NOVA CONSULTA`);
-        console.log(`│ 👤 Usuário: ${req.userId}`);
-        console.log(`│ 📅 Data atual: ${currentDate}`);
-        console.log(`│ 💬 Pergunta: "${message}"`);
-        console.log('└─────────────────────────────────────────────────────────\n');
+        console.log('\n╔═════════════════════════════════════════════════════════╗');
+        console.log('║                   🤖 NOVA CONSULTA                      ║');
+        console.log('╚═════════════════════════════════════════════════════════╝');
+        console.log(`👤 Usuário: ${req.userId}`);
+        console.log(`📅 Data atual: ${currentDate}`);
+        console.log(`📆 Mês atual: ${currentMonth}`);
+        console.log(`💬 Pergunta: "${message}"`);
+        console.log('─────────────────────────────────────────────────────────\n');
         
-        // ========== BUSCAR RESUMO DA CONVERSA ==========
+        console.log('─────────────────────────────────────────────────────────\n');
+        
+        // ========== PASSO 0: DETECTAR INTENT ==========
+        console.log('╔═════════════════════════════════════════════════════════╗');
+        console.log('║             PASSO 0: DETECÇÃO DE INTENT                 ║');
+        console.log('╚═════════════════════════════════════════════════════════╝');
+        
+        const intentData = await detectIntent(message, currentDate);
+        
+        // ========== VERIFICAR SE É AÇÃO DIRETA NA PLANILHA ==========
+        const spreadsheetIntents = [
+            INTENTS.ADD_INCOME,
+            INTENTS.ADD_EXPENSE,
+            INTENTS.EDIT_INCOME,
+            INTENTS.EDIT_EXPENSE,
+            INTENTS.UPDATE_INCOME_FIELD,
+            INTENTS.UPDATE_EXPENSE_FIELD,
+            INTENTS.DELETE_INCOME,
+            INTENTS.DELETE_EXPENSE
+        ];
+        
+        if (spreadsheetIntents.includes(intentData.intent)) {
+            console.log('\n📝 Intent requer ação direta na planilha!');
+            console.log('   ⚡ Executando ação antes de gerar resposta...\n');
+            
+            const actionResult = await executeAction(
+                intentData.intent,
+                intentData.entities,
+                req.userToken,
+                currentMonth
+            );
+            
+            if (actionResult.success) {
+                console.log('   ✅ Ação executada com sucesso!');
+                
+                // Criar ou atualizar conversa
+                let conversaId = req.body.conversaId;
+                if (!conversaId) {
+                    console.log('\n🆕 Criando nova conversa...');
+                    try {
+                        const novaConversa = await axios.post(
+                            `${OPERATIONAL_SERVER_URL}/api/conversas`,
+                            { titulo: message.substring(0, 50) + (message.length > 50 ? '...' : '') },
+                            { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                        );
+                        conversaId = novaConversa.data.conversa._id;
+                        console.log('   ✅ Conversa criada:', conversaId);
+                    } catch (error) {
+                        console.error('   ❌ Erro ao criar conversa:', error.message);
+                    }
+                }
+                
+                // Atualizar resumo
+                if (conversaId) {
+                    await atualizarResumoConversa(conversaId, message, actionResult.message, req.userToken);
+                }
+                
+                console.log('\n╔═════════════════════════════════════════════════════════╗');
+                console.log('║            ✨ CONSULTA FINALIZADA COM SUCESSO           ║');
+                console.log('╚═════════════════════════════════════════════════════════╝\n');
+                
+                return res.json({
+                    success: true,
+                    response: actionResult.message,
+                    conversaId: conversaId,
+                    debug: {
+                        intent: intentData.intent,
+                        confidence: intentData.confidence,
+                        actionExecuted: true,
+                        currentDate: currentDate
+                    }
+                });
+            } else {
+                console.log('   ❌ Falha na execução da ação');
+                return res.json({
+                    success: false,
+                    response: actionResult.message || 'Não consegui executar essa ação. Pode tentar novamente?',
+                    conversaId: req.body.conversaId,
+                    debug: {
+                        intent: intentData.intent,
+                        confidence: intentData.confidence,
+                        actionExecuted: false,
+                        error: actionResult.error
+                    }
+                });
+            }
+        }
+        
+        // ========== CONTINUAR COM FLUXO NORMAL PARA OUTROS INTENTS ==========
+        console.log('\n💬 Intent requer resposta conversacional');
+        console.log('   🔄 Continuando com fluxo normal...\n');
+        
+        // ========== BUSCAR CONVERSAÇÃO E RESUMO ==========
         console.log('🔍 Verificando conversa ativa e resumo...');
+        let conversaId = req.body.conversaId;
         let resumoContexto = '';
         
         if (conversaId) {
@@ -949,101 +750,21 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                 if (resumoResponse.data.resumo) {
                     resumoContexto = resumoResponse.data.resumo;
                     console.log(`   📚 Resumo carregado: ${resumoResponse.data.palavrasResumo} palavras`);
+                } else {
+                    console.log('   ℹ️ Conversa nova - sem resumo anterior');
                 }
             } catch (error) {
-                console.log('   ⚠️ Erro ao buscar resumo:', error.message);
+                console.log('   ⚠️ Erro ao buscar resumo, continuando sem contexto:', error.message);
             }
+        } else {
+            console.log('   ℹ️ Nova conversa - será criada após resposta');
         }
 
-        // ========== CLASSIFICAR INTENT ==========
-        console.log('\n🎯 PASSO 1: Classificando intenção do usuário...');
-        const intentResult = await classifyIntent(message, resumoContexto);
-        
-        console.log(`   Intent: ${intentResult.intent}`);
-        console.log(`   Confidence: ${(intentResult.confidence * 100).toFixed(0)}%`);
-        
-        // ========== VERIFICAR SE É UMA AÇÃO ==========
-        const actionIntents = [
-            'add_income', 'add_expense', 'edit_transaction', 
-            'delete_transaction', 'update_goal_progress', 'update_goal_info',
-            'update_profile', 'update_patrimony', 'add_debt', 'mark_payment', 'delete_debt'
-        ];
-        
-        if (actionIntents.includes(intentResult.intent) && intentResult.confidence > 0.6) {
-            console.log('🎬 Executando ação:', intentResult.intent);
-            
-            // Execute the action
-            const actionResult = await executeAction(
-                intentResult.intent,
-                intentResult.entities,
-                req.userToken,
-                req.userId
-            );
-            
-            if (actionResult.needsInfo) {
-                // Need more information from user
-                return res.json({
-                    success: true,
-                    response: actionResult.message,
-                    needsConfirmation: true,
-                    intent: intentResult.intent,
-                    partialEntities: intentResult.entities,
-                    sectionsUsed: []
-                });
-            }
-            
-            if (actionResult.success) {
-                // Action completed successfully - save to conversation
-                if (conversaId) {
-                    try {
-                        await axios.post(
-                            `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/mensagens`,
-                            {
-                                tipo: 'usuario',
-                                conteudo: message,
-                                sectionsUsed: [],
-                                timeframe: null
-                            },
-                            { headers: { 'Authorization': `Bearer ${req.userToken}` } }
-                        );
-                        
-                        await axios.post(
-                            `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/mensagens`,
-                            {
-                                tipo: 'assistente',
-                                conteudo: actionResult.message,
-                                sectionsUsed: [],
-                                timeframe: null
-                            },
-                            { headers: { 'Authorization': `Bearer ${req.userToken}` } }
-                        );
-                    } catch (error) {
-                        console.log('⚠️ Erro ao salvar mensagens:', error.message);
-                    }
-                }
-                
-                return res.json({
-                    success: true,
-                    response: actionResult.message,
-                    actionCompleted: true,
-                    intent: intentResult.intent,
-                    data: actionResult.data,
-                    sectionsUsed: [],
-                    conversaId
-                });
-            } else {
-                // Action failed
-                return res.json({
-                    success: true,
-                    response: actionResult.message + ' Posso ajudar de outra forma?',
-                    actionFailed: true,
-                    sectionsUsed: []
-                });
-            }
-        }
-        
-        // ========== CONTINUAR COM FLUXO DE QUERY NORMAL ==========
-        console.log('\n🔍 PASSO 2: Analisando quais dados são necessários...');
+        // ========== PASSO 1: IA DECIDE QUAIS DADOS PRECISA ==========
+        console.log('╔═════════════════════════════════════════════════════════╗');
+        console.log('║        PASSO 1: ANÁLISE DE DADOS NECESSÁRIOS            ║');
+        console.log('╚═════════════════════════════════════════════════════════╝');
+        console.log('🔍 Analisando quais dados são necessários...');
         
         const decisionPrompt = `${DECISION_PROMPT}
 
@@ -1074,33 +795,46 @@ Responda apenas com JSON válido.`;
         let decision;
         try {
             const decisionText = decisionResponse.data.choices[0].message.content;
+            console.log('   📄 Resposta bruta da IA:');
+            console.log('   ', decisionText);
+            
+            // Limpar possível markdown
             const cleanJson = decisionText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             decision = JSON.parse(cleanJson);
             
+            // Substituir MÊS-ATUAL pelo mês real
             if (decision.timeframe?.months) {
                 decision.timeframe.months = decision.timeframe.months.map(m => 
                     m === 'MÊS-ATUAL' ? currentMonth : m
                 );
             }
             
-            console.log('   ✅ Decisão interpretada:');
-            console.log('   📊 Seções:', decision.requiredSections);
+            console.log('\n   ✅ Decisão interpretada:');
+            console.log('   📊 Seções necessárias:', decision.requiredSections);
             console.log('   📅 Timeframe:', JSON.stringify(decision.timeframe));
+            console.log('   💭 Raciocínio:', decision.timeframe.reasoning);
             
         } catch (error) {
-            console.error('   ❌ Erro ao parsear decisão:', error.message);
+            console.error('   ❌ Erro ao parsear decisão da IA:', error.message);
+            console.log('   🔄 Usando fallback: dados do mês atual');
+            
+            // Fallback: usar dados do mês atual
             decision = {
                 requiredSections: ['financas'],
                 timeframe: { 
                     type: 'current_only', 
                     months: [currentMonth],
-                    reasoning: 'Fallback'
+                    reasoning: 'Fallback - erro ao interpretar decisão da IA'
                 }
             };
         }
 
-        // ========== PASSO 3: BUSCAR DADOS ==========
-        console.log('\n🔍 PASSO 3: Buscando dados do usuário...');
+        // ========== PASSO 2: BUSCAR DADOS ORGANIZADOS ==========
+        console.log('\n╔═════════════════════════════════════════════════════════╗');
+        console.log('║           PASSO 2: BUSCA DE DADOS DO USUÁRIO            ║');
+        console.log('╚═════════════════════════════════════════════════════════╝');
+        console.log('🔍 Buscando dados do usuário...');
+        console.log('   📥 Conectando ao servidor operacional:', OPERATIONAL_SERVER_URL);
         
         const userData = await fetchOrganizedData(
             req.userToken,
@@ -1108,20 +842,32 @@ Responda apenas com JSON válido.`;
             decision.timeframe
         );
 
-        console.log('   ✅ Dados recuperados');
-        console.log('   📦 Seções:', Object.keys(userData.sections));
-
-        // ========== PASSO 4: GERAR RESPOSTA ==========
-        console.log('\n🔍 PASSO 4: Gerando resposta...');
+        console.log('   ✅ Dados recuperados com sucesso');
+        console.log('   📦 Seções carregadas:', Object.keys(userData.sections));
         
+        if (userData.sections.financas) {
+            const mesesCarregados = Object.keys(userData.sections.financas);
+            console.log('   📅 Meses financeiros carregados:', mesesCarregados);
+        }
+
+        // ========== PASSO 3: IA GERA RESPOSTA COM OS DADOS ==========
+        console.log('\n╔═════════════════════════════════════════════════════════╗');
+        console.log('║         PASSO 3: GERAÇÃO DE RESPOSTA PERSONALIZADA      ║');
+        console.log('╚═════════════════════════════════════════════════════════╝');
+        console.log('🔍 Gerando resposta personalizada...');
+        
+        // Incluir resumo da conversa no prompt, se existir
         let contextoPrevio = '';
         if (resumoContexto) {
-            contextoPrevio = `\n\nCONTEXTO DA CONVERSA:\n${resumoContexto}\n`;
+            contextoPrevio = `\n\nCONTEXTO DA CONVERSA ANTERIOR:\n${resumoContexto}\n\nUse este contexto para dar continuidade à conversa de forma natural e coerente.`;
         }
+        
+        // Incluir informações do intent detectado
+        const intentContext = `\n\nINFORMAÇÕES DO INTENT DETECTADO:\n- Intent: ${intentData.intent}\n- Confiança: ${(intentData.confidence * 100).toFixed(0)}%\n- Raciocínio: ${intentData.reasoning}\n- Entidades extraídas: ${JSON.stringify(intentData.entities)}\n\nUse essas informações para contextualizar melhor sua resposta.`;
         
         const finalPrompt = `${RESPONSE_PROMPT}
 
-DATA ATUAL: ${currentDate}${contextoPrevio}
+DATA ATUAL: ${currentDate}${contextoPrevio}${intentContext}
 
 DADOS DO USUÁRIO:
 ${JSON.stringify(userData, null, 2)}
@@ -1129,6 +875,8 @@ ${JSON.stringify(userData, null, 2)}
 PERGUNTA: "${message}"
 
 Forneça uma resposta completa, personalizada e útil baseada nos dados reais do usuário.`;
+
+        console.log('   ⏳ Consultando OpenAI para resposta final...');
 
         const finalResponse = await axios.post(
             'https://api.openai.com/v1/chat/completions',
@@ -1147,12 +895,12 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         );
 
         const aiMessage = finalResponse.data.choices[0].message.content;
-        console.log('   ✅ Resposta gerada');
         
-        // ========== CRIAR/ATUALIZAR CONVERSA ==========
-        let finalConversaId = conversaId;
+        console.log('   ✅ Resposta gerada com sucesso');
+        console.log('   📝 Tamanho da resposta:', aiMessage.length, 'caracteres');
         
-        if (!finalConversaId) {
+        // ========== CRIAR CONVERSA SE NÃO EXISTIR ==========
+        if (!conversaId) {
             console.log('\n🆕 Criando nova conversa...');
             try {
                 const novaConversa = await axios.post(
@@ -1160,67 +908,46 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
                     { titulo: message.substring(0, 50) + (message.length > 50 ? '...' : '') },
                     { headers: { 'Authorization': `Bearer ${req.userToken}` } }
                 );
-                finalConversaId = novaConversa.data.conversa._id;
-                console.log('   ✅ Conversa criada:', finalConversaId);
+                conversaId = novaConversa.data.conversa._id;
+                console.log('   ✅ Conversa criada:', conversaId);
             } catch (error) {
                 console.error('   ❌ Erro ao criar conversa:', error.message);
+                console.error('   📄 Detalhes:', error.response?.data);
+                // Continuar mesmo sem criar a conversa (modo degradado)
             }
         }
         
-        // ========== SALVAR MENSAGENS ==========
-        if (finalConversaId) {
+        // ========== ATUALIZAR RESUMO DA CONVERSA (SÍNCRONO) ==========
+        if (conversaId) {
+            console.log('\n🔄 Atualizando resumo da conversa (aguardando conclusão)...');
             try {
-                await axios.post(
-                    `${OPERATIONAL_SERVER_URL}/api/conversas/${finalConversaId}/mensagens`,
-                    {
-                        tipo: 'usuario',
-                        conteudo: message,
-                        sectionsUsed: decision.requiredSections,
-                        timeframe: decision.timeframe
-                    },
-                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
-                );
-                
-                await axios.post(
-                    `${OPERATIONAL_SERVER_URL}/api/conversas/${finalConversaId}/mensagens`,
-                    {
-                        tipo: 'assistente',
-                        conteudo: aiMessage,
-                        sectionsUsed: decision.requiredSections,
-                        timeframe: decision.timeframe
-                    },
-                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
-                );
-            } catch (error) {
-                console.error('   ❌ Erro ao salvar mensagens:', error.message);
-            }
-        }
-        
-        // ========== ATUALIZAR RESUMO ==========
-        if (finalConversaId) {
-            console.log('\n🔄 Atualizando resumo da conversa...');
-            try {
-                await atualizarResumoConversa(finalConversaId, message, aiMessage, req.userToken);
-                console.log('   ✅ Resumo atualizado');
+                // IMPORTANTE: Executar de forma síncrona para garantir que capture a mensagem correta
+                await atualizarResumoConversa(conversaId, message, aiMessage, req.userToken);
+                console.log('   ✅ Resumo atualizado com sucesso');
             } catch (error) {
                 console.error('   ❌ Erro ao atualizar resumo:', error.message);
+                // Não bloquear a resposta ao usuário por erro no resumo
             }
+        } else {
+            console.log('\n   ⚠️ ConversaId não disponível - resumo não será atualizado');
         }
         
-        console.log('\n┌─────────────────────────────────────────────────────────');
-        console.log('│ ✨ CONSULTA FINALIZADA COM SUCESSO');
-        console.log('└─────────────────────────────────────────────────────────\n');
+        console.log('\n╔═════════════════════════════════════════════════════════╗');
+        console.log('║            ✨ CONSULTA FINALIZADA COM SUCESSO           ║');
+        console.log('╚═════════════════════════════════════════════════════════╝\n');
 
         res.json({
             success: true,
             response: aiMessage,
-            conversaId: finalConversaId,
+            conversaId: conversaId,
             debug: {
+                intent: intentData.intent,
+                confidence: intentData.confidence,
                 sectionsUsed: decision.requiredSections,
                 timeframe: decision.timeframe,
                 currentDate: currentDate,
                 resumoUsado: !!resumoContexto,
-                intent: intentResult.intent
+                actionExecuted: false
             }
         });
 
@@ -1231,7 +958,7 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         if (error.response?.data) {
             console.error('   Detalhes:', JSON.stringify(error.response.data, null, 2));
         }
-        console.log('└─────────────────────────────────────────────────────────\n');
+        console.log('╚═════════════════════════════════════════════════════════╝\n');
 
         if (error.response?.status === 429) {
             return res.status(429).json({

@@ -39,6 +39,130 @@ const AVAILABLE_SECTIONS = {
     }
 };
 
+// ========== SISTEMA DE INTENTS ==========
+const INTENT_DEFINITIONS = {
+    // Transaction Intents
+    'add_income': {
+        description: 'Adicionar receita/entrada de dinheiro',
+        keywords: ['adicionar receita', 'registrar entrada', 'recebi', 'salário', 'ganho', 'entrada'],
+        action: 'addTransaction',
+        type: 'receita',
+        requiredParams: ['valor']
+    },
+    
+    'add_expense': {
+        description: 'Adicionar despesa/gasto',
+        keywords: ['adicionar despesa', 'gastei', 'paguei', 'comprei', 'registrar gasto', 'pagar'],
+        action: 'addTransaction',
+        type: 'despesa',
+        requiredParams: ['valor']
+    },
+    
+    'edit_transaction': {
+        description: 'Editar transação existente',
+        keywords: ['editar', 'alterar', 'modificar', 'corrigir', 'mudar valor', 'atualizar transação'],
+        action: 'editTransaction',
+        requiredParams: ['identificador', 'campo']
+    },
+    
+    'delete_transaction': {
+        description: 'Deletar transação',
+        keywords: ['deletar', 'remover', 'apagar', 'excluir', 'cancelar registro'],
+        action: 'deleteTransaction',
+        requiredParams: ['identificador']
+    },
+    
+    // Goal Management Intents
+    'update_goal_progress': {
+        description: 'Atualizar progresso de meta',
+        keywords: ['adicionar à meta', 'atualizar progresso', 'progredir meta', 'avançar meta'],
+        action: 'updateGoalProgress',
+        requiredParams: ['valor']
+    },
+    
+    'update_goal_info': {
+        description: 'Atualizar informações da meta',
+        keywords: ['mudar meta', 'alterar objetivo', 'redefinir meta'],
+        action: 'updateGoalInfo',
+        requiredParams: ['campo']
+    },
+    
+    // Profile Update Intents
+    'update_profile': {
+        description: 'Atualizar informações do perfil',
+        keywords: ['atualizar perfil', 'mudar informações', 'alterar dados', 'modificar perfil'],
+        action: 'updateProfile',
+        requiredParams: ['campo']
+    },
+    
+    'update_patrimony': {
+        description: 'Atualizar patrimônio',
+        keywords: ['atualizar patrimônio', 'adicionar investimento', 'registrar ativo', 'patrimônio'],
+        action: 'updatePatrimony',
+        requiredParams: ['campo', 'valor']
+    },
+    
+    // Debt Management Intents
+    'add_debt': {
+        description: 'Adicionar nova dívida',
+        keywords: ['registrar dívida', 'adicionar parcelamento', 'nova dívida', 'parcelar'],
+        action: 'addDebt',
+        requiredParams: ['nome', 'valorTotal', 'numParcelas']
+    },
+    
+    'mark_payment': {
+        description: 'Marcar parcela como paga',
+        keywords: ['pagar parcela', 'marcar como pago', 'paguei parcela', 'quitar parcela'],
+        action: 'markPayment',
+        requiredParams: ['dividaId', 'parcelaNumero']
+    },
+    
+    'delete_debt': {
+        description: 'Remover dívida',
+        keywords: ['remover dívida', 'excluir dívida', 'deletar dívida'],
+        action: 'deleteDebt',
+        requiredParams: ['dividaId']
+    },
+    
+    // Query and Analysis Intents
+    'query_financial': {
+        description: 'Consultar informações financeiras',
+        keywords: ['quanto', 'qual', 'onde', 'quando', 'mostrar', 'listar', 'ver'],
+        action: 'query',
+        requiredParams: []
+    },
+    
+    'financial_analysis': {
+        description: 'Análise financeira detalhada',
+        keywords: ['analisar', 'análise', 'avaliar', 'revisar', 'diagnóstico'],
+        action: 'analyze',
+        requiredParams: []
+    },
+    
+    'calculate': {
+        description: 'Fazer cálculos matemáticos',
+        keywords: ['calcular', 'quanto é', 'soma', 'multiplicar', 'dividir'],
+        action: 'calculate',
+        requiredParams: []
+    },
+    
+    // Education Intents
+    'financial_education': {
+        description: 'Educação financeira',
+        keywords: ['explicar', 'ensinar', 'aprender', 'o que é', 'como funciona'],
+        action: 'educate',
+        requiredParams: []
+    },
+    
+    // General Chat
+    'chat': {
+        description: 'Conversa casual',
+        keywords: ['olá', 'oi', 'bom dia', 'obrigado', 'tchau'],
+        action: 'chat',
+        requiredParams: []
+    }
+};
+
 // ========== AUTENTICAÇÃO ==========
 const verifyUserToken = (req, res, next) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -84,6 +208,444 @@ function calculateMonthsList(currentMonth, monthsBack) {
     }
 
     return months;
+}
+
+// ========== EXTRAÇÃO DE ENTIDADES ==========
+
+function extractEntities(message) {
+    const entities = {
+        valor: null,
+        data: null,
+        descricao: null,
+        categoria: null,
+        subcategoria: null,
+        formaPagamento: null,
+        goalType: null,
+        campo: null,
+        identificador: null
+    };
+    
+    // Extract money values (R$ 100, 100 reais, cem reais, 1000, 1k, 1 mil)
+    const moneyPatterns = [
+        /R\$\s*(\d+(?:[.,]\d{2})?)/i,
+        /(\d+(?:[.,]\d{2})?)\s*reais?/i,
+        /(\d+)\s*(?:mil|k)/i,
+        /valor\s+(?:de\s+)?(\d+(?:[.,]\d{2})?)/i
+    ];
+    
+    for (const pattern of moneyPatterns) {
+        const match = message.match(pattern);
+        if (match) {
+            entities.valor = parseFloat(match[1].replace(',', '.'));
+            if (message.toLowerCase().includes('mil') || message.toLowerCase().includes('k')) {
+                entities.valor *= 1000;
+            }
+            break;
+        }
+    }
+    
+    // Extract dates (hoje, ontem, 15/12, dezembro)
+    const datePatterns = {
+        'hoje': new Date(),
+        'ontem': new Date(Date.now() - 86400000),
+        'anteontem': new Date(Date.now() - 172800000)
+    };
+    
+    for (const [keyword, date] of Object.entries(datePatterns)) {
+        if (message.toLowerCase().includes(keyword)) {
+            entities.data = date.toISOString().split('T')[0];
+            break;
+        }
+    }
+    
+    // Extract date in DD/MM format
+    const dateMatch = message.match(/(\d{1,2})\/(\d{1,2})/);
+    if (dateMatch) {
+        const [_, day, month] = dateMatch;
+        const year = new Date().getFullYear();
+        entities.data = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    
+    // Extract description (words after "de" or "em" or "para" or "com")
+    const descPatterns = [
+        /(?:de|em|para|com|no|na)\s+([^,\.]+)/i,
+        /descri[çc][ãa]o[:\s]+([^,\.]+)/i
+    ];
+    
+    for (const pattern of descPatterns) {
+        const match = message.match(pattern);
+        if (match) {
+            entities.descricao = match[1].trim();
+            break;
+        }
+    }
+    
+    // Extract goal type (meta curto prazo, meta longo prazo)
+    if (message.toLowerCase().includes('curto')) {
+        entities.goalType = 'metaCurto';
+    } else if (message.toLowerCase().includes('longo')) {
+        entities.goalType = 'metaLongo';
+    }
+    
+    // Extract payment method
+    const paymentMethods = ['pix', 'dinheiro', 'débito', 'crédito', 'cartão'];
+    for (const method of paymentMethods) {
+        if (message.toLowerCase().includes(method)) {
+            entities.formaPagamento = method.charAt(0).toUpperCase() + method.slice(1);
+            break;
+        }
+    }
+    
+    return entities;
+}
+
+// ========== CLASSIFICADOR DE INTENTS ==========
+
+async function classifyIntent(message, conversaResumo = '') {
+    const prompt = `Você é um classificador de intenções para um assistente financeiro.
+
+CONTEXTO DA CONVERSA:
+${conversaResumo || 'Início da conversa'}
+
+INTENÇÕES DISPONÍVEIS:
+- add_income: usuário quer adicionar/registrar uma receita
+- add_expense: usuário quer adicionar/registrar uma despesa
+- edit_transaction: usuário quer editar uma transação existente
+- delete_transaction: usuário quer deletar uma transação
+- update_goal_progress: usuário quer adicionar progresso a uma meta
+- update_goal_info: usuário quer alterar informações de uma meta (valor, prazo, descrição)
+- update_profile: usuário quer atualizar informações pessoais do perfil
+- update_patrimony: usuário quer atualizar patrimônio/investimentos
+- add_debt: usuário quer registrar uma nova dívida
+- mark_payment: usuário quer marcar uma parcela como paga
+- delete_debt: usuário quer remover uma dívida
+- query_financial: usuário quer apenas consultar/perguntar sobre seus dados
+- financial_analysis: usuário quer uma análise detalhada das finanças
+- calculate: usuário quer fazer cálculos matemáticos
+- financial_education: usuário quer aprender sobre conceitos financeiros
+- chat: conversa casual ou não relacionada a ações
+
+MENSAGEM DO USUÁRIO: "${message}"
+
+Responda APENAS com JSON válido:
+{
+  "intent": "nome_da_intencao",
+  "confidence": 0.95,
+  "entities": {
+    "valor": 100.50,
+    "descricao": "supermercado",
+    "data": "2025-12-19",
+    "goalType": "metaCurto"
+  },
+  "reasoning": "explicação breve"
+}`;
+
+    try {
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.1,
+                max_tokens: 300
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        const content = response.data.choices[0].message.content;
+        const result = JSON.parse(content);
+        
+        // Merge with local entity extraction
+        const localEntities = extractEntities(message);
+        result.entities = { ...localEntities, ...result.entities };
+        
+        console.log('🎯 Intent detectado:', result.intent, `(${(result.confidence * 100).toFixed(0)}%)`);
+        console.log('📦 Entidades:', JSON.stringify(result.entities, null, 2));
+        
+        return result;
+    } catch (error) {
+        console.error('❌ Erro ao classificar intent:', error.message);
+        // Fallback to query intent
+        return { 
+            intent: 'query_financial', 
+            confidence: 0.5, 
+            entities: extractEntities(message),
+            reasoning: 'Fallback due to classification error'
+        };
+    }
+}
+
+// ========== ACTION HANDLERS ==========
+
+async function addTransaction(userId, userToken, tipo, entities) {
+    try {
+        // Validate required fields
+        if (!entities.valor) {
+            return {
+                success: false,
+                needsInfo: true,
+                missing: ['valor'],
+                message: 'Por favor, informe o valor da transação.'
+            };
+        }
+        
+        // Determine month
+        const mesAno = entities.data 
+            ? entities.data.substring(0, 7) 
+            : getCurrentMonth();
+        
+        // Prepare transaction data
+        const transactionData = {
+            data: entities.data || new Date().toISOString().split('T')[0],
+            descricao: entities.descricao || 'Sem descrição',
+            categoria: entities.categoria || '',
+            subcategoria: entities.subcategoria || '',
+            valor: entities.valor,
+            status: 'Confirmado'
+        };
+        
+        if (tipo === 'despesa') {
+            transactionData.formaPagamento = entities.formaPagamento || '';
+        }
+        
+        // Fetch current month data
+        const response = await axios.get(
+            `${OPERATIONAL_SERVER_URL}/api/financas/${mesAno}`,
+            {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            }
+        );
+        
+        const financasData = response.data;
+        
+        // Add new transaction
+        if (tipo === 'receita') {
+            financasData.receitas.push(transactionData);
+        } else {
+            financasData.despesas.push(transactionData);
+        }
+        
+        // Save updated data
+        await axios.post(
+            `${OPERATIONAL_SERVER_URL}/api/financas/${mesAno}`,
+            financasData,
+            {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            }
+        );
+        
+        return {
+            success: true,
+            message: `✅ ${tipo === 'receita' ? 'Receita' : 'Despesa'} de R$ ${entities.valor.toFixed(2)} adicionada com sucesso${entities.descricao ? ' em ' + entities.descricao : ''}!`,
+            data: transactionData
+        };
+        
+    } catch (error) {
+        console.error('❌ Erro ao adicionar transação:', error.message);
+        return {
+            success: false,
+            message: 'Erro ao adicionar transação. Tente novamente.'
+        };
+    }
+}
+
+async function editTransaction(userId, userToken, entities) {
+    try {
+        // This would require identification logic
+        return {
+            success: false,
+            needsInfo: true,
+            message: 'Para editar uma transação, preciso saber qual é. Pode me dizer a data e descrição?'
+        };
+    } catch (error) {
+        console.error('❌ Erro ao editar transação:', error.message);
+        return {
+            success: false,
+            message: 'Erro ao editar transação.'
+        };
+    }
+}
+
+async function deleteTransaction(userId, userToken, entities) {
+    try {
+        return {
+            success: false,
+            needsInfo: true,
+            message: 'Para deletar uma transação, preciso identificá-la. Qual a data e descrição?'
+        };
+    } catch (error) {
+        console.error('❌ Erro ao deletar transação:', error.message);
+        return {
+            success: false,
+            message: 'Erro ao deletar transação.'
+        };
+    }
+}
+
+async function updateGoalProgress(userId, userToken, entities) {
+    try {
+        // Fetch current profile
+        const response = await axios.get(
+            `${OPERATIONAL_SERVER_URL}/api/perfil`,
+            {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            }
+        );
+        
+        const perfil = response.data;
+        
+        // Determine which goal to update
+        const goalType = entities.goalType || 'metaCurto';
+        const valorAdicionar = entities.valor || 0;
+        
+        if (!perfil[goalType] || !perfil[goalType].valor) {
+            return {
+                success: false,
+                message: 'Meta não encontrada ou não configurada. Configure suas metas primeiro na página de Perfil.'
+            };
+        }
+        
+        // Update progress
+        perfil[goalType].progresso = (perfil[goalType].progresso || 0) + valorAdicionar;
+        perfil[goalType].ultimaAtualizacao = new Date();
+        
+        // Save updated profile
+        await axios.post(
+            `${OPERATIONAL_SERVER_URL}/api/perfil`,
+            perfil,
+            {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            }
+        );
+        
+        const percentual = ((perfil[goalType].progresso / perfil[goalType].valor) * 100).toFixed(1);
+        
+        return {
+            success: true,
+            message: `✅ Progresso atualizado! Você já tem R$ ${perfil[goalType].progresso.toFixed(2)} (${percentual}%) da sua meta de R$ ${perfil[goalType].valor.toFixed(2)}. 🎯`,
+            data: perfil[goalType]
+        };
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar meta:', error.message);
+        return {
+            success: false,
+            message: 'Erro ao atualizar progresso da meta.'
+        };
+    }
+}
+
+async function updateProfile(userId, userToken, entities) {
+    try {
+        return {
+            success: false,
+            needsInfo: true,
+            message: 'Qual informação do perfil você gostaria de atualizar?'
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Erro ao atualizar perfil.'
+        };
+    }
+}
+
+async function updatePatrimony(userId, userToken, entities) {
+    try {
+        return {
+            success: false,
+            needsInfo: true,
+            message: 'Qual ativo você gostaria de atualizar? (ações, fundos, imóveis, etc.)'
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Erro ao atualizar patrimônio.'
+        };
+    }
+}
+
+async function addDebt(userId, userToken, entities) {
+    try {
+        return {
+            success: false,
+            needsInfo: true,
+            message: 'Para registrar uma dívida, preciso do nome, valor total e número de parcelas.'
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Erro ao adicionar dívida.'
+        };
+    }
+}
+
+async function markDebtPayment(userId, userToken, entities) {
+    try {
+        return {
+            success: false,
+            needsInfo: true,
+            message: 'Qual dívida e qual parcela você pagou?'
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Erro ao marcar pagamento.'
+        };
+    }
+}
+
+async function executeAction(intent, entities, userToken, userId) {
+    console.log('🎬 Executando ação:', intent);
+    
+    const handlers = {
+        add_income: async () => {
+            return await addTransaction(userId, userToken, 'receita', entities);
+        },
+        
+        add_expense: async () => {
+            return await addTransaction(userId, userToken, 'despesa', entities);
+        },
+        
+        edit_transaction: async () => {
+            return await editTransaction(userId, userToken, entities);
+        },
+        
+        delete_transaction: async () => {
+            return await deleteTransaction(userId, userToken, entities);
+        },
+        
+        update_goal_progress: async () => {
+            return await updateGoalProgress(userId, userToken, entities);
+        },
+        
+        update_profile: async () => {
+            return await updateProfile(userId, userToken, entities);
+        },
+        
+        update_patrimony: async () => {
+            return await updatePatrimony(userId, userToken, entities);
+        },
+        
+        add_debt: async () => {
+            return await addDebt(userId, userToken, entities);
+        },
+        
+        mark_payment: async () => {
+            return await markDebtPayment(userId, userToken, entities);
+        }
+    };
+    
+    if (handlers[intent]) {
+        return await handlers[intent]();
+    }
+    
+    return { success: false, message: 'Ação não implementada' };
 }
 
 async function fetchOrganizedData(userToken, requiredSections, timeframe) {
@@ -358,9 +920,9 @@ app.get('/health', (req, res) => {
 // ========== ROTA PRINCIPAL DO CHAT ==========
 app.post('/api/chat', verifyUserToken, async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, conversaId } = req.body;
         const currentMonth = getCurrentMonth();
-        const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const currentDate = new Date().toISOString().split('T')[0];
 
         if (!message || typeof message !== 'string') {
             return res.status(400).json({ error: 'Mensagem inválida' });
@@ -370,13 +932,11 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         console.log(`│ 🤖 NOVA CONSULTA`);
         console.log(`│ 👤 Usuário: ${req.userId}`);
         console.log(`│ 📅 Data atual: ${currentDate}`);
-        console.log(`│ 📆 Mês atual: ${currentMonth}`);
         console.log(`│ 💬 Pergunta: "${message}"`);
         console.log('└─────────────────────────────────────────────────────────\n');
         
-        // ========== BUSCAR CONVERSAÇÃO E RESUMO ==========
+        // ========== BUSCAR RESUMO DA CONVERSA ==========
         console.log('🔍 Verificando conversa ativa e resumo...');
-        let conversaId = req.body.conversaId;
         let resumoContexto = '';
         
         if (conversaId) {
@@ -389,18 +949,101 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                 if (resumoResponse.data.resumo) {
                     resumoContexto = resumoResponse.data.resumo;
                     console.log(`   📚 Resumo carregado: ${resumoResponse.data.palavrasResumo} palavras`);
-                } else {
-                    console.log('   ℹ️ Conversa nova - sem resumo anterior');
                 }
             } catch (error) {
-                console.log('   ⚠️ Erro ao buscar resumo, continuando sem contexto:', error.message);
+                console.log('   ⚠️ Erro ao buscar resumo:', error.message);
             }
-        } else {
-            console.log('   ℹ️ Nova conversa - será criada após resposta');
         }
 
-        // ========== PASSO 1: IA DECIDE QUAIS DADOS PRECISA ==========
-        console.log('🔍 PASSO 1: Analisando quais dados são necessários...');
+        // ========== CLASSIFICAR INTENT ==========
+        console.log('\n🎯 PASSO 1: Classificando intenção do usuário...');
+        const intentResult = await classifyIntent(message, resumoContexto);
+        
+        console.log(`   Intent: ${intentResult.intent}`);
+        console.log(`   Confidence: ${(intentResult.confidence * 100).toFixed(0)}%`);
+        
+        // ========== VERIFICAR SE É UMA AÇÃO ==========
+        const actionIntents = [
+            'add_income', 'add_expense', 'edit_transaction', 
+            'delete_transaction', 'update_goal_progress', 'update_goal_info',
+            'update_profile', 'update_patrimony', 'add_debt', 'mark_payment', 'delete_debt'
+        ];
+        
+        if (actionIntents.includes(intentResult.intent) && intentResult.confidence > 0.6) {
+            console.log('🎬 Executando ação:', intentResult.intent);
+            
+            // Execute the action
+            const actionResult = await executeAction(
+                intentResult.intent,
+                intentResult.entities,
+                req.userToken,
+                req.userId
+            );
+            
+            if (actionResult.needsInfo) {
+                // Need more information from user
+                return res.json({
+                    success: true,
+                    response: actionResult.message,
+                    needsConfirmation: true,
+                    intent: intentResult.intent,
+                    partialEntities: intentResult.entities,
+                    sectionsUsed: []
+                });
+            }
+            
+            if (actionResult.success) {
+                // Action completed successfully - save to conversation
+                if (conversaId) {
+                    try {
+                        await axios.post(
+                            `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/mensagens`,
+                            {
+                                tipo: 'usuario',
+                                conteudo: message,
+                                sectionsUsed: [],
+                                timeframe: null
+                            },
+                            { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                        );
+                        
+                        await axios.post(
+                            `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/mensagens`,
+                            {
+                                tipo: 'assistente',
+                                conteudo: actionResult.message,
+                                sectionsUsed: [],
+                                timeframe: null
+                            },
+                            { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                        );
+                    } catch (error) {
+                        console.log('⚠️ Erro ao salvar mensagens:', error.message);
+                    }
+                }
+                
+                return res.json({
+                    success: true,
+                    response: actionResult.message,
+                    actionCompleted: true,
+                    intent: intentResult.intent,
+                    data: actionResult.data,
+                    sectionsUsed: [],
+                    conversaId
+                });
+            } else {
+                // Action failed
+                return res.json({
+                    success: true,
+                    response: actionResult.message + ' Posso ajudar de outra forma?',
+                    actionFailed: true,
+                    sectionsUsed: []
+                });
+            }
+        }
+        
+        // ========== CONTINUAR COM FLUXO DE QUERY NORMAL ==========
+        console.log('\n🔍 PASSO 2: Analisando quais dados são necessários...');
         
         const decisionPrompt = `${DECISION_PROMPT}
 
@@ -431,43 +1074,33 @@ Responda apenas com JSON válido.`;
         let decision;
         try {
             const decisionText = decisionResponse.data.choices[0].message.content;
-            console.log('   📄 Resposta bruta da IA:');
-            console.log('   ', decisionText);
-            
-            // Limpar possível markdown
             const cleanJson = decisionText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             decision = JSON.parse(cleanJson);
             
-            // Substituir MÊS-ATUAL pelo mês real
             if (decision.timeframe?.months) {
                 decision.timeframe.months = decision.timeframe.months.map(m => 
                     m === 'MÊS-ATUAL' ? currentMonth : m
                 );
             }
             
-            console.log('\n   ✅ Decisão interpretada:');
-            console.log('   📊 Seções necessárias:', decision.requiredSections);
+            console.log('   ✅ Decisão interpretada:');
+            console.log('   📊 Seções:', decision.requiredSections);
             console.log('   📅 Timeframe:', JSON.stringify(decision.timeframe));
-            console.log('   💭 Raciocínio:', decision.timeframe.reasoning);
             
         } catch (error) {
-            console.error('   ❌ Erro ao parsear decisão da IA:', error.message);
-            console.log('   🔄 Usando fallback: dados do mês atual');
-            
-            // Fallback: usar dados do mês atual
+            console.error('   ❌ Erro ao parsear decisão:', error.message);
             decision = {
                 requiredSections: ['financas'],
                 timeframe: { 
                     type: 'current_only', 
                     months: [currentMonth],
-                    reasoning: 'Fallback - erro ao interpretar decisão da IA'
+                    reasoning: 'Fallback'
                 }
             };
         }
 
-        // ========== PASSO 2: BUSCAR DADOS ORGANIZADOS ==========
-        console.log('\n🔍 PASSO 2: Buscando dados do usuário...');
-        console.log('   📥 Conectando ao servidor operacional:', OPERATIONAL_SERVER_URL);
+        // ========== PASSO 3: BUSCAR DADOS ==========
+        console.log('\n🔍 PASSO 3: Buscando dados do usuário...');
         
         const userData = await fetchOrganizedData(
             req.userToken,
@@ -475,21 +1108,15 @@ Responda apenas com JSON válido.`;
             decision.timeframe
         );
 
-        console.log('   ✅ Dados recuperados com sucesso');
-        console.log('   📦 Seções carregadas:', Object.keys(userData.sections));
-        
-        if (userData.sections.financas) {
-            const mesesCarregados = Object.keys(userData.sections.financas);
-            console.log('   📅 Meses financeiros carregados:', mesesCarregados);
-        }
+        console.log('   ✅ Dados recuperados');
+        console.log('   📦 Seções:', Object.keys(userData.sections));
 
-        // ========== PASSO 3: IA GERA RESPOSTA COM OS DADOS ==========
-        console.log('\n🔍 PASSO 3: Gerando resposta personalizada...');
+        // ========== PASSO 4: GERAR RESPOSTA ==========
+        console.log('\n🔍 PASSO 4: Gerando resposta...');
         
-        // Incluir resumo da conversa no prompt, se existir
         let contextoPrevio = '';
         if (resumoContexto) {
-            contextoPrevio = `\n\nCONTEXTO DA CONVERSA ANTERIOR:\n${resumoContexto}\n\nUse este contexto para dar continuidade à conversa de forma natural e coerente.`;
+            contextoPrevio = `\n\nCONTEXTO DA CONVERSA:\n${resumoContexto}\n`;
         }
         
         const finalPrompt = `${RESPONSE_PROMPT}
@@ -502,8 +1129,6 @@ ${JSON.stringify(userData, null, 2)}
 PERGUNTA: "${message}"
 
 Forneça uma resposta completa, personalizada e útil baseada nos dados reais do usuário.`;
-
-        console.log('   ⏳ Consultando OpenAI para resposta final...');
 
         const finalResponse = await axios.post(
             'https://api.openai.com/v1/chat/completions',
@@ -522,12 +1147,12 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         );
 
         const aiMessage = finalResponse.data.choices[0].message.content;
+        console.log('   ✅ Resposta gerada');
         
-        console.log('   ✅ Resposta gerada com sucesso');
-        console.log('   📝 Tamanho da resposta:', aiMessage.length, 'caracteres');
+        // ========== CRIAR/ATUALIZAR CONVERSA ==========
+        let finalConversaId = conversaId;
         
-        // ========== CRIAR CONVERSA SE NÃO EXISTIR ==========
-        if (!conversaId) {
+        if (!finalConversaId) {
             console.log('\n🆕 Criando nova conversa...');
             try {
                 const novaConversa = await axios.post(
@@ -535,28 +1160,51 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
                     { titulo: message.substring(0, 50) + (message.length > 50 ? '...' : '') },
                     { headers: { 'Authorization': `Bearer ${req.userToken}` } }
                 );
-                conversaId = novaConversa.data.conversa._id;
-                console.log('   ✅ Conversa criada:', conversaId);
+                finalConversaId = novaConversa.data.conversa._id;
+                console.log('   ✅ Conversa criada:', finalConversaId);
             } catch (error) {
                 console.error('   ❌ Erro ao criar conversa:', error.message);
-                console.error('   📄 Detalhes:', error.response?.data);
-                // Continuar mesmo sem criar a conversa (modo degradado)
             }
         }
         
-        // ========== ATUALIZAR RESUMO DA CONVERSA (SÍNCRONO) ==========
-        if (conversaId) {
-            console.log('\n🔄 Atualizando resumo da conversa (aguardando conclusão)...');
+        // ========== SALVAR MENSAGENS ==========
+        if (finalConversaId) {
             try {
-                // IMPORTANTE: Executar de forma síncrona para garantir que capture a mensagem correta
-                await atualizarResumoConversa(conversaId, message, aiMessage, req.userToken);
-                console.log('   ✅ Resumo atualizado com sucesso');
+                await axios.post(
+                    `${OPERATIONAL_SERVER_URL}/api/conversas/${finalConversaId}/mensagens`,
+                    {
+                        tipo: 'usuario',
+                        conteudo: message,
+                        sectionsUsed: decision.requiredSections,
+                        timeframe: decision.timeframe
+                    },
+                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                );
+                
+                await axios.post(
+                    `${OPERATIONAL_SERVER_URL}/api/conversas/${finalConversaId}/mensagens`,
+                    {
+                        tipo: 'assistente',
+                        conteudo: aiMessage,
+                        sectionsUsed: decision.requiredSections,
+                        timeframe: decision.timeframe
+                    },
+                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                );
+            } catch (error) {
+                console.error('   ❌ Erro ao salvar mensagens:', error.message);
+            }
+        }
+        
+        // ========== ATUALIZAR RESUMO ==========
+        if (finalConversaId) {
+            console.log('\n🔄 Atualizando resumo da conversa...');
+            try {
+                await atualizarResumoConversa(finalConversaId, message, aiMessage, req.userToken);
+                console.log('   ✅ Resumo atualizado');
             } catch (error) {
                 console.error('   ❌ Erro ao atualizar resumo:', error.message);
-                // Não bloquear a resposta ao usuário por erro no resumo
             }
-        } else {
-            console.log('\n⚠️ ConversaId não disponível - resumo não será atualizado');
         }
         
         console.log('\n┌─────────────────────────────────────────────────────────');
@@ -566,12 +1214,13 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         res.json({
             success: true,
             response: aiMessage,
-            conversaId: conversaId,
+            conversaId: finalConversaId,
             debug: {
                 sectionsUsed: decision.requiredSections,
                 timeframe: decision.timeframe,
                 currentDate: currentDate,
-                resumoUsado: !!resumoContexto
+                resumoUsado: !!resumoContexto,
+                intent: intentResult.intent
             }
         });
 

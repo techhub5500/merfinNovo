@@ -9,6 +9,7 @@ require('dotenv').config();
 // Importar sistema de intents e ações
 const { INTENTS, INTENT_DETECTION_PROMPT } = require('./intents');
 const spreadsheetActions = require('./spreadsheetActions');
+const ThoughtProcess = require('./thoughtProcess');
 
 const app = express();
 const PORT = process.env.AGENT_PORT || 5001;
@@ -259,18 +260,42 @@ Resposta: {"requiredSections": ["financas"], "timeframe": {"type": "specific_mon
 Pergunta: "Minha situação financeira geral" (Data: 2025-12-19)
 Resposta: {"requiredSections": ["perfil", "financas", "dividas"], "timeframe": {"type": "current_only", "months": ["MÊS-ATUAL"], "reasoning": "Visão completa do contexto atual"}}`;
 
-const RESPONSE_PROMPT = `Você é Merfin, um assistente financeiro inteligente e empático.
+const RESPONSE_PROMPT = `Você é Merfin — um consultor financeiro pessoal que vive dentro de uma plataforma de clareza financeira criada pela empresa Merfin.
 
-CARACTERÍSTICAS:
-- Analise os dados reais do usuário fornecidos
-- Seja específico com valores e categorias
-- Use linguagem clara e acessível
-- Sugira ações práticas quando apropriado
-- Celebre conquistas e motive em desafios
+SUA MISSÃO REAL É:
+- Transformar ansiedade financeira em clareza
+- Ajudar o usuário a ENTENDER sua realidade, não apenas controlá-la
+- Tornar decisões financeiras conscientes e confiantes
+- Ser um parceiro de raciocínio, não um fiscal de gastos
 
-Os dados estão organizados por mês. Use a estrutura "userData.sections.financas[MÊS]" para acessar dados específicos.
+PRINCÍPIO FUNDAMENTAL:
+"Dinheiro não deveria gerar ansiedade. Deveria gerar consciência, previsibilidade e autonomia."
 
-Forneça uma resposta personalizada, útil e baseada nos dados reais.`;
+COMO VOCÊ SE COMPORTA:
+- Tom: Humano, empático, sem julgamento
+- Linguagem: Simples e acessível (evite jargão financeiro)
+- Abordagem: Explicar consequências ANTES de acontecerem
+- Atitude: Parceiro que ilumina caminhos, não controlador que dita regras
+- Respostas: CURTAS e naturais (máximo 300-400 caracteres para ações simples)
+
+IMPORTANTE:
+- NÃO seja prolixo ou robótico
+- NÃO repita saudações desnecessárias
+- Use o histórico para manter continuidade natural
+- Seja direto, mas caloroso
+- Celebre conquistas de forma genuína
+- Valide sentimentos antes de dar conselhos técnicos
+
+VOCÊ NUNCA:
+❌ Julga escolhas financeiras
+❌ Impõe controle rígido
+❌ Promete enriquecimento rápido
+❌ Gera ansiedade através de medo
+❌ Se identifica como outra IA que não seja Merfin
+
+Os dados estão organizados por mês. Use "userData.sections.financas[MÊS]" para acessar dados específicos.
+
+Forneça uma resposta personalizada, útil, CURTA e baseada nos dados reais.`;
 
 // ========== FUNÇÃO DE GERAÇÃO DE RESUMO ==========
 
@@ -729,32 +754,59 @@ async function executeAction(intent, entities, userToken, currentMonth) {
                     }
                 }
                 
-                const summary = `✅ Lançamentos concluídos!\n\n` +
-                    `📊 Resumo:\n` +
-                    `- Receitas adicionadas: ${results.incomes.added}\n` +
-                    `- Despesas adicionadas: ${results.expenses.added}\n` +
-                    `- Total processado: ${results.incomes.added + results.expenses.added}\n\n` +
-                    `Detalhes:\n${results.details.join('\n')}`;
-                
                 console.log(`   ✅ Processamento concluído!`);
                 console.log(`   📊 Receitas: ${results.incomes.added} adicionadas`);
                 console.log(`   💸 Despesas: ${results.expenses.added} adicionadas`);
                 
-                return {
+                actionResult = {
                     success: true,
-                    message: summary,
                     data: results
                 };
-            
+                break;
             default:
                 console.log('   ℹ️ Intent não requer ação direta na planilha');
                 return { requiresAIResponse: true };
         }
+        
+        // ========== PROCESSAR RESPOSTA COM SISTEMA DE RACIOCÍNIO ==========
+        if (actionResult && actionResult.success) {
+            console.log('   ✅ Ação executada com sucesso!');
+            
+            // Buscar dados do usuário para contexto
+            const userData = {
+                currentMonth: monthId
+            };
+            
+            // Criar instância do processo de pensamento
+            const thoughtProcess = new ThoughtProcess();
+            
+            // Processar resposta natural
+            const intelligentResponse = thoughtProcess.process(
+                intent,
+                entities,
+                actionResult,
+                userData
+            );
+            
+            // Se requer resposta da IA (consultas complexas)
+            if (intelligentResponse.requiresAI) {
+                console.log('   🤖 Requer resposta elaborada da IA');
+                return { requiresAIResponse: true };
+            }
+            
+            // Usar resposta humanizada
+            actionResult.message = intelligentResponse.response;
+            actionResult.metadata = intelligentResponse.metadata;
+            
+            console.log('   🧠 Resposta humanizada gerada!');
+        }
+        
+        return actionResult;
     } catch (error) {
         console.error('   ❌ Erro ao executar ação:', error.message);
         return {
             success: false,
-            message: 'Ocorreu um erro ao executar a ação.',
+            message: 'Ops, algo deu errado. Pode tentar de novo? 😅',
             error: error.message
         };
     }

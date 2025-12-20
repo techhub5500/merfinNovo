@@ -66,6 +66,37 @@
     <script src="../js/dashboard.js"></script>
 
     <script>
+    // Configurar Marked.js para melhor renderização
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({
+            breaks: true,       // Quebras de linha automáticas
+            gfm: true,          // GitHub Flavored Markdown
+            tables: true,       // Suporte a tabelas
+            sanitize: false,    // Permitir HTML (use com cuidado)
+            smartLists: true,   // Listas inteligentes
+            smartypants: true   // Tipografia inteligente
+        });
+    }
+
+    // Função para renderizar Markdown
+    function renderMarkdown(text) {
+        if (typeof marked === 'undefined') {
+            console.warn('Marked.js não carregado, retornando texto plano');
+            return text;
+        }
+        
+        try {
+            // Renderizar markdown
+            let html = marked.parse(text);
+            
+            // Wrapper com classe para estilos
+            return `<div class="markdown-content">${html}</div>`;
+        } catch (error) {
+            console.error('Erro ao renderizar markdown:', error);
+            return `<div class="markdown-content">${text}</div>`;
+        }
+    }
+
     // Inicializar histórico de conversas
     initChatHistory();
     
@@ -116,7 +147,7 @@
             }
         }
 
-        // Adicionar mensagem do bot com efeito de digitação
+        // Adicionar mensagem do bot com efeito de digitação e suporte a Markdown
         function addBotMessageTyping(text) {
             removeThinkingIndicator();
             
@@ -124,11 +155,19 @@
             el.className = 'message bot typing';
             messages.appendChild(el);
             
-            // Dividir em palavras
-            const words = text.split(' ');
+            // Renderizar markdown primeiro
+            const markdownHtml = renderMarkdown(text);
+            
+            // Criar elemento temporário para extrair apenas o texto para efeito de digitação
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = markdownHtml;
+            const plainText = tempDiv.textContent || tempDiv.innerText || text;
+            
+            // Dividir em palavras para efeito de digitação
+            const words = plainText.split(' ');
             let currentIndex = 0;
             
-            // Mostrar 3 palavras por vez
+            // Mostrar 3 palavras por vez (efeito de digitação)
             const typingInterval = setInterval(() => {
                 const wordsToShow = words.slice(currentIndex, currentIndex + 3);
                 
@@ -142,8 +181,11 @@
                     currentIndex += 3;
                     messages.scrollTop = messages.scrollHeight;
                 } else {
+                    // Finalizar: remover classe typing e aplicar markdown completo
                     clearInterval(typingInterval);
                     el.classList.remove('typing');
+                    el.innerHTML = markdownHtml; // Aplicar markdown renderizado
+                    messages.scrollTop = messages.scrollHeight;
                 }
             }, 150); // 150ms entre cada grupo de 3 palavras
         }

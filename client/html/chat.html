@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="../../favicon.png">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/chat.css">
+    <link rel="stylesheet" href="../css/chat-history.css">
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -35,6 +36,18 @@
         </div>
     </div>
 
+    <!-- Botão Histórico Fixo -->
+    <button id="btn-historico" class="btn-historico" onclick="abrirModalHistorico()">
+        <i class="fas fa-history"></i>
+        <span>Histórico</span>
+    </button>
+
+    <!-- Botão Novo Chat -->
+    <button id="btn-novo-chat" class="btn-novo-chat" onclick="iniciarNovoChat()">
+        <i class="fas fa-plus"></i>
+        <span>Novo Chat</span>
+    </button>
+
     <!-- Conteúdo do chat -->
     <div class="content" id="content">
         <main class="chat-container">
@@ -53,6 +66,9 @@
     <script src="../js/dashboard.js"></script>
 
     <script>
+    // Inicializar histórico de conversas
+    initChatHistory();
+    
     (function () {
         const form = document.getElementById('chat-form');
         const input = document.getElementById('message-input');
@@ -168,6 +184,10 @@
 
                 if (data.success && data.response) {
                     addBotMessageTyping(data.response);
+                    
+                    // Salvar mensagens no histórico
+                    await salvarMensagemNaConversa('user', messageText);
+                    await salvarMensagemNaConversa('assistant', data.response, data.debug?.sectionsUsed, data.debug?.timeframe);
                 } else {
                     throw new Error(data.error || 'Erro ao processar mensagem');
                 }

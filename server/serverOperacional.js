@@ -146,6 +146,23 @@ const notaSchema = new mongoose.Schema({
 
 const Nota = mongoose.model('Nota', notaSchema);
 
+// Schema de Conversas do Chat
+const conversaSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    titulo: { type: String, default: 'Nova Conversa' },
+    mensagens: [{
+        tipo: { type: String, enum: ['user', 'assistant'], required: true },
+        conteudo: String,
+        timestamp: { type: Date, default: Date.now },
+        sectionsUsed: [String],
+        timeframe: Object
+    }],
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
+const Conversa = mongoose.model('Conversa', conversaSchema);
+
 // ========== MIDDLEWARE DE AUTENTICAÇÃO ==========
 
 const authMiddleware = (req, res, next) => {
@@ -574,6 +591,177 @@ app.delete('/api/notas/:pagina', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Erro ao deletar nota:', error);
         res.status(500).json({ error: 'Erro ao deletar nota' });
+    }
+});
+
+// ========== ROTAS DE CONVERSAS (HISTÓRICO DE CHAT) ==========
+
+// Buscar todas as conversas do usuário
+app.get('/api/conversas', authMiddleware, async (req, res) => {
+    try {
+        const conversas = await Conversa.find({ userId: req.userId })
+            .sort({ updatedAt: -1 })
+            .select('_id titulo mensagens.timestamp createdAt updatedAt');
+        
+        // Retornar com contagem de mensagens e última mensagem
+        const conversasFormatadas = conversas.map(conv => ({
+            id: conv._id,
+            titulo: conv.titulo,
+            numMensagens: conv.mensagens?.length || 0,
+            ultimaMensagem: conv.mensagens?.length > 0 
+                ? conv.mensagens[conv.mensagens.length - 1].timestamp 
+                : conv.createdAt,
+            createdAt: conv.createdAt,
+            updatedAt: conv.updatedAt
+        }));
+        
+        res.json(conversasFormatadas);
+    } catch (error) {
+        console.error('Erro ao buscar conversas:', error);
+        res.status(500).json({ error: 'Erro ao buscar conversas' });
+    }
+});
+
+// Buscar conversa específica por ID
+app.get('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
+    try {
+        const { conversaId } = req.params;
+        
+        // Validar se o ID é um ObjectId válido do MongoDB
+        if (!mongoose.Types.ObjectId.isValid(conversaId)) {
+            console.error('❌ ID de conversa inválido:', conversaId);
+            return res.status(400).json({ error: 'ID de conversa inválido' });
+        }
+        
+        console.log('🔍 Buscando conversa:', conversaId, 'para usuário:', req.userId);
+        
+        const conversa = await Conversa.findOne({ 
+            _id: conversaId, 
+            userId: req.userId 
+        });
+        
+        if (!conversa) {
+            console.error('❌ Conversa não encontrada:', conversaId);
+            return res.status(404).json({ error: 'Conversa não encontrada' });
+        }
+        
+        console.log('✅ Conversa encontrada:', conversa.titulo, 'com', conversa.mensagens.length, 'mensagens');
+        res.json(conversa);
+    } catch (error) {
+        console.error('❌ Erro ao buscar conversa:', error);
+        res.status(500).json({ error: 'Erro ao buscar conversa: ' + error.message });
+    }
+});
+
+// Criar nova conversa
+app.post('/api/conversas', authMiddleware, async (req, res) => {
+    try {
+        const { titulo } = req.body;
+        
+        const conversa = new Conversa({
+            userId: req.userId,
+            titulo: titulo || 'Nova Conversa',
+            mensagens: []
+        });
+        
+        await conversa.save();
+        
+        res.status(201).json({ 
+            message: 'Conversa criada com sucesso', 
+            conversa 
+        });
+    } catch (error) {
+        console.error('Erro ao criar conversa:', error);
+        res.status(500).json({ error: 'Erro ao criar conversa' });
+    }
+});
+
+// Adicionar mensagem a uma conversa
+app.post('/api/conversas/:conversaId/mensagem', authMiddleware, async (req, res) => {
+    try {
+        const { conversaId } = req.params;
+        const { tipo, conteudo, sectionsUsed, timeframe } = req.body;
+        
+        const conversa = await Conversa.findOne({ 
+            _id: conversaId, 
+            userId: req.userId 
+        });
+        
+        if (!conversa) {
+            return res.status(404).json({ error: 'Conversa não encontrada' });
+        }
+        
+        conversa.mensagens.push({
+            tipo,
+            conteudo,
+            sectionsUsed,
+            timeframe,
+            timestamp: new Date()
+        });
+        
+        conversa.updatedAt = new Date();
+        
+        // Atualizar título automaticamente com a primeira mensagem do usuário
+        if (conversa.mensagens.length === 1 && tipo === 'user') {
+            conversa.titulo = conteudo.substring(0, 50) + (conteudo.length > 50 ? '...' : '');
+        }
+        
+        await conversa.save();
+        
+        res.json({ 
+            message: 'Mensagem adicionada com sucesso', 
+            conversa 
+        });
+    } catch (error) {
+        console.error('Erro ao adicionar mensagem:', error);
+        res.status(500).json({ error: 'Erro ao adicionar mensagem' });
+    }
+});
+
+// Atualizar título da conversa
+app.patch('/api/conversas/:conversaId/titulo', authMiddleware, async (req, res) => {
+    try {
+        const { conversaId } = req.params;
+        const { titulo } = req.body;
+        
+        const conversa = await Conversa.findOneAndUpdate(
+            { _id: conversaId, userId: req.userId },
+            { titulo, updatedAt: new Date() },
+            { new: true }
+        );
+        
+        if (!conversa) {
+            return res.status(404).json({ error: 'Conversa não encontrada' });
+        }
+        
+        res.json({ 
+            message: 'Título atualizado com sucesso', 
+            conversa 
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar título:', error);
+        res.status(500).json({ error: 'Erro ao atualizar título' });
+    }
+});
+
+// Deletar conversa
+app.delete('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
+    try {
+        const { conversaId } = req.params;
+        
+        const result = await Conversa.deleteOne({ 
+            _id: conversaId, 
+            userId: req.userId 
+        });
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'Conversa não encontrada' });
+        }
+        
+        res.json({ message: 'Conversa deletada com sucesso' });
+    } catch (error) {
+        console.error('Erro ao deletar conversa:', error);
+        res.status(500).json({ error: 'Erro ao deletar conversa' });
     }
 });
 

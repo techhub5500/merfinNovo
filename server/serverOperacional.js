@@ -157,6 +157,9 @@ const conversaSchema = new mongoose.Schema({
         sectionsUsed: [String],
         timeframe: Object
     }],
+    resumo: { type: String, default: '' },
+    ultimoResumoAt: Date,
+    palavrasResumo: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
@@ -762,6 +765,73 @@ app.delete('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Erro ao deletar conversa:', error);
         res.status(500).json({ error: 'Erro ao deletar conversa' });
+    }
+});
+
+// Buscar resumo de uma conversa
+app.get('/api/conversas/:conversaId/resumo', authMiddleware, async (req, res) => {
+    try {
+        const { conversaId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(conversaId)) {
+            return res.status(400).json({ error: 'ID de conversa inválido' });
+        }
+        
+        const conversa = await Conversa.findOne({ 
+            _id: conversaId, 
+            userId: req.userId 
+        }).select('resumo ultimoResumoAt palavrasResumo');
+        
+        if (!conversa) {
+            return res.status(404).json({ error: 'Conversa não encontrada' });
+        }
+        
+        res.json({
+            resumo: conversa.resumo || '',
+            ultimoResumoAt: conversa.ultimoResumoAt,
+            palavrasResumo: conversa.palavrasResumo || 0
+        });
+    } catch (error) {
+        console.error('Erro ao buscar resumo:', error);
+        res.status(500).json({ error: 'Erro ao buscar resumo' });
+    }
+});
+
+// Atualizar resumo de uma conversa
+app.patch('/api/conversas/:conversaId/resumo', authMiddleware, async (req, res) => {
+    try {
+        const { conversaId } = req.params;
+        const { resumo, palavrasResumo } = req.body;
+        
+        if (!mongoose.Types.ObjectId.isValid(conversaId)) {
+            return res.status(400).json({ error: 'ID de conversa inválido' });
+        }
+        
+        const conversa = await Conversa.findOneAndUpdate(
+            { _id: conversaId, userId: req.userId },
+            { 
+                resumo,
+                palavrasResumo: palavrasResumo || 0,
+                ultimoResumoAt: new Date(),
+                updatedAt: new Date()
+            },
+            { new: true }
+        );
+        
+        if (!conversa) {
+            return res.status(404).json({ error: 'Conversa não encontrada' });
+        }
+        
+        console.log('📝 Resumo atualizado:', conversaId, '- Palavras:', palavrasResumo);
+        
+        res.json({ 
+            message: 'Resumo atualizado com sucesso',
+            resumo: conversa.resumo,
+            palavrasResumo: conversa.palavrasResumo
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar resumo:', error);
+        res.status(500).json({ error: 'Erro ao atualizar resumo' });
     }
 });
 

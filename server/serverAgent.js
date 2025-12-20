@@ -181,6 +181,34 @@ async function fetchOrganizedData(userToken, requiredSections, timeframe) {
 
 // ========== PROMPTS DO SISTEMA ==========
 
+const SUMMARY_PROMPT = `Você é um assistente especializado em criar resumos concisos de conversas sobre finanças pessoais.
+
+REGRAS OBRIGATÓRIAS:
+1. Máximo de 450 palavras
+2. Seja DIRETO e OBJETIVO, mas não deixe nada que considerar importante de fora.
+3. Foque em dados financeiros que considerar cruciais, por exemplo:  valores, prazos, metas, receitas, despesas
+4. Use terceira pessoa: "O usuário" e "Eu, o agente"
+5. NÃO repita conclusões ou informações já mencionadas
+6. NÃO detalhe informações implícitas (exemplo: se já disse "36 meses", não precisa explicar "3 anos")
+
+CONTEXTO PRÉVIO DA CONVERSA:
+{resumoAnterior}
+
+INTERAÇÃO ATUAL A SER RESUMIDA:
+- Mensagem do usuário: "{mensagemUsuario}"
+- Minha resposta como agente: "{respostaAgente}"
+
+TAREFA: 
+Gere um resumo atualizado que:
+1. Incorpore o contexto do resumo anterior (se houver) de forma SINTÉTICA
+2. Elimine redundâncias.
+3. Seja conciso - prefira "R$ 1.000/mês por 36 meses = R$ 36.000" a explicar cada cálculo
+4. Agrupe informações relacionadas em vez de listar separadamente
+
+EXEMPLO DE BOM RESUMO (CONCISO):
+"O usuário quer juntar R$ 1.000/mês por 36 meses (total R$ 36.000). Tem R$ 377,25 de progresso rumo a R$ 45.000 para apartamento, fundo emergencial de R$ 15.000, renda de R$ 10.000/mês e 2 dependentes. Eu respondi que é viável (10% da renda), sugerindo: revisar despesas, automatizar transferência mensal e acompanhar progresso regularmente."`;
+
+
 const DECISION_PROMPT = `Você é um assistente financeiro que precisa decidir quais dados buscar para responder perguntas.
 
 SEÇÕES DISPONÍVEIS:
@@ -238,6 +266,86 @@ Os dados estão organizados por mês. Use a estrutura "userData.sections.financa
 
 Forneça uma resposta personalizada, útil e baseada nos dados reais.`;
 
+// ========== FUNÇÃO DE GERAÇÃO DE RESUMO ==========
+
+async function generateSummary(mensagemUsuario, respostaAgente, resumoAnterior = '') {
+    try {
+        const prompt = SUMMARY_PROMPT
+            .replace('{resumoAnterior}', resumoAnterior || 'Nenhum - esta é a primeira interação')
+            .replace('{mensagemUsuario}', mensagemUsuario)
+            .replace('{respostaAgente}', respostaAgente);
+        
+        console.log('📝 Gerando resumo com gpt-3.5-turbo...');
+        console.log('   📨 Mensagem do usuário:', mensagemUsuario.substring(0, 100) + (mensagemUsuario.length > 100 ? '...' : ''));
+        console.log('   🤖 Resposta do agente:', respostaAgente.substring(0, 100) + (respostaAgente.length > 100 ? '...' : ''));
+        console.log('   📚 Resumo anterior:', resumoAnterior ? resumoAnterior.substring(0, 100) + '...' : 'Nenhum');
+        
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-3.5-turbo',
+                messages: [{ role: 'system', content: prompt }],
+                max_tokens: 600,
+                temperature: 0.3
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        const resumo = response.data.choices[0].message.content.trim();
+        const palavrasResumo = resumo.split(/\s+/).length;
+        
+        console.log('✅ Resumo gerado:', palavrasResumo, 'palavras');
+        console.log('📄 Conteúdo do resumo:', resumo);
+        
+        return { resumo, palavrasResumo };
+    } catch (error) {
+        console.error('❌ Erro ao gerar resumo:', error.message);
+        return { resumo: '', palavrasResumo: 0 };
+    }
+}
+
+async function atualizarResumoConversa(conversaId, mensagemUsuario, respostaAgente, userToken) {
+    try {
+        // Buscar resumo anterior
+        const resumoResponse = await axios.get(
+            `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/resumo`,
+            { headers: { 'Authorization': `Bearer ${userToken}` } }
+        ).catch(() => ({ data: { resumo: '' } }));
+        
+        const resumoAnterior = resumoResponse.data.resumo || '';
+        
+        // Gerar novo resumo
+        const { resumo, palavrasResumo } = await generateSummary(
+            mensagemUsuario,
+            respostaAgente,
+            resumoAnterior
+        );
+        
+        if (!resumo) {
+            console.log('⚠️ Resumo vazio, pulando atualização');
+            return;
+        }
+        
+        // Salvar resumo (não-bloqueante)
+        axios.patch(
+            `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/resumo`,
+            { resumo, palavrasResumo },
+            { headers: { 'Authorization': `Bearer ${userToken}` } }
+        ).catch(error => {
+            console.error('❌ Erro ao salvar resumo:', error.message);
+        });
+        
+        console.log('💾 Resumo enviado para salvamento assíncrono');
+    } catch (error) {
+        console.error('❌ Erro ao atualizar resumo:', error.message);
+    }
+}
+
 // ========== ROTA DE HEALTH CHECK ==========
 app.get('/health', (req, res) => {
     res.json({ 
@@ -265,6 +373,31 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         console.log(`│ 📆 Mês atual: ${currentMonth}`);
         console.log(`│ 💬 Pergunta: "${message}"`);
         console.log('└─────────────────────────────────────────────────────────\n');
+        
+        // ========== BUSCAR CONVERSAÇÃO E RESUMO ==========
+        console.log('🔍 Verificando conversa ativa e resumo...');
+        let conversaId = req.body.conversaId;
+        let resumoContexto = '';
+        
+        if (conversaId) {
+            try {
+                const resumoResponse = await axios.get(
+                    `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/resumo`,
+                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                );
+                
+                if (resumoResponse.data.resumo) {
+                    resumoContexto = resumoResponse.data.resumo;
+                    console.log(`   📚 Resumo carregado: ${resumoResponse.data.palavrasResumo} palavras`);
+                } else {
+                    console.log('   ℹ️ Conversa nova - sem resumo anterior');
+                }
+            } catch (error) {
+                console.log('   ⚠️ Erro ao buscar resumo, continuando sem contexto:', error.message);
+            }
+        } else {
+            console.log('   ℹ️ Nova conversa - será criada após resposta');
+        }
 
         // ========== PASSO 1: IA DECIDE QUAIS DADOS PRECISA ==========
         console.log('🔍 PASSO 1: Analisando quais dados são necessários...');
@@ -353,9 +486,15 @@ Responda apenas com JSON válido.`;
         // ========== PASSO 3: IA GERA RESPOSTA COM OS DADOS ==========
         console.log('\n🔍 PASSO 3: Gerando resposta personalizada...');
         
+        // Incluir resumo da conversa no prompt, se existir
+        let contextoPrevio = '';
+        if (resumoContexto) {
+            contextoPrevio = `\n\nCONTEXTO DA CONVERSA ANTERIOR:\n${resumoContexto}\n\nUse este contexto para dar continuidade à conversa de forma natural e coerente.`;
+        }
+        
         const finalPrompt = `${RESPONSE_PROMPT}
 
-DATA ATUAL: ${currentDate}
+DATA ATUAL: ${currentDate}${contextoPrevio}
 
 DADOS DO USUÁRIO:
 ${JSON.stringify(userData, null, 2)}
@@ -386,6 +525,40 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         
         console.log('   ✅ Resposta gerada com sucesso');
         console.log('   📝 Tamanho da resposta:', aiMessage.length, 'caracteres');
+        
+        // ========== CRIAR CONVERSA SE NÃO EXISTIR ==========
+        if (!conversaId) {
+            console.log('\n🆕 Criando nova conversa...');
+            try {
+                const novaConversa = await axios.post(
+                    `${OPERATIONAL_SERVER_URL}/api/conversas`,
+                    { titulo: message.substring(0, 50) + (message.length > 50 ? '...' : '') },
+                    { headers: { 'Authorization': `Bearer ${req.userToken}` } }
+                );
+                conversaId = novaConversa.data.conversa._id;
+                console.log('   ✅ Conversa criada:', conversaId);
+            } catch (error) {
+                console.error('   ❌ Erro ao criar conversa:', error.message);
+                console.error('   📄 Detalhes:', error.response?.data);
+                // Continuar mesmo sem criar a conversa (modo degradado)
+            }
+        }
+        
+        // ========== ATUALIZAR RESUMO DA CONVERSA (SÍNCRONO) ==========
+        if (conversaId) {
+            console.log('\n🔄 Atualizando resumo da conversa (aguardando conclusão)...');
+            try {
+                // IMPORTANTE: Executar de forma síncrona para garantir que capture a mensagem correta
+                await atualizarResumoConversa(conversaId, message, aiMessage, req.userToken);
+                console.log('   ✅ Resumo atualizado com sucesso');
+            } catch (error) {
+                console.error('   ❌ Erro ao atualizar resumo:', error.message);
+                // Não bloquear a resposta ao usuário por erro no resumo
+            }
+        } else {
+            console.log('\n⚠️ ConversaId não disponível - resumo não será atualizado');
+        }
+        
         console.log('\n┌─────────────────────────────────────────────────────────');
         console.log('│ ✨ CONSULTA FINALIZADA COM SUCESSO');
         console.log('└─────────────────────────────────────────────────────────\n');
@@ -393,10 +566,12 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         res.json({
             success: true,
             response: aiMessage,
+            conversaId: conversaId,
             debug: {
                 sectionsUsed: decision.requiredSections,
                 timeframe: decision.timeframe,
-                currentDate: currentDate
+                currentDate: currentDate,
+                resumoUsado: !!resumoContexto
             }
         });
 

@@ -78,6 +78,9 @@
         let sessionId = localStorage.getItem('merfin_chat_session') || 
                         'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         localStorage.setItem('merfin_chat_session', sessionId);
+        
+        // Variável para manter o ID da conversa atual (essencial para resumos)
+        let conversaAtualId = null;
 
         // Adicionar mensagem do usuário
         function addUserMessage(text) {
@@ -176,7 +179,8 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        message: messageText
+                        message: messageText,
+                        conversaId: conversaAtualId // Enviar ID da conversa ativa para manter contexto
                     })
                 });
 
@@ -184,6 +188,12 @@
 
                 if (data.success && data.response) {
                     addBotMessageTyping(data.response);
+                    
+                    // Atualizar conversaId retornado pelo servidor
+                    if (data.conversaId) {
+                        conversaAtualId = data.conversaId;
+                        console.log('📌 Conversa ID:', conversaAtualId);
+                    }
                     
                     // Salvar mensagens no histórico
                     await salvarMensagemNaConversa('user', messageText);

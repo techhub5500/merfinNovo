@@ -21,6 +21,7 @@ app.use(express.json());
 // ========== CONFIGURAÇÃO ==========
 const OPERATIONAL_SERVER_URL = process.env.OPERATIONAL_SERVER_URL || 'http://localhost:5000';
 const JWT_SECRET = process.env.JWT_SECRET || 'merfin_secret_key_2025';
+const SEARCH_API_KEY = process.env.SEARCH_API_KEY;
 
 // ========== SEÇÕES DE DADOS DISPONÍVEIS ==========
 const AVAILABLE_SECTIONS = {
@@ -65,6 +66,140 @@ const verifyUserToken = (req, res, next) => {
 };
 
 // ========== FUNÇÕES AUXILIARES ==========
+
+// Função para pesquisar na internet usando Serper API
+async function pesquisarNaInternet(query) {
+    if (!SEARCH_API_KEY) {
+        console.log('   ⚠️ SEARCH_API_KEY não configurada - pesquisa desabilitada');
+        return null;
+    }
+
+    try {
+        console.log(`   🔍 Pesquisando na internet: "${query}"`);
+        
+        const response = await axios.post(
+            'https://google.serper.dev/search',
+            {
+                q: query,
+                hl: 'pt-br',
+                num: 5  // Limitar a 5 resultados para não sobrecarregar
+            },
+            {
+                headers: {
+                    'X-API-KEY': SEARCH_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 5000  // Timeout de 5 segundos para não atrasar muito
+            }
+        );
+
+        // Extrair informações relevantes
+        const resultados = {
+            temResultados: true,
+            query: query,
+            resposta: response.data.answerBox?.answer || response.data.answerBox?.snippet,
+            resultados: response.data.organic?.slice(0, 3).map(r => ({
+                titulo: r.title,
+                snippet: r.snippet,
+                link: r.link
+            })) || [],
+            knowledgeGraph: response.data.knowledgeGraph ? {
+                titulo: response.data.knowledgeGraph.title,
+                descricao: response.data.knowledgeGraph.description,
+                atributos: response.data.knowledgeGraph.attributes
+            } : null
+        };
+
+        console.log(`   ✅ Pesquisa concluída: ${resultados.resultados.length} resultados`);
+        return resultados;
+
+    } catch (error) {
+        console.error('   ❌ Erro na pesquisa:', error.message);
+        return null;
+    }
+}
+
+// Função para decidir se precisa pesquisar na internet
+async function precisaPesquisar(mensagemUsuario, intentData) {
+    // Se não tem API key, não adianta tentar
+    if (!SEARCH_API_KEY) {
+        return { precisa: false, motivo: 'API key não configurada' };
+    }
+
+    // Intents que NUNCA precisam de pesquisa (são sobre dados pessoais do usuário)
+    const intentsInternos = [
+        'consulta_gastos',
+        'adicionar_transacao',
+        'consulta_metas',
+        'consulta_dividas',
+        'analise_financeira',
+        'previsao_orcamento',
+        'saudacao',
+        'despedida'
+    ];
+
+    if (intentsInternos.includes(intentData?.intent)) {
+        return { 
+            precisa: false, 
+            motivo: `Intent ${intentData.intent} usa apenas dados pessoais` 
+        };
+    }
+
+    // Prompt para a IA decidir se precisa pesquisar
+    const decisaoPrompt = `Você é um assistente que decide se uma pergunta precisa de pesquisa na internet.
+
+REGRAS IMPORTANTES:
+1. Pesquisar APENAS se a pergunta for sobre:
+   - Informações atualizadas (preços, cotações, notícias recentes)
+   - Fatos específicos ("quanto custa X hoje?", "qual a taxa de juros atual?", "o que é X?")
+   - Comparações de produtos/serviços do mercado
+   - Informações que mudam frequentemente
+
+2. NÃO pesquisar se a pergunta for sobre:
+   - Dados pessoais do usuário (seus gastos, suas metas, seu saldo)
+   - Conselhos financeiros gerais (como economizar, investir)
+   - Cálculos ou planejamentos
+   - Perguntas conversacionais
+
+3. Seja CONSERVADOR: prefira NÃO pesquisar em caso de dúvida
+
+PERGUNTA: "${mensagemUsuario}"
+
+Responda APENAS com JSON válido:
+{
+  "precisa": true/false,
+  "motivo": "explicação breve",
+  "queryPesquisa": "termos de busca otimizados" (apenas se precisa=true)
+}`;
+
+    try {
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'system', content: decisaoPrompt }],
+                max_tokens: 150,
+                temperature: 0.1
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        const decisionText = response.data.choices[0].message.content;
+        const cleanJson = decisionText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const decision = JSON.parse(cleanJson);
+
+        return decision;
+
+    } catch (error) {
+        console.error('   ❌ Erro ao decidir sobre pesquisa:', error.message);
+        return { precisa: false, motivo: 'Erro na decisão' };
+    }
+}
 
 function getCurrentMonth() {
     const now = new Date();
@@ -292,6 +427,16 @@ VOCÊ NUNCA:
 ❌ Promete enriquecimento rápido
 ❌ Gera ansiedade através de medo
 ❌ Se identifica como outra IA que não seja Merfin
+
+FORMATAÇÃO DE RESPOSTAS (MARKDOWN RICO):
+Use Markdown para tornar suas respostas mais claras e visualmente atrativas:
+- **Negrito** para valores financeiros importantes (ex: **R$ 1.500**, **meta de R$ 50.000**)
+- **Negrito** para termos-chave (ex: **fundo emergencial**, **investimento**)
+- *Itálico* para ênfase emocional (ex: *você está no caminho certo*)
+- Listas para passos ou itens (ex: - Primeiro, revise suas despesas\n- Segundo, automatize transferências)
+- Tabelas para comparar dados (ex: | Mês | Receitas | Despesas |\n|------|---------|----------|\n| Dez | R$ 5.000 | R$ 4.200 |)
+- Quebras de linha para separar ideias
+- Evite excesso - use formatação apenas onde agrega valor
 
 Os dados estão organizados por mês. Use "userData.sections.financas[MÊS]" para acessar dados específicos.
 
@@ -949,6 +1094,28 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         console.log('\n💬 Intent requer resposta conversacional');
         console.log('   🔄 Continuando com fluxo normal...\n');
 
+        // ========== PASSO 0.5: VERIFICAR SE PRECISA PESQUISAR NA INTERNET ==========
+        console.log('╔═════════════════════════════════════════════════════════╗');
+        console.log('║      PASSO 0.5: VERIFICAÇÃO DE PESQUISA NECESSÁRIA      ║');
+        console.log('╚═════════════════════════════════════════════════════════╝');
+        
+        let resultadosPesquisa = null;
+        const decisaoPesquisa = await precisaPesquisar(message, intentData);
+        
+        console.log('   🤔 Decisão:', decisaoPesquisa.precisa ? 'PRECISA pesquisar' : 'NÃO precisa pesquisar');
+        console.log('   💭 Motivo:', decisaoPesquisa.motivo);
+        
+        if (decisaoPesquisa.precisa && decisaoPesquisa.queryPesquisa) {
+            console.log('   🌐 Realizando pesquisa na internet...');
+            resultadosPesquisa = await pesquisarNaInternet(decisaoPesquisa.queryPesquisa);
+            
+            if (resultadosPesquisa?.temResultados) {
+                console.log('   ✅ Pesquisa bem-sucedida - dados disponíveis para contexto');
+            } else {
+                console.log('   ⚠️ Pesquisa não retornou resultados úteis');
+            }
+        }
+
         // ========== PASSO 1: IA DECIDE QUAIS DADOS PRECISA ==========
         console.log('╔═════════════════════════════════════════════════════════╗');
         console.log('║        PASSO 1: ANÁLISE DE DADOS NECESSÁRIOS            ║');
@@ -1054,16 +1221,43 @@ Responda apenas com JSON válido.`;
         // Incluir informações do intent detectado
         const intentContext = `\n\nINFORMAÇÕES DO INTENT DETECTADO:\n- Intent: ${intentData.intent}\n- Confiança: ${(intentData.confidence * 100).toFixed(0)}%\n- Raciocínio: ${intentData.reasoning}\n- Entidades extraídas: ${JSON.stringify(intentData.entities)}\n\nUse essas informações para contextualizar melhor sua resposta.`;
         
+        // Incluir resultados da pesquisa na internet, se houver
+        let contextoPesquisa = '';
+        if (resultadosPesquisa?.temResultados) {
+            contextoPesquisa = `\n\n🌐 INFORMAÇÕES DA INTERNET:\nPesquisa realizada: "${resultadosPesquisa.query}"\n\n`;
+            
+            if (resultadosPesquisa.resposta) {
+                contextoPesquisa += `Resposta Direta: ${resultadosPesquisa.resposta}\n\n`;
+            }
+            
+            if (resultadosPesquisa.knowledgeGraph) {
+                contextoPesquisa += `Knowledge Graph:\n- Título: ${resultadosPesquisa.knowledgeGraph.titulo}\n- Descrição: ${resultadosPesquisa.knowledgeGraph.descricao}\n`;
+                if (resultadosPesquisa.knowledgeGraph.atributos) {
+                    contextoPesquisa += `- Atributos: ${JSON.stringify(resultadosPesquisa.knowledgeGraph.atributos)}\n`;
+                }
+                contextoPesquisa += '\n';
+            }
+            
+            if (resultadosPesquisa.resultados?.length > 0) {
+                contextoPesquisa += 'Principais Resultados:\n';
+                resultadosPesquisa.resultados.forEach((r, i) => {
+                    contextoPesquisa += `${i + 1}. ${r.titulo}\n   ${r.snippet}\n   Fonte: ${r.link}\n\n`;
+                });
+            }
+            
+            contextoPesquisa += 'IMPORTANTE: Use estas informações da internet para complementar sua resposta com dados atualizados e precisos. Cite as fontes quando relevante.';
+        }
+        
         const finalPrompt = `${RESPONSE_PROMPT}
 
-DATA ATUAL: ${currentDate}${contextoPrevio}${intentContext}
+DATA ATUAL: ${currentDate}${contextoPrevio}${intentContext}${contextoPesquisa}
 
 DADOS DO USUÁRIO:
 ${JSON.stringify(userData, null, 2)}
 
 PERGUNTA: "${message}"
 
-Forneça uma resposta completa, personalizada e útil baseada nos dados reais do usuário.`;
+Forneça uma resposta completa, personalizada e útil baseada nos dados reais do usuário${resultadosPesquisa?.temResultados ? ' e nas informações atualizadas da internet' : ''}.`;
 
         console.log('   ⏳ Consultando OpenAI para resposta final...');
 
@@ -1136,7 +1330,9 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
                 timeframe: decision.timeframe,
                 currentDate: currentDate,
                 resumoUsado: !!resumoContexto,
-                actionExecuted: false
+                actionExecuted: false,
+                pesquisaRealizada: !!resultadosPesquisa?.temResultados,
+                queryPesquisa: decisaoPesquisa.precisa ? decisaoPesquisa.queryPesquisa : null
             }
         });
 
@@ -1173,6 +1369,7 @@ app.listen(PORT, () => {
     console.log(`\n🤖 Servidor Merfin Agent Inteligente`);
     console.log(`📡 Porta: ${PORT}`);
     console.log(`🔑 OpenAI: ${process.env.OPENAI_API_KEY ? '✓' : '✗'}`);
-    console.log(`🔗 Server Operacional: ${OPERATIONAL_SERVER_URL}`);
+    console.log(`� Pesquisa Internet: ${SEARCH_API_KEY ? '✓' : '✗'}`);
+    console.log(`�🔗 Server Operacional: ${OPERATIONAL_SERVER_URL}`);
     console.log(`📊 Seções disponíveis: ${Object.keys(AVAILABLE_SECTIONS).join(', ')}\n`);
 });

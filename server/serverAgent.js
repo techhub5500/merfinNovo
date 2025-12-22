@@ -274,7 +274,30 @@ async function fetchOrganizedData(userToken, requiredSections, timeframe) {
                         { headers: { 'Authorization': `Bearer ${userToken}` } }
                     );
                     financas[monthsToFetch[0]] = response.data;
+                    
+                    // LOG DETALHADO DOS DADOS
                     console.log(`      ✅ Mês ${monthsToFetch[0]} carregado`);
+                    console.log(`      📊 DADOS DO MÊS ${monthsToFetch[0]}:`);
+                    console.log(`         💰 Receitas: ${response.data.receitas?.length || 0} itens`);
+                    if (response.data.receitas?.length > 0) {
+                        const totalReceitas = response.data.receitas.reduce((sum, r) => sum + (parseFloat(r.valor) || 0), 0);
+                        console.log(`         💵 Total Receitas: R$ ${totalReceitas.toFixed(2)}`);
+                        response.data.receitas.forEach(r => {
+                            console.log(`            - ${r.descricao}: R$ ${parseFloat(r.valor).toFixed(2)} (${r.status})`);
+                        });
+                    }
+                    console.log(`         💸 Despesas: ${response.data.despesas?.length || 0} itens`);
+                    if (response.data.despesas?.length > 0) {
+                        const totalDespesas = response.data.despesas.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+                        console.log(`         💵 Total Despesas: R$ ${totalDespesas.toFixed(2)}`);
+                        response.data.despesas.forEach(d => {
+                            console.log(`            - ${d.descricao}: R$ ${parseFloat(d.valor).toFixed(2)} (${d.status})`);
+                        });
+                    }
+                    const saldo = (response.data.receitas?.reduce((sum, r) => sum + (parseFloat(r.valor) || 0), 0) || 0) -
+                                  (response.data.despesas?.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0) || 0);
+                    console.log(`         💰 Saldo: R$ ${saldo.toFixed(2)}`);
+                    console.log(`      ─────────────────────────────────────────────────────`);
                 } else {
                     const response = await axios.post(
                         `${OPERATIONAL_SERVER_URL}/api/financas/multiplos-meses`,
@@ -285,6 +308,29 @@ async function fetchOrganizedData(userToken, requiredSections, timeframe) {
                     // Organizar por mês
                     response.data.forEach(mesData => {
                         financas[mesData.mesAno] = mesData;
+                        
+                        // LOG DETALHADO DOS DADOS DE CADA MÊS
+                        console.log(`      📊 DADOS DO MÊS ${mesData.mesAno}:`);
+                        console.log(`         💰 Receitas: ${mesData.receitas?.length || 0} itens`);
+                        if (mesData.receitas?.length > 0) {
+                            const totalReceitas = mesData.receitas.reduce((sum, r) => sum + (parseFloat(r.valor) || 0), 0);
+                            console.log(`         💵 Total Receitas: R$ ${totalReceitas.toFixed(2)}`);
+                            mesData.receitas.forEach(r => {
+                                console.log(`            - ${r.descricao}: R$ ${parseFloat(r.valor).toFixed(2)} (${r.status})`);
+                            });
+                        }
+                        console.log(`         💸 Despesas: ${mesData.despesas?.length || 0} itens`);
+                        if (mesData.despesas?.length > 0) {
+                            const totalDespesas = mesData.despesas.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+                            console.log(`         💵 Total Despesas: R$ ${totalDespesas.toFixed(2)}`);
+                            mesData.despesas.forEach(d => {
+                                console.log(`            - ${d.descricao}: R$ ${parseFloat(d.valor).toFixed(2)} (${d.status})`);
+                            });
+                        }
+                        const saldo = (mesData.receitas?.reduce((sum, r) => sum + (parseFloat(r.valor) || 0), 0) || 0) -
+                                      (mesData.despesas?.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0) || 0);
+                        console.log(`         💰 Saldo: R$ ${saldo.toFixed(2)}`);
+                        console.log(`      ─────────────────────────────────────────────────────`);
                     });
                     console.log(`      ✅ ${response.data.length} meses carregados`);
                 }
@@ -414,6 +460,12 @@ PRINCÍPIO FUNDAMENTAL:
 
 Quando uma pessoa entende sua realidade financeira com clareza, ela decide melhor. Seu papel é construir esse entendimento — não dar ordens, mas pensar JUNTO com o usuário.
 
+⚠️ REGRA DE OURO - PRECISÃO NUMÉRICA ABSOLUTA:
+Quando você recebe dados financeiros (receitas, despesas, saldos), esses valores são EXATOS e CALCULADOS.
+JAMAIS arredonde, aproxime ou recalcule esses valores.
+SEMPRE use os números EXATAMENTE como fornecidos nos dados.
+Exemplo: Se os dados dizem "Receitas: R$ 10.800,00", você DEVE escrever "R$ 10.800" - NUNCA "R$ 10.000" ou "cerca de R$ 11.000".
+
 COMO VOCÊ SE COMPORTA:
 - Tom: Humano, empático, sem julgamento
 - Linguagem: Simples e acessível (evite jargão financeiro a menos que esteja ensinando)
@@ -481,25 +533,28 @@ ESTRUTURA DE RESPOSTA:
 5. Relação com metas (se declaradas)
 6. Pergunta para aprofundar: "Quer que eu detalhe alguma área específica?"
 
-IMPORTANTE PARA ANÁLISES:
+🔴 REGRA CRÍTICA DE PRECISÃO NUMÉRICA:
+- USE OS VALORES EXATOS dos totais fornecidos nos dados - NUNCA arredonde ou aproxime
+- Os totais de receitas, despesas e saldos nos dados JSON são PRECISOS - copie-os exatamente
+- NÃO recalcule os valores - use os totais já calculados que foram fornecidos
 - NÃO liste item por item (ex: "Aluguel: R$ 1.200, Água: R$ 500...")
-- FOQUE em visão macro: totais, tendências, insights
-- Use itens específicos APENAS como exemplo ou destaque
+- FOQUE em visão macro usando os TOTAIS EXATOS: receita total, despesa total, saldo total
+- Use itens específicos APENAS como exemplo ou destaque quando relevante
 - Priorize análise qualitativa sobre lista quantitativa
 
-EXEMPLO:
+EXEMPLO (valores ilustrativos - use os valores reais dos dados fornecidos):
 User: "Faça uma análise completa de novembro e dezembro"
 Merfin: "📊 Visão Geral: Situação financeira saudável e em melhora!
 
 **Novembro:**
-- Receitas: R$ 10.800
-- Despesas: R$ 5.340
-- Saldo: R$ 5.460 (50% de sobra)
+- Receitas: [USE VALOR EXATO DOS DADOS]
+- Despesas: [USE VALOR EXATO DOS DADOS]
+- Saldo: [USE VALOR EXATO DOS DADOS] (X% de sobra)
 
 **Dezembro:**
-- Receitas: R$ 11.500  ⬆️ 
-- Despesas: R$ 5.710  ⬆️
-- Saldo: R$ 5.790 (50% de sobra)
+- Receitas: [USE VALOR EXATO DOS DADOS]  ⬆️ ou ⬇️ 
+- Despesas: [USE VALOR EXATO DOS DADOS]  ⬆️ ou ⬇️
+- Saldo: [USE VALOR EXATO DOS DADOS] (X% de sobra)
 
 💡 **O que isso significa:**
 Você manteve um padrão consistente de poupar metade da sua renda nos dois meses. Suas receitas cresceram 6% de novembro para dezembro, e suas despesas aumentaram proporcionalmente, mantendo o equilíbrio.
@@ -1272,6 +1327,10 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                 console.log('║       ✨ DUPLICATA IDENTIFICADA - NÃO ADICIONADO        ║');
                 console.log('╚═════════════════════════════════════════════════════════╝\n');
                 
+                console.log('📤 RESPOSTA ENVIADA PARA O FRONTEND:');
+                console.log('   ', responseMessage);
+                console.log('─────────────────────────────────────────────────────────\n');
+                
                 return res.json({
                     success: true,
                     response: responseMessage,
@@ -1326,6 +1385,10 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                 console.log('║            ✨ CONSULTA FINALIZADA COM SUCESSO           ║');
                 console.log('╚═════════════════════════════════════════════════════════╝\n');
                 
+                console.log('📤 RESPOSTA ENVIADA PARA O FRONTEND:');
+                console.log('   ', actionResult.message);
+                console.log('─────────────────────────────────────────────────────────\n');
+                
                 return res.json({
                     success: true,
                     response: actionResult.message,
@@ -1339,9 +1402,15 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                 });
             } else {
                 console.log('   ❌ Falha na execução da ação');
+                
+                const errorResponse = actionResult.message || 'Não consegui executar essa ação. Pode tentar novamente?';
+                console.log('📤 RESPOSTA ENVIADA PARA O FRONTEND:');
+                console.log('   ', errorResponse);
+                console.log('─────────────────────────────────────────────────────────\n');
+                
                 return res.json({
                     success: false,
-                    response: actionResult.message || 'Não consegui executar essa ação. Pode tentar novamente?',
+                    response: errorResponse,
                     conversaId: req.body.conversaId,
                     debug: {
                         intent: intentData.intent,
@@ -1518,9 +1587,60 @@ DATA ATUAL: ${currentDate}${contextoPrevio}${intentContext}${contextoPesquisa}
 DADOS DO USUÁRIO:
 ${JSON.stringify(userData, null, 2)}
 
+🚨 REGRA CRÍTICA OBRIGATÓRIA - LEIA COM ATENÇÃO:
+1. TODOS os valores de receitas e despesas nos dados JSON acima já foram VALIDADOS e estão CORRETOS
+2. Para calcular totais, você DEVE somar TODAS as transações de cada array (receitas[] e despesas[])
+3. NUNCA filtre transações por categoria, tipo, status ou qualquer outro critério
+4. NUNCA recalcule ou ajuste os valores - use os dados EXATAMENTE como fornecidos
+5. Se você somar manualmente: Nov receitas = 5000 + 2300 + 2300 + 1200 = 10.800 (esse é o valor CORRETO)
+6. Se você somar manualmente: Nov despesas = 1200 + 500 + 650 + 1230 + 130 + 1630 = 5.340 (esse é o valor CORRETO)
+7. Se você somar manualmente: Dez receitas = 8000 + 2300 + 1200 + 5000 = 16.500 (esse é o valor CORRETO)
+8. Se você somar manualmente: Dez despesas = 300 + 1230 + 130 + 1630 = 3.290 (esse é o valor CORRETO)
+
+EXEMPLO DO QUE VOCÊ DEVE FAZER:
+- Somar TODOS os itens do array "receitas" para obter o total de receitas
+- Somar TODOS os itens do array "despesas" para obter o total de despesas
+- Calcular saldo = total receitas - total despesas
+
+EXEMPLO DO QUE VOCÊ NÃO DEVE FAZER (PROIBIDO):
+- Excluir receitas de investimentos do cálculo
+- Excluir despesas de cartão de crédito do cálculo
+- Filtrar por status "Recebido" vs "A receber"
+- Filtrar por categoria
+- Aproximar ou arredondar valores
+
 PERGUNTA: "${message}"
 
 Forneça uma resposta completa, personalizada e útil baseada nos dados reais do usuário${resultadosPesquisa?.temResultados ? ' e nas informações atualizadas da internet' : ''}.`;
+
+        // LOG RESUMO DOS DADOS ENVIADOS PARA A IA
+        console.log('\n   📊 RESUMO DOS DADOS ENVIADOS PARA A IA:');
+        console.log('   ═══════════════════════════════════════════════════════');
+        if (userData.sections?.financas) {
+            const meses = Object.keys(userData.sections.financas);
+            console.log(`   📅 Meses incluídos: ${meses.join(', ')}`);
+            meses.forEach(mes => {
+                const mesData = userData.sections.financas[mes];
+                const totalReceitas = mesData.receitas?.reduce((sum, r) => sum + (parseFloat(r.valor) || 0), 0) || 0;
+                const totalDespesas = mesData.despesas?.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0) || 0;
+                console.log(`   \n   ${mes}:`);
+                console.log(`      💰 Receitas: ${mesData.receitas?.length || 0} itens = R$ ${totalReceitas.toFixed(2)}`);
+                console.log(`      💸 Despesas: ${mesData.despesas?.length || 0} itens = R$ ${totalDespesas.toFixed(2)}`);
+                console.log(`      💵 Saldo: R$ ${(totalReceitas - totalDespesas).toFixed(2)}`);
+            });
+        }
+        if (userData.sections?.perfil) {
+            console.log(`   \n   👤 Perfil incluído: Sim`);
+        }
+        console.log('   ═══════════════════════════════════════════════════════\n');
+
+        // LOG DO JSON COMPLETO ENVIADO (para debug)
+        console.log('   🔍 JSON EXATO ENVIADO PARA A IA (financas apenas):');
+        console.log('   ═══════════════════════════════════════════════════════');
+        if (userData.sections?.financas) {
+            console.log(JSON.stringify(userData.sections.financas, null, 2));
+        }
+        console.log('   ═══════════════════════════════════════════════════════\n');
 
         console.log('   ⏳ Consultando OpenAI para resposta final...');
 
@@ -1544,6 +1664,38 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         
         console.log('   ✅ Resposta gerada com sucesso');
         console.log('   📝 Tamanho da resposta:', aiMessage.length, 'caracteres');
+        
+        // VALIDAÇÃO: Verificar se a IA usou os valores corretos
+        console.log('\n   🔍 VALIDAÇÃO DOS VALORES NA RESPOSTA:');
+        console.log('   ═══════════════════════════════════════════════════════');
+        if (userData.sections?.financas) {
+            const meses = Object.keys(userData.sections.financas);
+            meses.forEach(mes => {
+                const mesData = userData.sections.financas[mes];
+                const totalReceitas = mesData.receitas?.reduce((sum, r) => sum + (parseFloat(r.valor) || 0), 0) || 0;
+                const totalDespesas = mesData.despesas?.reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0) || 0;
+                
+                // Formatações possíveis do valor na resposta
+                const receitaFormats = [
+                    `R$ ${totalReceitas.toFixed(0)}`,
+                    `R$ ${totalReceitas.toFixed(2).replace('.', ',')}`,
+                    `R$ ${totalReceitas.toLocaleString('pt-BR')}`,
+                    totalReceitas.toFixed(0),
+                    totalReceitas.toFixed(2)
+                ];
+                
+                const receitaEncontrada = receitaFormats.some(format => aiMessage.includes(format));
+                
+                console.log(`   ${mes}:`);
+                console.log(`      📊 Receita esperada: R$ ${totalReceitas.toFixed(2)}`);
+                console.log(`      ${receitaEncontrada ? '✅' : '❌'} Valor ${receitaEncontrada ? 'encontrado' : 'NÃO encontrado'} na resposta`);
+                
+                if (!receitaEncontrada) {
+                    console.log(`      ⚠️ ALERTA: A IA pode ter usado valor diferente!`);
+                }
+            });
+        }
+        console.log('   ═══════════════════════════════════════════════════════\n');
         
         // ========== CRIAR CONVERSA SE NÃO EXISTIR ==========
         if (!conversaId) {
@@ -1581,6 +1733,10 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         console.log('\n╔═════════════════════════════════════════════════════════╗');
         console.log('║            ✨ CONSULTA FINALIZADA COM SUCESSO           ║');
         console.log('╚═════════════════════════════════════════════════════════╝\n');
+
+        console.log('📤 RESPOSTA ENVIADA PARA O FRONTEND:');
+        console.log('   ', aiMessage);
+        console.log('─────────────────────────────────────────────────────────\n');
 
         res.json({
             success: true,

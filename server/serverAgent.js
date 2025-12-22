@@ -1634,14 +1634,6 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
         }
         console.log('   ═══════════════════════════════════════════════════════\n');
 
-        // LOG DO JSON COMPLETO ENVIADO (para debug)
-        console.log('   🔍 JSON EXATO ENVIADO PARA A IA (financas apenas):');
-        console.log('   ═══════════════════════════════════════════════════════');
-        if (userData.sections?.financas) {
-            console.log(JSON.stringify(userData.sections.financas, null, 2));
-        }
-        console.log('   ═══════════════════════════════════════════════════════\n');
-
         console.log('   ⏳ Consultando OpenAI para resposta final...');
 
         const finalResponse = await axios.post(

@@ -3,6 +3,150 @@ const axios = require('axios');
 // ========== FUNÇÕES DE MANIPULAÇÃO DE PLANILHAS ==========
 
 /**
+ * Função auxiliar para normalizar strings para comparação
+ */
+function normalizeString(str) {
+    if (!str) return '';
+    return str.toString().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^\w\s]/g, '') // Remove pontuação
+        .replace(/\s+/g, ' ') // Normaliza espaços
+        .trim();
+}
+
+/**
+ * Calcula similaridade entre duas strings (0 a 1)
+ */
+function calculateSimilarity(str1, str2) {
+    const norm1 = normalizeString(str1);
+    const norm2 = normalizeString(str2);
+    
+    if (norm1 === norm2) return 1;
+    if (!norm1 || !norm2) return 0;
+    
+    // Algoritmo simples de similaridade baseado em palavras comuns
+    const words1 = norm1.split(' ');
+    const words2 = norm2.split(' ');
+    
+    const commonWords = words1.filter(word => words2.includes(word)).length;
+    const totalWords = Math.max(words1.length, words2.length);
+    
+    return commonWords / totalWords;
+}
+
+/**
+ * Verifica se já existe uma despesa similar na planilha
+ * Retorna: { isDuplicate: boolean, existingItem: object|null, similarity: number }
+ */
+async function checkDuplicateExpense(userToken, operationalServerUrl, monthId, expenseData) {
+    console.log('\n🔍 VERIFICAÇÃO DE DUPLICATA - Despesa');
+    console.log('   📅 Mês:', monthId);
+    console.log('   📊 Dados a verificar:', JSON.stringify(expenseData, null, 2));
+    
+    const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
+    
+    if (!currentData.despesas || currentData.despesas.length === 0) {
+        console.log('   ✅ Nenhuma despesa no mês - não há duplicata');
+        return { isDuplicate: false, existingItem: null, similarity: 0 };
+    }
+    
+    const targetValue = parseFloat(expenseData.amount) || 0;
+    const targetDescription = expenseData.description || '';
+    const targetCategory = expenseData.category || '';
+    
+    // Buscar itens similares
+    for (const despesa of currentData.despesas) {
+        const itemValue = parseFloat(despesa.valor) || 0;
+        
+        // Critério 1: Valor deve ser igual ou muito próximo (±5 reais)
+        const valueDiff = Math.abs(itemValue - targetValue);
+        const valueMatch = valueDiff <= 5;
+        
+        if (!valueMatch) continue;
+        
+        // Critério 2: Descrição similar (>= 70% de similaridade)
+        const descriptionSimilarity = calculateSimilarity(targetDescription, despesa.descricao);
+        const descriptionMatch = descriptionSimilarity >= 0.7;
+        
+        // Critério 3: Mesma categoria (se informada)
+        const categoryMatch = !targetCategory || normalizeString(targetCategory) === normalizeString(despesa.categoria);
+        
+        // Se valor + descrição + categoria batem, é duplicata
+        if (valueMatch && descriptionMatch && categoryMatch) {
+            console.log('   ⚠️ DUPLICATA ENCONTRADA!');
+            console.log(`   📝 Item existente: ${despesa.descricao} - R$ ${despesa.valor}`);
+            console.log(`   📊 Similaridade descrição: ${(descriptionSimilarity * 100).toFixed(0)}%`);
+            console.log(`   💰 Diferença valor: R$ ${valueDiff.toFixed(2)}`);
+            
+            return {
+                isDuplicate: true,
+                existingItem: despesa,
+                similarity: descriptionSimilarity
+            };
+        }
+    }
+    
+    console.log('   ✅ Nenhuma duplicata encontrada - seguro adicionar');
+    return { isDuplicate: false, existingItem: null, similarity: 0 };
+}
+
+/**
+ * Verifica se já existe uma receita similar na planilha
+ * Retorna: { isDuplicate: boolean, existingItem: object|null, similarity: number }
+ */
+async function checkDuplicateIncome(userToken, operationalServerUrl, monthId, incomeData) {
+    console.log('\n🔍 VERIFICAÇÃO DE DUPLICATA - Receita');
+    console.log('   📅 Mês:', monthId);
+    console.log('   📊 Dados a verificar:', JSON.stringify(incomeData, null, 2));
+    
+    const currentData = await getMonthData(userToken, operationalServerUrl, monthId);
+    
+    if (!currentData.receitas || currentData.receitas.length === 0) {
+        console.log('   ✅ Nenhuma receita no mês - não há duplicata');
+        return { isDuplicate: false, existingItem: null, similarity: 0 };
+    }
+    
+    const targetValue = parseFloat(incomeData.amount) || 0;
+    const targetDescription = incomeData.description || '';
+    const targetCategory = incomeData.category || '';
+    
+    // Buscar itens similares
+    for (const receita of currentData.receitas) {
+        const itemValue = parseFloat(receita.valor) || 0;
+        
+        // Critério 1: Valor deve ser igual ou muito próximo (±5 reais)
+        const valueDiff = Math.abs(itemValue - targetValue);
+        const valueMatch = valueDiff <= 5;
+        
+        if (!valueMatch) continue;
+        
+        // Critério 2: Descrição similar (>= 70% de similaridade)
+        const descriptionSimilarity = calculateSimilarity(targetDescription, receita.descricao);
+        const descriptionMatch = descriptionSimilarity >= 0.7;
+        
+        // Critério 3: Mesma categoria (se informada)
+        const categoryMatch = !targetCategory || normalizeString(targetCategory) === normalizeString(receita.categoria);
+        
+        // Se valor + descrição + categoria batem, é duplicata
+        if (valueMatch && descriptionMatch && categoryMatch) {
+            console.log('   ⚠️ DUPLICATA ENCONTRADA!');
+            console.log(`   📝 Item existente: ${receita.descricao} - R$ ${receita.valor}`);
+            console.log(`   📊 Similaridade descrição: ${(descriptionSimilarity * 100).toFixed(0)}%`);
+            console.log(`   💰 Diferença valor: R$ ${valueDiff.toFixed(2)}`);
+            
+            return {
+                isDuplicate: true,
+                existingItem: receita,
+                similarity: descriptionSimilarity
+            };
+        }
+    }
+    
+    console.log('   ✅ Nenhuma duplicata encontrada - seguro adicionar');
+    return { isDuplicate: false, existingItem: null, similarity: 0 };
+}
+
+/**
  * Busca dados financeiros de um mês específico
  */
 async function getMonthData(userToken, operationalServerUrl, monthId) {
@@ -722,5 +866,7 @@ module.exports = {
     listIncomes,
     listExpenses,
     clearAllIncomes,
-    clearAllExpenses
+    clearAllExpenses,
+    checkDuplicateExpense,
+    checkDuplicateIncome
 };

@@ -15,8 +15,9 @@ const REASONING_CHAINS = {
         maxLength: 120,
         insights: ['verificar_se_recorrente', 'sugerir_investimento_se_alto'],
         template: (data) => {
-            const description = data.description ? `de ${data.description} ` : '';
-            return `✅ Receita ${description}de R$ ${data.amount.toFixed(2)} adicionada com sucesso!`;
+            const valor = `R$ ${data.amount.toFixed(2).replace('.', ',')}`;
+            const descricao = data.description || 'receita';
+            return `✅ Receita de ${descricao} de ${valor} adicionada com sucesso`;
         }
     },
     
@@ -27,8 +28,31 @@ const REASONING_CHAINS = {
         maxLength: 100,
         insights: ['verificar_categoria_alta'],
         template: (data) => {
-            const description = data.description ? `de ${data.description} ` : '';
-            return `✅ Despesa ${description}de R$ ${data.amount.toFixed(2)} adicionada com sucesso!`;
+            const valor = `R$ ${data.amount.toFixed(2).replace('.', ',')}`;
+            const descricao = data.description || 'despesa';
+            return `✅ Despesa de ${descricao} de ${valor} adicionada com sucesso`;
+        }
+    },
+    
+    // Solicitar esclarecimento sobre transação
+    CLARIFY_TRANSACTION: {
+        tone: 'amigavel_orientador',
+        celebrate: false,
+        maxLength: 200,
+        insights: [],
+        template: (data) => {
+            const tipo = data.transactionType === 'income' ? 'receita' : 
+                        data.transactionType === 'expense' ? 'despesa' : 'transação';
+            const valor = data.amount ? ` de R$ ${parseFloat(data.amount).toFixed(2).replace('.', ',')}` : '';
+            
+            return `Para fazer o lançamento dessa ${tipo}${valor}, preciso de uma descrição. 
+
+Por exemplo:
+• "Comprei 150 no supermercado hoje"
+• "Recebi 5000 de salário semana passada"
+• "Paguei 80 de uber com cartão de crédito"
+
+Me envie com a descrição que eu faço o lançamento! 😊`;
         }
     },
     

@@ -335,7 +335,41 @@ async function fetchOrganizedData(userToken, requiredSections, timeframe) {
                     console.log(`      ✅ ${response.data.length} meses carregados`);
                 }
 
+                // Calcular totais consolidados (para perguntas diretas sobre saldo)
+                let totaisConsolidados = {
+                    totalReceitas: 0,
+                    totalDespesas: 0,
+                    saldoTotal: 0,
+                    numeroMeses: Object.keys(financas).length,
+                    primeiroMes: monthsToFetch[0],
+                    ultimoMes: monthsToFetch[monthsToFetch.length - 1]
+                };
+                
+                Object.values(financas).forEach(mesData => {
+                    const receitasMes = (mesData.receitas || []).reduce((sum, r) => {
+                        const valor = parseFloat(r.valor);
+                        return sum + (isNaN(valor) ? 0 : valor);
+                    }, 0);
+                    const despesasMes = (mesData.despesas || []).reduce((sum, d) => {
+                        const valor = parseFloat(d.valor);
+                        return sum + (isNaN(valor) ? 0 : valor);
+                    }, 0);
+                    
+                    totaisConsolidados.totalReceitas += receitasMes;
+                    totaisConsolidados.totalDespesas += despesasMes;
+                });
+                
+                totaisConsolidados.saldoTotal = totaisConsolidados.totalReceitas - totaisConsolidados.totalDespesas;
+                
+                console.log('\n   📊 TOTAIS CONSOLIDADOS:');
+                console.log(`      💰 Total Receitas: R$ ${totaisConsolidados.totalReceitas.toFixed(2)}`);
+                console.log(`      💸 Total Despesas: R$ ${totaisConsolidados.totalDespesas.toFixed(2)}`);
+                console.log(`      💵 Saldo Total: R$ ${totaisConsolidados.saldoTotal.toFixed(2)}`);
+                console.log(`      📅 Período: ${totaisConsolidados.primeiroMes} a ${totaisConsolidados.ultimoMes}`);
+                console.log(`      📆 Número de meses: ${totaisConsolidados.numeroMeses}\n`);
+                
                 result.sections.financas = financas;
+                result.sections.totaisConsolidados = totaisConsolidados;
             }
             
             else if (section === 'dividas') {
@@ -522,8 +556,52 @@ Merfin: "Olá! Analisando seus dados, vejo que você gastou R$ 1.200 em alimenta
 
 ---
 
-SITUAÇÃO 2: Pedido de análise geral
-Exemplo: "Como estão minhas finanças?", "Me dá um panorama", "Como estou esse mês?", "Faça uma análise completa"
+SITUAÇÃO 2A: Pergunta DIRETA sobre saldo/total
+Exemplo: "Qual meu saldo total?", "Quanto tenho no ano?", "Qual foi meu saldo total?"
+
+🔴 REGRA CRÍTICA - RESPOSTA DIRETA E CONCISA:
+Quando o usuário perguntar sobre SALDO TOTAL ou valores consolidados:
+
+1. USE OS TOTAIS PRÉ-CALCULADOS fornecidos em userData.sections.totaisConsolidados
+2. NUNCA liste mês por mês - seja DIRETO
+3. NÃO recalcule - confie nos totais fornecidos
+
+ESTRUTURA OBRIGATÓRIA (máximo 8 linhas):
+
+📊 Saldo Total de [PERÍODO]:
+
+💰 Total de Receitas: R$ [USE VALOR EXATO]
+💸 Total de Despesas: R$ [USE VALOR EXATO]
+💵 Saldo Líquido: R$ [USE VALOR EXATO]
+
+
+💡 [Uma linha de insight se relevante]
+
+Quer uma análise detalhada mês a mês?
+
+EXEMPLO BOM:
+
+📊 Saldo Total de 2025:
+
+💰 Total de Receitas: R$ 15.800,00
+💸 Total de Despesas: R$ 5.420,00
+💵 Saldo Líquido: R$ 10.380,00
+
+💡 Você teve um saldo positivo consistente, com bom controle de despesas.
+
+Quer uma análise detalhada mês a mês?
+
+EXEMPLO RUIM (NÃO FAÇA):
+
+### Total de Receitas de 2025:
+- Janeiro: R$ 0
+- Fevereiro: R$ 0
+[... listando todos os meses ...]
+
+---
+
+SITUAÇÃO 2B: Pedido de análise geral/completa
+Exemplo: "Como estão minhas finanças?", "Me dá um panorama", "Faça uma análise completa"
 
 ESTRUTURA DE RESPOSTA:
 1. Resumo em uma frase (saúde geral: positiva/neutra/atenção)
@@ -904,6 +982,29 @@ Certifique-se de usar a data correta (${currentDate} se "hoje"), categorias da l
 async function executeAction(intent, entities, userToken, currentMonth) {
     console.log('\n⚡ EXECUTANDO AÇÃO');
     console.log(`   🎬 Intent: ${intent}`);
+    
+    // ===== VALIDAÇÃO DE INFORMAÇÕES ESSENCIAIS =====
+    if (intent === INTENTS.CLARIFY_TRANSACTION) {
+        console.log('   ⚠️  Informações insuficientes - solicitando esclarecimento');
+        
+        const tipoTransacao = entities.transactionType === 'income' ? 'receita' : 
+                             entities.transactionType === 'expense' ? 'despesa' : 
+                             'transação';
+        const valorTexto = entities.amount ? ` de R$ ${parseFloat(entities.amount).toFixed(2).replace('.', ',')}` : '';
+        
+        return {
+            success: false,
+            requiresClarification: true,
+            message: `Para fazer o lançamento dessa ${tipoTransacao}${valorTexto}, preciso de uma descrição. 
+
+Por exemplo:
+• "Comprei 150 no supermercado hoje"
+• "Recebi 5000 de salário semana passada"
+• "Paguei 80 de uber com cartão de crédito"
+
+Me envie com a descrição que eu faço o lançamento! 😊`
+        };
+    }
     
     // Determinar mês de competência baseado na data do lançamento
     let monthId = currentMonth;

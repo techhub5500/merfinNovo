@@ -420,16 +420,29 @@ let notas = [];
 let notaAtualIndex = 0;
 
 function initializeNotas() {
+    // Verificar se os elementos de notas existem no DOM
+    const btnAddNota = document.getElementById('btn-add-nota');
+    const btnSaveNota = document.getElementById('btn-save-nota');
+    const notaPrev = document.querySelector('.nota-prev');
+    const notaNext = document.querySelector('.nota-next');
+    const notaAtual = document.getElementById('nota-atual');
+    
+    // Se não existem elementos de notas, não fazer nada (página não tem sistema de notas)
+    if (!btnAddNota || !btnSaveNota || !notaPrev || !notaNext || !notaAtual) {
+        console.log('Sistema de notas não disponível nesta página');
+        return;
+    }
+    
     loadNotas();
     
-    document.getElementById('btn-add-nota').addEventListener('click', adicionarNota);
-    document.getElementById('btn-save-nota').addEventListener('click', salvarNotas);
-    document.querySelector('.nota-prev').addEventListener('click', () => navegarNota(-1));
-    document.querySelector('.nota-next').addEventListener('click', () => navegarNota(1));
+    btnAddNota.addEventListener('click', adicionarNota);
+    btnSaveNota.addEventListener('click', salvarNotas);
+    notaPrev.addEventListener('click', () => navegarNota(-1));
+    notaNext.addEventListener('click', () => navegarNota(1));
     
     // Auto-save ao digitar (com debounce)
     let timeout;
-    document.getElementById('nota-atual').addEventListener('input', function() {
+    notaAtual.addEventListener('input', function() {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
             if (notas[notaAtualIndex]) {

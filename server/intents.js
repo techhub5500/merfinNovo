@@ -50,8 +50,7 @@ const INTENTS = {
     
     // ===== CONVERSAÇÃO E ESCLARECIMENTO =====
     JUST_CHAT: "INTENT_JUST_CHAT",                        // Apenas conversar
-    CLARIFY: "INTENT_CLARIFY",                            // Pedir esclarecimento
-    GREETING: "INTENT_GREETING",                          // Saudação
+    CLARIFY: "INTENT_CLARIFY",                            // Pedir esclarecimento    CLARIFY_TRANSACTION: "INTENT_CLARIFY_TRANSACTION",    // Pedir esclarecimento sobre transação (falta descrição)    GREETING: "INTENT_GREETING",                          // Saudação
     FAREWELL: "INTENT_FAREWELL",                          // Despedida
     THANKS: "INTENT_THANKS",                              // Agradecimento
     
@@ -294,6 +293,17 @@ const INTENT_EXAMPLES = {
         "Preciso de alguém para conversar"
     ],
     
+    [INTENTS.CLARIFY_TRANSACTION]: [
+        "1550 de despesa",
+        "adicione 200",
+        "500 de receita",
+        "gastei 100",
+        "recebi 300",
+        "coloca 1000",
+        "2500",
+        "despesa de 450"
+    ],
+    
     [INTENTS.GREETING]: [
         "Olá",
         "Oi",
@@ -412,6 +422,23 @@ REGRAS IMPORTANTES:
 9. Se for despedida → INTENT_FAREWELL
 10. Se for agradecimento → INTENT_THANKS
 
+🔴 REGRA CRÍTICA - VALIDAÇÃO DE INFORMAÇÕES ESSENCIAIS:
+Quando o usuário quiser adicionar uma RECEITA ou DESPESA:
+- Se faltar DESCRIÇÃO (ex: "1550 de despesa", "adicione 200", "500 de receita") → use INTENT_CLARIFY_TRANSACTION
+- Se tiver APENAS valor SEM contexto do que é → use INTENT_CLARIFY_TRANSACTION
+- Descrição essencial: o QUE foi comprado/recebido (ex: "salário", "mercado", "uber", "freelance")
+
+EXEMPLOS que REQUEREM ESCLARECIMENTO (use INTENT_CLARIFY_TRANSACTION):
+- "1550 de despesa" → falta descrição
+- "adicione 200" → falta tipo (receita/despesa) e descrição
+- "500 de receita" → falta descrição
+- "gastei 100" → falta descrição do que foi
+
+EXEMPLOS que ESTÃO COMPLETOS (pode usar INTENT_ADD_*):
+- "Paguei 150 no mercado" → tem descrição (mercado)
+- "Recebi 5000 de salário" → tem descrição (salário)
+- "Gastei 80 de uber" → tem descrição (uber)
+
 FORMATO DE RESPOSTA:
 
 Para INTENT_BULK_ADD (múltiplos itens), use este formato:
@@ -483,7 +510,12 @@ IMPORTANTE SOBRE ENTITIES:
   * "Xº dia útil" → calcular o dia útil especificado
   * Se não mencionar data específica, use a data atual
 - description: descrição mencionada
-- paymentMethod: forma de pagamento (Dinheiro, Débito, Crédito, PIX)
+- paymentMethod: forma de pagamento (Dinheiro, Débito, Crédito, PIX) - REGRAS DE MAPEAMENTO:
+  * "dinheiro", "espécie", "à vista em dinheiro" → "Dinheiro"
+  * "débito", "cartão débito", "débito automático" → "Débito"
+  * "crédito", "cartão crédito", "cartão de crédito", "parcelado" → "Crédito"
+  * "pix", "PIX", "transferência", "ted", "doc" → "PIX"
+  * Se não mencionado, deixe como null (será usado padrão "Dinheiro")
 - status: status do pagamento/recebimento - REGRAS CRÍTICAS:
   * Para DESPESAS: "Pago" ou "A pagar"
   * Para RECEITAS: "Recebido" ou "A receber"
@@ -537,8 +569,14 @@ Saída: {"intent": "INTENT_ADD_INCOME", "confidence": 0.98, "reasoning": "Usuár
 Entrada: "Paguei o aluguel no dia 10" (Data atual: 2025-12-20)
 Saída: {"intent": "INTENT_ADD_EXPENSE", "confidence": 0.98, "reasoning": "Usuário pagou aluguel no dia 10 do mês", "entities": {"amount": null, "description": "Aluguel", "category": "Moradia", "subcategory": "Aluguel", "status": "Pago", "date": "2025-12-10"}}
 
-Entrada: "Vou pagar a conta de luz de R$ 180"
-Saída: {"intent": "INTENT_ADD_EXPENSE", "confidence": 0.98, "reasoning": "Usuário vai pagar no futuro", "entities": {"amount": 180, "description": "Conta de luz", "category": "Moradia", "subcategory": "Energia elétrica", "status": "A pagar"}}
+Entrada: "Paguei R$ 80 de uber em transporte com cartão de crédito"
+Saída: {"intent": "INTENT_ADD_EXPENSE", "confidence": 0.98, "reasoning": "Usuário pagou Uber com cartão de crédito", "entities": {"amount": 80, "description": "Uber", "category": "Transporte", "subcategory": "Aplicativos de transporte (Uber, 99)", "status": "Pago", "paymentMethod": "Crédito"}}
+
+Entrada: "Gastei R$ 50 no débito"
+Saída: {"intent": "INTENT_ADD_EXPENSE", "confidence": 0.98, "reasoning": "Usuário gastou com cartão de débito", "entities": {"amount": 50, "description": "Gasto", "status": "Pago", "paymentMethod": "Débito"}}
+
+Entrada: "Transferi R$ 200 via PIX"
+Saída: {"intent": "INTENT_ADD_EXPENSE", "confidence": 0.98, "reasoning": "Usuário fez transferência via PIX", "entities": {"amount": 200, "description": "Transferência", "status": "Pago", "paymentMethod": "PIX"}}
 
 Entrada: "Altera a categoria da despesa do mercado para Transporte"
 Saída: {"intent": "INTENT_UPDATE_EXPENSE_FIELD", "confidence": 0.95, "reasoning": "Usuário quer atualizar apenas o campo categoria", "entities": {"identifier": "Mercado", "field": "categoria", "newValue": "Transporte"}}

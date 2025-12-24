@@ -3,6 +3,22 @@
 // Variáveis para controle de filtro e cálculos
 let currentFilterMonths = 1; // Padrão: mês selecionado apenas
 
+// Função auxiliar para obter o mês atual no formato YYYY-MM
+function getCurrentMonthId() {
+    // Verificar se existe a variável global currentMonthDate do minhas-financas.js
+    if (typeof currentMonthDate !== 'undefined' && currentMonthDate) {
+        const year = currentMonthDate.getFullYear();
+        const month = (currentMonthDate.getMonth() + 1).toString().padStart(2, '0');
+        return `${year}-${month}`;
+    }
+    
+    // Caso contrário, usar a data atual
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}-${month}`;
+}
+
 function initializeDashboard() {
     // Inicializar filtro
     setupFilterButton();

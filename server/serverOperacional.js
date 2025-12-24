@@ -627,16 +627,29 @@ app.get('/api/conversas', authMiddleware, async (req, res) => {
 
 // Buscar conversa específica por ID
 app.get('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
+    const timestamp = new Date().toISOString();
     try {
         const { conversaId } = req.params;
         
+        console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📥 [REQUISIÇÃO] GET /api/conversas/:conversaId');
+        console.log('⏰ Timestamp:', timestamp);
+        console.log('🆔 ConversaId recebido:', conversaId);
+        console.log('👤 UserId do token:', req.userId);
+        console.log('🔐 Token válido:', !!req.userId);
+        
         // Validar se o ID é um ObjectId válido do MongoDB
         if (!mongoose.Types.ObjectId.isValid(conversaId)) {
-            console.error('❌ ID de conversa inválido:', conversaId);
+            console.error('❌ [VALIDAÇÃO] ID não é um ObjectId válido do MongoDB');
+            console.error('   Tipo recebido:', typeof conversaId);
+            console.error('   Valor:', conversaId);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
             return res.status(400).json({ error: 'ID de conversa inválido' });
         }
         
-        console.log('🔍 Buscando conversa:', conversaId, 'para usuário:', req.userId);
+        console.log('✅ [VALIDAÇÃO] ObjectId válido');
+        console.log('🔍 [MONGODB] Iniciando busca no banco...');
+        console.log('   Query: { _id:', conversaId, ', userId:', req.userId, '}');
         
         const conversa = await Conversa.findOne({ 
             _id: conversaId, 
@@ -644,14 +657,41 @@ app.get('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
         });
         
         if (!conversa) {
-            console.error('❌ Conversa não encontrada:', conversaId);
+            console.error('❌ [MONGODB] Conversa NÃO encontrada no banco');
+            console.error('   Possíveis causas:');
+            console.error('   1. Conversa foi deletada');
+            console.error('   2. ConversaId não existe');
+            console.error('   3. UserId não corresponde (conversa de outro usuário)');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
             return res.status(404).json({ error: 'Conversa não encontrada' });
         }
         
-        console.log('✅ Conversa encontrada:', conversa.titulo, 'com', conversa.mensagens.length, 'mensagens');
+        console.log('✅ [MONGODB] Conversa ENCONTRADA!');
+        console.log('📊 [DADOS] Informações da conversa:');
+        console.log('   ID:', conversa._id);
+        console.log('   Título:', conversa.titulo);
+        console.log('   Mensagens:', conversa.mensagens.length);
+        console.log('   Criada em:', conversa.createdAt);
+        console.log('   Atualizada em:', conversa.updatedAt);
+        
+        if (conversa.mensagens.length > 0) {
+            console.log('📝 [MENSAGENS] Primeiras mensagens:');
+            conversa.mensagens.slice(0, 3).forEach((msg, i) => {
+                console.log(`   ${i + 1}. [${msg.tipo}] ${msg.conteudo.substring(0, 50)}...`);
+            });
+        }
+        
+        console.log('📤 [RESPOSTA] Enviando conversa para o cliente...');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        
         res.json(conversa);
     } catch (error) {
-        console.error('❌ Erro ao buscar conversa:', error);
+        console.error('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('💥 [ERRO CRÍTICO] Falha ao buscar conversa');
+        console.error('📛 Tipo de erro:', error.name);
+        console.error('💬 Mensagem:', error.message);
+        console.error('📚 Stack trace:', error.stack);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         res.status(500).json({ error: 'Erro ao buscar conversa: ' + error.message });
     }
 });

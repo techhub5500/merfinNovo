@@ -579,32 +579,67 @@ let conversas = [];
 
 // Inicializar sistema de histórico
 async function initChatHistory() {
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log('🚀 SISTEMA DE HISTÓRICO DE CONVERSAS INICIADO');
+    console.log('📅 Data:', new Date().toLocaleString('pt-BR'));
+    console.log('═══════════════════════════════════════════════════════════\n');
     await carregarConversas();
 }
 
 // Carregar lista de conversas
 async function carregarConversas() {
+    console.log('\n📚 [INIT] Carregando lista de conversas do servidor...');
     try {
         const response = await fetchAPI('/api/conversas');
+        
+        if (!response.ok) {
+            console.error('❌ [INIT] Erro HTTP:', response.status, response.statusText);
+            throw new Error(`Erro HTTP ${response.status}`);
+        }
+        
         conversas = await response.json();
-        console.log('📚 Conversas carregadas:', conversas.length);
+        
+        console.log('✅ [INIT] Conversas carregadas com sucesso!');
+        console.log('   Total:', conversas.length);
+        
+        if (conversas.length > 0) {
+            console.log('📋 [INIT] Primeiras conversas:');
+            conversas.slice(0, 5).forEach((c, i) => {
+                console.log(`   ${i + 1}. [ID: ${c.id}] ${c.titulo}`);
+            });
+        } else {
+            console.log('⚠️ [INIT] Nenhuma conversa encontrada');
+        }
     } catch (error) {
-        console.error('Erro ao carregar conversas:', error);
+        console.error('💥 [INIT] Erro ao carregar conversas:', error.message);
+        console.error('   Stack:', error.stack);
     }
 }
 
 // Abrir modal de histórico
 function abrirModalHistorico() {
+    console.log('\n🔓 [MODAL] Abrindo modal de histórico...');
+    console.log('   Conversas em cache:', conversas.length);
+    console.log('   ConversaAtualId:', conversaAtualId || '(nenhuma)');
+    
     // Remover modal existente se houver
     const existingModal = document.getElementById('modal-historico');
-    if (existingModal) existingModal.remove();
+    if (existingModal) {
+        console.log('   Removendo modal anterior...');
+        existingModal.remove();
+    }
     
     const modal = criarModalHistorico();
     document.body.appendChild(modal);
+    console.log('✅ [MODAL] Modal criado e adicionado ao DOM');
+    
     renderizarListaConversas();
     
     // Animação de entrada
-    setTimeout(() => modal.classList.add('show'), 10);
+    setTimeout(() => {
+        modal.classList.add('show');
+        console.log('✨ [MODAL] Animação de entrada aplicada');
+    }, 10);
 }
 
 // Criar modal de histórico
@@ -654,12 +689,28 @@ function criarModalHistorico() {
 
 // Renderizar lista de conversas
 function renderizarListaConversas(filtro = '') {
+    console.log('\n🎨 [RENDER] Iniciando renderização da lista de conversas');
+    console.log('   Filtro aplicado:', filtro || '(nenhum)');
+    console.log('   Total de conversas disponíveis:', conversas.length);
+    
     const lista = document.getElementById('lista-conversas');
-    if (!lista) return;
+    if (!lista) {
+        console.error('❌ [RENDER] Elemento #lista-conversas não encontrado no DOM!');
+        return;
+    }
     
     const conversasFiltradas = conversas.filter(c => 
         c.titulo.toLowerCase().includes(filtro.toLowerCase())
     );
+    
+    console.log('   Conversas após filtro:', conversasFiltradas.length);
+    
+    if (conversasFiltradas.length > 0) {
+        console.log('📋 [RENDER] Lista de conversas a renderizar:');
+        conversasFiltradas.forEach((c, i) => {
+            console.log(`   ${i + 1}. [ID: ${c.id}] ${c.titulo} (${c.numMensagens} msgs)`);
+        });
+    }
     
     if (conversasFiltradas.length === 0) {
         lista.innerHTML = `
@@ -702,41 +753,73 @@ function renderizarListaConversas(filtro = '') {
         </div>
     `).join('');
     
-    // Adicionar event listeners após renderizar
+    // Adicionar event listeners após renderizar (150ms garante DOM pronto)
     setTimeout(() => {
-        // Click nas conversas
-        document.querySelectorAll('.conversa-info').forEach(el => {
+        const conversaItems = document.querySelectorAll('.conversa-item');
+        const btnsEditar = document.querySelectorAll('.btn-editar');
+        const btnsDeletar = document.querySelectorAll('.btn-deletar');
+        
+        console.log('📌 Anexando listeners:', {
+            conversas: conversaItems.length,
+            editButtons: btnsEditar.length,
+            deleteButtons: btnsDeletar.length
+        });
+        
+        // Validar se elementos existem
+        if (conversaItems.length === 0) {
+            console.error('❌ Nenhum elemento .conversa-item encontrado!');
+            return;
+        }
+        
+        // Click no CARD INTEIRO para abrir conversa
+        conversaItems.forEach(el => {
             el.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
+                // Não abrir se clicou em botão de ação
+                if (e.target.closest('.btn-editar') || e.target.closest('.btn-deletar')) {
+                    console.log('🚫 Clique em botão - não abre conversa');
+                    return;
+                }
+                
                 const conversaId = this.getAttribute('data-conversa-id');
-                if (conversaId) {
-                    console.log('🖱️ Clique na conversa:', conversaId);
+                
+                console.log('🖱️ Clique no card capturado!', {
+                    conversaId: conversaId,
+                    elemento: this.querySelector('.conversa-titulo span')?.textContent
+                });
+                
+                if (conversaId && conversaId !== 'undefined' && conversaId !== 'null') {
                     carregarConversa(conversaId);
+                } else {
+                    console.error('❌ ID inválido no clique:', conversaId);
+                    showNotification('Erro: ID de conversa inválido', 'error');
                 }
             });
         });
         
-        // Botões de editar
-        document.querySelectorAll('.btn-editar').forEach(btn => {
+        // Botões de editar (com stopPropagation para não abrir conversa)
+        btnsEditar.forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopPropagation(); // Impede que o clique propague para o card
                 const conversaId = this.getAttribute('data-conversa-id');
+                console.log('✏️ Botão editar clicado:', conversaId);
                 if (conversaId) editarTitulo(conversaId);
             });
         });
         
-        // Botões de deletar
-        document.querySelectorAll('.btn-deletar').forEach(btn => {
+        // Botões de deletar (com stopPropagation para não abrir conversa)
+        btnsDeletar.forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopPropagation(); // Impede que o clique propague para o card
                 const conversaId = this.getAttribute('data-conversa-id');
+                console.log('🗑️ Botão deletar clicado:', conversaId);
                 if (conversaId) deletarConversa(conversaId);
             });
         });
-    }, 50);
+        
+        console.log('✅ Listeners anexados com sucesso!');
+    }, 150);
 }
 
 // Filtrar conversas
@@ -785,49 +868,58 @@ let carregandoConversa = false;
 
 // Carregar conversa específica
 async function carregarConversa(conversaId) {
-    // Debounce - evitar múltiplos cliques
-    if (carregarConversaTimeout) {
-        console.log('⏳ Aguardando debounce...');
+    console.log('\n🚀 [INÍCIO] Tentativa de carregar conversa:', conversaId);
+    
+    // Validar ID PRIMEIRO (antes de qualquer bloqueio)
+    if (!conversaId || conversaId === 'undefined' || conversaId === 'null') {
+        console.error('❌ [VALIDAÇÃO] ID inválido:', conversaId);
+        showNotification('Erro: ID de conversa inválido', 'error');
         return;
     }
     
     // Evitar carregamento simultâneo
     if (carregandoConversa) {
-        console.log('⏳ Já está carregando uma conversa...');
+        console.log('⏳ [LOCK] Já está carregando uma conversa, aguarde...');
+        showNotification('Aguarde o carregamento atual...', 'info');
         return;
     }
     
-    // Validar ID
-    if (!conversaId || conversaId === 'undefined' || conversaId === 'null') {
-        console.error('❌ ID de conversa inválido:', conversaId);
-        showNotification('Erro: ID de conversa inválido', 'error');
+    // Debounce mais curto (300ms em vez de 1 segundo)
+    if (carregarConversaTimeout) {
+        console.log('⏳ [DEBOUNCE] Clique muito rápido, aguarde 300ms...');
         return;
     }
     
     carregarConversaTimeout = setTimeout(() => {
         carregarConversaTimeout = null;
-    }, 1000);
+        console.log('✅ [DEBOUNCE] Liberado para próximo clique');
+    }, 300);
     
     carregandoConversa = true;
+    console.log('🔐 [LOCK] Ativado - carregando conversa');
     
     try {
-        console.log('🔄 Carregando conversa:', conversaId);
+        console.log('📡 [HTTP] Fazendo requisição para /api/conversas/' + conversaId);
         showNotification('Carregando conversa...', 'info');
         
         const response = await fetchAPI(`/api/conversas/${conversaId}`);
         
+        console.log('📡 [HTTP] Status da resposta:', response.status, response.statusText);
+        
         // Verificar se a resposta foi bem-sucedida
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+            console.error('❌ [HTTP] Erro na resposta:', errorData);
             throw new Error(errorData.error || `Erro HTTP ${response.status}`);
         }
         
         const conversa = await response.json();
         
-        console.log('📦 Conversa recebida:', {
+        console.log('📦 [DADOS] Conversa recebida:', {
             id: conversa._id,
             titulo: conversa.titulo,
-            numMensagens: conversa.mensagens?.length || 0
+            numMensagens: conversa.mensagens?.length || 0,
+            primeiraMsg: conversa.mensagens?.[0]?.conteudo?.substring(0, 50)
         });
         
         // Validar estrutura da conversa
@@ -848,11 +940,12 @@ async function carregarConversa(conversaId) {
         
         // Renderizar mensagens
         if (Array.isArray(conversa.mensagens) && conversa.mensagens.length > 0) {
-            console.log('📝 Renderizando', conversa.mensagens.length, 'mensagens...');
+            console.log('📝 [RENDER] Renderizando', conversa.mensagens.length, 'mensagens...');
             
+            let mensagensRenderizadas = 0;
             conversa.mensagens.forEach((msg, index) => {
                 if (!msg.conteudo) {
-                    console.warn('⚠️ Mensagem sem conteúdo no índice', index);
+                    console.warn('⚠️ [RENDER] Mensagem sem conteúdo no índice', index);
                     return;
                 }
                 
@@ -860,26 +953,36 @@ async function carregarConversa(conversaId) {
                 el.className = `message ${msg.tipo === 'user' ? 'user' : 'bot'}`;
                 el.innerText = msg.conteudo;
                 chatMessages.appendChild(el);
+                mensagensRenderizadas++;
             });
             
-            console.log('✅ Mensagens renderizadas com sucesso!');
+            console.log('✅ [RENDER] ' + mensagensRenderizadas + ' mensagens renderizadas com sucesso!');
         } else {
-            console.log('⚠️ Conversa vazia - sem mensagens');
+            console.log('⚠️ [RENDER] Conversa vazia - sem mensagens');
         }
         
         // Scroll para o final
         setTimeout(() => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            console.log('📜 [SCROLL] Posicionado no final do chat');
         }, 100);
         
+        console.log('❌ [MODAL] Fechando modal de histórico...');
         fecharModalHistorico();
+        
+        console.log('✅ [SUCESSO] Conversa carregada completamente!\n');
         showNotification('Conversa carregada!', 'success');
         
     } catch (error) {
-        console.error('❌ Erro ao carregar conversa:', error);
+        console.error('❌ [ERRO] Falha ao carregar conversa:', {
+            conversaId: conversaId,
+            erro: error.message,
+            stack: error.stack
+        });
         showNotification('Erro: ' + error.message, 'error');
     } finally {
         carregandoConversa = false;
+        console.log('🔓 [LOCK] Liberado - carregamento finalizado\n');
     }
 }
 

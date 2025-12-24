@@ -15,8 +15,8 @@ const REASONING_CHAINS = {
         maxLength: 120,
         insights: ['verificar_se_recorrente', 'sugerir_investimento_se_alto'],
         template: (data) => {
-            const celebration = data.amount > 1000 ? '✨' : '✅';
-            return `${celebration} Receita de R$ ${data.amount.toFixed(2)} registrada!`;
+            const description = data.description ? `de ${data.description} ` : '';
+            return `✅ Receita ${description}de R$ ${data.amount.toFixed(2)} adicionada com sucesso!`;
         }
     },
     
@@ -27,7 +27,8 @@ const REASONING_CHAINS = {
         maxLength: 100,
         insights: ['verificar_categoria_alta'],
         template: (data) => {
-            return `✅ Despesa de R$ ${data.amount.toFixed(2)} em ${data.category || 'gastos'}.`;
+            const description = data.description ? `de ${data.description} ` : '';
+            return `✅ Despesa ${description}de R$ ${data.amount.toFixed(2)} adicionada com sucesso!`;
         }
     },
     

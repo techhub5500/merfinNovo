@@ -27,12 +27,12 @@
 }
 
 .auth-modal-content {
-    background: var(--color-bg-secondary);
+    background: var(--color-surface);
     border-radius: 16px;
     padding: 32px;
     width: 90%;
     max-width: 450px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
                 0 0 0 1px rgba(255, 255, 255, 0.1);
     animation: slideUp 0.4s ease;
 }
@@ -115,7 +115,7 @@
 
 .auth-form input {
     padding: 12px;
-    background: var(--color-bg-primary);
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 6px;
     color: var(--color-text-primary);
@@ -143,7 +143,7 @@
 }
 
 .btn-auth:hover {
-    background: var(--color-primary-dark);
+    background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
 }
@@ -221,15 +221,6 @@ body {
     padding-bottom: 140px; /* espaço para o form */
 }
 
-.messages {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-sizing: border-box;
-}
-
 .input-area {
     position: absolute; /* posiciona relativo a .content */
     bottom: 0;
@@ -250,44 +241,83 @@ body {
 .input-wrapper {
     position: relative;
     width: 100%;
-    border: 1px solid var(--color-border);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    background: var(--color-surface-user);
+    background: rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
-    padding: 12px;
+    padding: 8px;
     gap: 8px;
     box-sizing: border-box;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 #message-input {
     flex: 1;
-    height: 96px;
+    height: 120px;
+    min-height: 120px; /* altura mínima para evitar encolhimento */
     resize: none;
     border: none;
+    padding: 12px 50px 12px 12px; /* espaço para o botão */
     background: transparent;
     color: var(--color-text-primary);
     font-size: 16px;
     box-sizing: border-box;
     outline: none;
-    padding: 0;
+    padding-right: 15px;
 }
 
+#message-input:focus {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+/* Scrollbar customizado para o textarea */
+#message-input::-webkit-scrollbar {
+    width: 8px;
+}
+
+#message-input::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 6px;
+}
+
+#message-input::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-tertiary);
+}
+
+
+
 #send-btn {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    min-width: 38px;
+    height: 38px;
     border: none;
     border-radius: 50%;
-    background: linear-gradient(180deg, #2f9a69, #238050);
+    background: transparent;
     color: white;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     box-shadow: var(--shadow-sm);
     transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+#send-btn:hover {
+    transform: scale(1.25);
+}
+
+#send-btn.clicked {
+    transform: scale(1.25);
+}
+
+#send-btn.clicked:hover {
+    transform: scale(1.25);
 }
 
 #send-btn:active {
@@ -387,60 +417,52 @@ body {
     align-items: flex-end;
 }
 
-#message-input {
-    width: 80%; /* solicitado: 80% da largura da página */
-    height: 120px; /* solicitado: 120px de altura */
-    resize: none;
-    padding: 12px 50px 12px 12px; /* espaço para o botão */
-    border-radius: 10px;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface-user);
-    color: var(--color-text-primary);
-    font-size: 16px;
-    box-sizing: border-box;
-    outline: none;
-}
 
-#message-input:focus {
-    border: none;
-    outline: none;
-    box-shadow: none;
-}
 
-#send-btn {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-    min-width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: 50%;
-    background: linear-gradient(180deg, #2f9a69, #238050);
-    color: white;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-fast), opacity var(--transition-fast);
-}
-
-#send-btn:active {
-    transform: scale(0.98);
-}
-
-#send-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
 
 /* Scrollbar custom */
 .messages::-webkit-scrollbar { width: 8px; }
 .messages::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 6px; }
 .messages::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
 
-/* ========== EFEITO DE PENSANDO ========== */
+/* ========== PLACEHOLDER DO CHAT ========== */
+.chat-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--color-text-secondary);
+    z-index: 1;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.chat-placeholder.hidden {
+    opacity: 0;
+}
+
+.placeholder-content {
+    max-width: 600px;
+    font-family: 'Crimson Text', serif;
+    font-size: 50px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* Responsividade do placeholder */
+@media (max-width: 600px) {
+    .placeholder-content {
+        max-width: 90vw;
+        font-size: 33px;
+        white-space: normal;
+        word-wrap: break-word;
+        line-height: 1.3;
+    }
+}
 .message.thinking {
     background: var(--color-surface-elevated);
     padding: 16px 20px;

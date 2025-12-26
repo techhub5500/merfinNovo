@@ -5,25 +5,28 @@
     position: fixed;
     top: 24px;
     right: 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff1f1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+    width: 48px;
+    height: 48px;
 }
 
 .btn-historico:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .btn-historico:active {
@@ -31,7 +34,7 @@
 }
 
 .btn-historico i {
-    font-size: 16px;
+    font-size: 18px;
 }
 
 /* Botão Novo Chat - Abaixo do botão Histórico */
@@ -39,25 +42,28 @@
     position: fixed;
     top: 76px;
     right: 24px;
-    background: linear-gradient(135deg, #2f9a69 0%, #238050 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff1f1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(47, 154, 105, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+    width: 48px;
+    height: 48px;
 }
 
 .btn-novo-chat:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(47, 154, 105, 0.5);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .btn-novo-chat:active {
@@ -65,7 +71,7 @@
 }
 
 .btn-novo-chat i {
-    font-size: 16px;
+    font-size: 18px;
 }
 
 /* Modal */
@@ -91,7 +97,7 @@
 
 .modal-historico-content {
     background: #1e1e1e;
-    border: 1px solid #333333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     width: 90%;
     max-width: 700px;
@@ -112,34 +118,36 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px 16px 0 0;
 }
 
 .modal-historico-header h2 {
     margin: 0;
-    font-size: 24px;
-    color: #ffffff;
+    font-size: 20px;
+    color: #fff1f1;
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-weight: 600;
+    gap: 10px;
+    font-weight: 500;
 }
 
 .modal-historico-header h2 i {
-    color: #ffffff;
+    color: #a0a0a0;
+    font-size: 18px;
 }
 
 .btn-fechar-modal {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    font-size: 24px;
-    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 18px;
+    color: #a0a0a0;
     cursor: pointer;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -147,17 +155,19 @@
 }
 
 .btn-fechar-modal:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff1f1;
 }
 
 /* Busca */
 .modal-historico-busca {
     padding: 16px 24px;
-    border-bottom: 1px solid #333333;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     gap: 12px;
-    background: #252525;
+    background: #1e1e1e;
 }
 
 .modal-historico-busca i {
@@ -167,10 +177,10 @@
 
 .modal-historico-busca input {
     flex: 1;
-    border: 1px solid #333333;
-    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     color: #fff1f1;
-    padding: 12px 16px;
+    padding: 10px 14px;
     border-radius: 8px;
     font-size: 14px;
     outline: none;
@@ -182,26 +192,27 @@
 }
 
 .modal-historico-busca input:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 /* Ações */
 .modal-historico-acoes {
     padding: 16px 24px;
-    border-bottom: 1px solid #333333;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     background: #1e1e1e;
 }
 
 .btn-nova-conversa {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff1f1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 12px 20px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -211,8 +222,33 @@
 }
 
 .btn-nova-conversa:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-apagar-todos {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    margin-left: 12px;
+}
+
+.btn-apagar-todos:hover {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: rgba(220, 53, 69, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
 }
 
 /* Lista de Conversas */
@@ -233,17 +269,17 @@
 }
 
 .modal-historico-lista::-webkit-scrollbar-thumb {
-    background: #333333;
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
 }
 
 .modal-historico-lista::-webkit-scrollbar-thumb:hover {
-    background: #444444;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .conversa-item {
-    background: #252525;
-    border: 2px solid #333333;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 12px;
@@ -257,15 +293,15 @@
 }
 
 .conversa-item:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-    background: #292929;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
     transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .conversa-item.ativa {
-    background: rgba(102, 126, 234, 0.15);
-    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .conversa-info {
@@ -284,13 +320,13 @@
 }
 
 .conversa-titulo i {
-    color: #667eea;
+    color: #a0a0a0;
     font-size: 16px;
 }
 
 .conversa-titulo span {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
     color: #fff1f1;
 }
 
@@ -335,8 +371,8 @@
 }
 
 .btn-icon:hover {
-    background: #333333;
-    color: #667eea;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff1f1;
 }
 
 .btn-icon.btn-deletar:hover {
@@ -352,8 +388,8 @@
 }
 
 .empty-state i {
-    font-size: 64px;
-    color: #333333;
+    font-size: 48px;
+    color: #6b7280;
     margin-bottom: 16px;
 }
 
@@ -402,31 +438,23 @@
     .btn-historico {
         top: 12px;
         right: 12px;
-        padding: 10px 16px;
-        font-size: 13px;
-    }
-
-    .btn-historico span {
-        display: none;
+        width: 44px;
+        height: 44px;
     }
 
     .btn-historico i {
-        margin: 0;
+        font-size: 16px;
     }
 
     .btn-novo-chat {
-        top: 60px;
+        top: 64px;
         right: 12px;
-        padding: 10px 16px;
-        font-size: 13px;
-    }
-
-    .btn-novo-chat span {
-        display: none;
+        width: 44px;
+        height: 44px;
     }
 
     .btn-novo-chat i {
-        margin: 0;
+        font-size: 16px;
     }
 
     .modal-historico-content {
@@ -452,19 +480,4 @@
         gap: 4px;
     }
 }
-    
-    .modal-historico-header h2 {
-        font-size: 20px;
-    }
-    
-    .conversa-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    
-    .conversa-acoes {
-        width: 100%;
-        justify-content: flex-end;
-    }
 

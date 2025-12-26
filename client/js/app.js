@@ -572,6 +572,29 @@ async function saveOnboardingData(skipMode = false) {
     }
 }
 
+// ========== CONTROLE DO PLACEHOLDER DO CHAT ==========
+
+// Função para controlar visibilidade do placeholder
+function toggleChatPlaceholder(show = false) {
+    const placeholder = document.getElementById('chat-placeholder');
+    if (!placeholder) return;
+    
+    if (show) {
+        placeholder.classList.remove('hidden');
+    } else {
+        placeholder.classList.add('hidden');
+    }
+}
+
+// Verificar se deve mostrar o placeholder (quando não há mensagens)
+function checkChatPlaceholder() {
+    const messages = document.getElementById('messages');
+    if (!messages) return;
+    
+    const hasMessages = messages.children.length > 0;
+    toggleChatPlaceholder(!hasMessages);
+}
+
 // ========== GERENCIAMENTO DE HISTÓRICO DE CONVERSAS ==========
 
 let conversaAtualId = null;
@@ -584,6 +607,9 @@ async function initChatHistory() {
     console.log('📅 Data:', new Date().toLocaleString('pt-BR'));
     console.log('═══════════════════════════════════════════════════════════\n');
     await carregarConversas();
+    
+    // Verificar se deve mostrar o placeholder inicialmente
+    setTimeout(() => checkChatPlaceholder(), 100);
 }
 
 // Carregar lista de conversas
@@ -670,6 +696,9 @@ function criarModalHistorico() {
             <div class="modal-historico-acoes">
                 <button class="btn-nova-conversa" onclick="criarNovaConversa()">
                     <i class="fas fa-plus"></i> Nova Conversa
+                </button>
+                <button class="btn-apagar-todos" onclick="apagarTodosChats()">
+                    <i class="fas fa-trash-alt"></i> Apagar Todos
                 </button>
             </div>
             
@@ -859,6 +888,7 @@ function iniciarNovoChat() {
     if (chatMessages) {
         chatMessages.innerHTML = '';
     }
+    toggleChatPlaceholder(true); // Mostrar placeholder no novo chat
     showNotification('Novo chat iniciado!', 'success');
 }
 
@@ -970,6 +1000,11 @@ async function carregarConversa(conversaId) {
         console.log('❌ [MODAL] Fechando modal de histórico...');
         fecharModalHistorico();
         
+        // Esconder placeholder se há mensagens carregadas
+        if (conversa.mensagens && conversa.mensagens.length > 0) {
+            toggleChatPlaceholder(false);
+        }
+        
         console.log('✅ [SUCESSO] Conversa carregada completamente!\n');
         showNotification('Conversa carregada!', 'success');
         
@@ -1030,6 +1065,33 @@ async function deletarConversa(conversaId) {
     } catch (error) {
         console.error('Erro ao deletar conversa:', error);
         showNotification('Erro ao deletar conversa', 'error');
+    }
+}
+
+// Apagar todas as conversas
+async function apagarTodosChats() {
+    if (!confirm('⚠️ ATENÇÃO: Esta ação irá deletar TODAS as suas conversas permanentemente. Tem certeza?')) return;
+    
+    try {
+        const response = await fetchAPI('/api/conversas', {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        // Limpar conversa atual
+        conversaAtualId = null;
+        const chatMessages = document.getElementById('messages');
+        if (chatMessages) chatMessages.innerHTML = '';
+        
+        // Limpar lista local
+        conversas = [];
+        renderizarListaConversas();
+        
+        showNotification(`Todas as conversas foram deletadas! (${data.deletedCount} conversas)`, 'success');
+    } catch (error) {
+        console.error('Erro ao apagar todos os chats:', error);
+        showNotification('Erro ao apagar todos os chats', 'error');
     }
 }
 

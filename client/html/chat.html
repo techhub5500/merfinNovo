@@ -39,19 +39,22 @@
     <!-- Botão Histórico Fixo -->
     <button id="btn-historico" class="btn-historico" onclick="abrirModalHistorico()">
         <i class="fas fa-history"></i>
-        <span>Histórico</span>
     </button>
 
     <!-- Botão Novo Chat -->
     <button id="btn-novo-chat" class="btn-novo-chat" onclick="iniciarNovoChat()">
         <i class="fas fa-plus"></i>
-        <span>Novo Chat</span>
     </button>
 
     <!-- Conteúdo do chat -->
     <div class="content" id="content">
         <main class="chat-container">
             <section id="messages" class="messages" aria-live="polite"></section>
+            <div id="chat-placeholder" class="chat-placeholder">
+                <div class="placeholder-content">
+                    Pergunte sobre suas finanças
+                </div>
+            </div>
         </main>
 
         <form id="chat-form" class="input-area" autocomplete="off">
@@ -120,6 +123,9 @@
             el.innerText = text;
             messages.appendChild(el);
             messages.scrollTop = messages.scrollHeight;
+            
+            // Esconder placeholder quando há mensagens
+            toggleChatPlaceholder(false);
         }
 
         // Criar elemento de "pensando"
@@ -150,6 +156,9 @@
         // Adicionar mensagem do bot com efeito de digitação e suporte a Markdown
         function addBotMessageTyping(text) {
             removeThinkingIndicator();
+            
+            // Esconder placeholder quando há mensagens
+            toggleChatPlaceholder(false);
             
             const el = document.createElement('div');
             el.className = 'message bot typing';
@@ -197,8 +206,10 @@
             
             if (isLoading) {
                 sendBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+                sendBtn.classList.add('clicked');
             } else {
                 sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                sendBtn.classList.remove('clicked');
             }
         }
 
@@ -261,6 +272,7 @@
             
             addUserMessage(txt);
             input.value = '';
+            input.style.height = '120px'; // Resetar altura para inicial
             sendMessage(txt);
         });
 
@@ -275,7 +287,7 @@
         // Auto-resize do textarea
         input.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+            this.style.height = Math.max(Math.min(this.scrollHeight, 400), 120) + 'px';
         });
     })();
     </script>

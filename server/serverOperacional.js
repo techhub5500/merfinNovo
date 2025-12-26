@@ -18,6 +18,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Log de todas as requisições (DEBUG)
+app.use((req, res, next) => {
+    console.log(`\n📨 [${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
 // Servir arquivos estáticos da pasta client
 app.use(express.static(path.join(__dirname, '../client')));
 
@@ -603,22 +609,10 @@ app.delete('/api/notas/:pagina', authMiddleware, async (req, res) => {
 app.get('/api/conversas', authMiddleware, async (req, res) => {
     try {
         const conversas = await Conversa.find({ userId: req.userId })
-            .sort({ updatedAt: -1 })
-            .select('_id titulo mensagens.timestamp createdAt updatedAt');
+            .select('titulo resumo createdAt updatedAt mensagens')
+            .sort({ updatedAt: -1 });
         
-        // Retornar com contagem de mensagens e última mensagem
-        const conversasFormatadas = conversas.map(conv => ({
-            id: conv._id,
-            titulo: conv.titulo,
-            numMensagens: conv.mensagens?.length || 0,
-            ultimaMensagem: conv.mensagens?.length > 0 
-                ? conv.mensagens[conv.mensagens.length - 1].timestamp 
-                : conv.createdAt,
-            createdAt: conv.createdAt,
-            updatedAt: conv.updatedAt
-        }));
-        
-        res.json(conversasFormatadas);
+        res.json(conversas);
     } catch (error) {
         console.error('Erro ao buscar conversas:', error);
         res.status(500).json({ error: 'Erro ao buscar conversas' });
@@ -787,7 +781,23 @@ app.patch('/api/conversas/:conversaId/titulo', authMiddleware, async (req, res) 
     }
 });
 
-// Deletar conversa
+// Deletar TODAS as conversas do usuário (deve vir ANTES da rota específica)
+app.delete('/api/conversas', authMiddleware, async (req, res) => {
+    console.log('🗑️ [DEBUG] DELETE /api/conversas chamado');
+    try {
+        const result = await Conversa.deleteMany({ userId: req.userId });
+        
+        res.json({ 
+            message: 'Todas as conversas foram deletadas com sucesso',
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error('Erro ao deletar todas as conversas:', error);
+        res.status(500).json({ error: 'Erro ao deletar todas as conversas' });
+    }
+});
+
+// Deletar conversa específica
 app.delete('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
     try {
         const { conversaId } = req.params;
@@ -883,6 +893,11 @@ app.get('/api/status', (req, res) => {
         message: 'Servidor Operacional Merfin rodando',
         database: mongoose.connection.readyState === 1 ? 'conectado' : 'desconectado'
     });
+});
+
+// Rota de teste sem auth
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'API funcionando', timestamp: new Date().toISOString() });
 });
 
 // ========== INICIAR SERVIDOR ==========

@@ -16,13 +16,19 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json());
 
 // Log de todas as requisições (DEBUG)
 app.use((req, res, next) => {
     console.log(`\n📨 [${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
+
+// ⚠️ IMPORTANTE: Webhook do Stripe precisa do body RAW
+// Esta rota DEVE vir ANTES do express.json()
+app.use('/api/pagamentos/webhook', express.raw({ type: 'application/json' }));
+
+// Agora sim podemos usar express.json() para as outras rotas
+app.use(express.json());
 
 // Servir arquivos estáticos da pasta client
 app.use(express.static(path.join(__dirname, '../client')));
@@ -172,6 +178,51 @@ const conversaSchema = new mongoose.Schema({
 
 const Conversa = mongoose.model('Conversa', conversaSchema);
 
+// Schema de Assinatura (Sistema de Pagamentos)
+const subscriptionSchema = new mongoose.Schema({
+    userId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true,
+        unique: true
+    },
+    stripeCustomerId: { 
+        type: String, 
+        required: true 
+    },
+    stripeSubscriptionId: { 
+        type: String, 
+        required: true 
+    },
+    status: { 
+        type: String, 
+        enum: ['pendente', 'ativo', 'cancelado', 'expirado'],
+        default: 'pendente'
+    },
+    plano: {
+        type: String,
+        enum: ['basico', 'premium', 'empresarial'],
+        required: true
+    },
+    validoAte: { 
+        type: Date, 
+        required: true 
+    },
+    createdAt: { 
+        type: Date, 
+        default: Date.now 
+    },
+    updatedAt: { 
+        type: Date, 
+        default: Date.now 
+    }
+});
+
+subscriptionSchema.index({ userId: 1 });
+subscriptionSchema.index({ stripeSubscriptionId: 1 });
+
+const Subscription = mongoose.model('Subscription', subscriptionSchema);
+
 // ========== MIDDLEWARE DE AUTENTICAÇÃO ==========
 
 const authMiddleware = (req, res, next) => {
@@ -189,6 +240,86 @@ const authMiddleware = (req, res, next) => {
         return res.status(401).json({ error: 'Token inválido' });
     }
 };
+
+// Middleware para verificar assinatura ativa
+const checkSubscription = async (req, res, next) => {
+    try {
+        const assinatura = await Subscription.findOne({ userId: req.userId });
+        
+        // Se não tem assinatura
+        if (!assinatura) {
+            return res.status(403).json({ 
+                error: 'Assinatura necessária',
+                message: 'Você precisa ter uma assinatura ativa para acessar esta funcionalidade.',
+                type: 'sem_assinatura',
+                redirectTo: '/html/planos.html'
+            });
+        }
+
+        // Se a assinatura está pendente (pagamento não processado ou falhou)
+        if (assinatura.status === 'pendente') {
+            return res.status(403).json({ 
+                error: 'Assinatura pendente',
+                message: 'Seu pagamento está pendente ou falhou. Por favor, regularize sua situação.',
+                type: 'pagamento_pendente',
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Preciso%20de%20ajuda%20com%20minha%20assinatura%20do%20Merfin.',
+                redirectTo: '/html/planos.html'
+            });
+        }
+
+        // Se a assinatura está cancelada
+        if (assinatura.status === 'cancelado') {
+            return res.status(403).json({ 
+                error: 'Assinatura cancelada',
+                message: 'Sua assinatura foi cancelada. Para continuar usando o Merfin, reative sua assinatura ou entre em contato com o suporte.',
+                type: 'assinatura_cancelada',
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20foi%20cancelada%20e%20preciso%20de%20ajuda.',
+                redirectTo: '/html/planos.html'
+            });
+        }
+
+        // Se a assinatura está expirada
+        if (assinatura.status === 'expirado') {
+            return res.status(403).json({ 
+                error: 'Assinatura expirada',
+                message: 'Sua assinatura expirou. Renove para continuar usando a plataforma.',
+                type: 'assinatura_expirada',
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20de%20ajuda%20para%20renovar.',
+                redirectTo: '/html/planos.html'
+            });
+        }
+
+        // Verificar se a assinatura expirou (mesmo se marcada como ativo)
+        if (assinatura.validoAte < new Date()) {
+            assinatura.status = 'expirado';
+            await assinatura.save();
+            
+            return res.status(403).json({ 
+                error: 'Assinatura expirada',
+                message: 'Sua assinatura expirou em ' + assinatura.validoAte.toLocaleDateString('pt-BR') + '. Renove para continuar.',
+                type: 'assinatura_expirada',
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20renovar.',
+                redirectTo: '/html/planos.html'
+            });
+        }
+
+        // Assinatura ativa - permite acesso
+        req.subscription = assinatura;
+        next();
+    } catch (error) {
+        console.error('❌ Erro ao verificar assinatura:', error);
+        return res.status(500).json({ error: 'Erro ao verificar assinatura' });
+    }
+};
+
 
 // ========== ROTAS DE AUTENTICAÇÃO ==========
 
@@ -899,6 +1030,25 @@ app.get('/api/status', (req, res) => {
 app.get('/api/test', (req, res) => {
     res.json({ message: 'API funcionando', timestamp: new Date().toISOString() });
 });
+
+// ========== INTEGRAÇÃO COM SISTEMA DE PAGAMENTOS ==========
+
+// Importar e usar as rotas de pagamento do Stripe
+const stripePaymentsRouter = require('./stripePayments');
+
+// Usar as rotas de pagamento (o webhook já está configurado dentro do stripePayments.js)
+app.use('/api/pagamentos', stripePaymentsRouter);
+
+// Exportar o modelo Subscription para uso no stripePayments.js
+module.exports.models = {
+    User,
+    Subscription,
+    Perfil,
+    Divida,
+    FinancasMensais,
+    Nota,
+    Conversa
+};
 
 // ========== INICIAR SERVIDOR ==========
 

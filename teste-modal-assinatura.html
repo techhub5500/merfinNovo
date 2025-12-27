@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Modal de Assinatura Cancelada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .test-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-cancelada {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .btn-expirada {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+        
+        .btn-pendente {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info li {
+            padding: 5px 0;
+            color: #555;
+        }
+        
+        .info li:before {
+            content: "✓ ";
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste - Sistema de Assinatura</h1>
+        
+        <div class="info">
+            <h3>📋 O que este teste faz?</h3>
+            <ul>
+                <li>Simula erros de assinatura cancelada/expirada/pendente</li>
+                <li>Mostra modal estilizado com botão WhatsApp</li>
+                <li>Testa a experiência do usuário em cada cenário</li>
+            </ul>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="btn-cancelada" onclick="testarCancelada()">
+                🚫 Testar Assinatura Cancelada
+            </button>
+            
+            <button class="btn-expirada" onclick="testarExpirada()">
+                ⏰ Testar Assinatura Expirada
+            </button>
+            
+            <button class="btn-pendente" onclick="testarPendente()">
+                💳 Testar Pagamento Pendente
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Copiar a função do app.js
+        function mostrarModalAssinaturaProblema(data) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(10px);
+                z-index: 10003;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+                border-radius: 20px;
+                padding: 40px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                animation: slideUp 0.4s ease;
+            `;
+            
+            let icon = '⚠️';
+            let iconColor = '#f39c12';
+            
+            if (data.type === 'assinatura_cancelada') {
+                icon = '🚫';
+                iconColor = '#e74c3c';
+            } else if (data.type === 'assinatura_expirada') {
+                icon = '⏰';
+                iconColor = '#e67e22';
+            } else if (data.type === 'pagamento_pendente') {
+                icon = '💳';
+                iconColor = '#3498db';
+            }
+            
+            modal.innerHTML = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite;">${icon}</div>
+                    <h2 style="color: ${iconColor}; font-family: 'Segoe UI', serif; font-size: 28px; font-weight: 700; margin-bottom: 15px;">
+                        ${data.error}
+                    </h2>
+                    <p style="color: white; font-family: 'Segoe UI', serif; font-size: 18px; line-height: 1.7; margin-bottom: 25px;">
+                        ${data.message}
+                    </p>
+                    <div style="background: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: left;">
+                        <p style="color: #ccc; font-size: 14px; margin: 0;">
+                            <strong style="color: #3498db;">💡 Precisa de ajuda?</strong><br>
+                            Nossa equipe de suporte está pronta para te ajudar a resolver este problema!
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <a href="${data.whatsappLink}" 
+                       target="_blank"
+                       id="btn-whatsapp-support"
+                       style="
+                           padding: 16px 24px;
+                           border: none;
+                           border-radius: 12px;
+                           background: linear-gradient(135deg, #25D366, #128C7E);
+                           color: white;
+                           font-size: 18px;
+                           font-weight: 700;
+                           cursor: pointer;
+                           text-decoration: none;
+                           display: flex;
+                           align-items: center;
+                           justify-content: center;
+                           gap: 12px;
+                           box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+                           transition: all 0.3s ease;
+                       ">
+                        <span style="font-size: 24px;">📱</span>
+                        <span>Falar com Suporte</span>
+                    </a>
+                    
+                    <button id="btn-fechar" style="
+                        padding: 14px 24px;
+                        border: 2px solid #444;
+                        border-radius: 12px;
+                        background: transparent;
+                        color: white;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">Fechar Teste</button>
+                </div>
+                
+                <p style="text-align: center; color: #888; font-size: 13px; margin-top: 20px;">
+                    WhatsApp: <strong style="color: #25D366;">(11) 91538-1876</strong>
+                </p>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            const btnWhatsapp = modal.querySelector('#btn-whatsapp-support');
+            const btnFechar = modal.querySelector('#btn-fechar');
+            
+            btnWhatsapp.onmouseover = () => {
+                btnWhatsapp.style.transform = 'translateY(-3px) scale(1.02)';
+                btnWhatsapp.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.5)';
+            };
+            btnWhatsapp.onmouseout = () => {
+                btnWhatsapp.style.transform = 'translateY(0) scale(1)';
+                btnWhatsapp.style.boxShadow = '0 4px 15px rgba(37, 211, 102, 0.3)';
+            };
+            
+            btnFechar.onclick = () => overlay.remove();
+            overlay.onclick = (e) => {
+                if (e.target === overlay) overlay.remove();
+            };
+        }
+
+        function testarCancelada() {
+            mostrarModalAssinaturaProblema({
+                error: 'Assinatura Cancelada',
+                message: 'Sua assinatura foi cancelada. Para continuar usando o Merfin, reative sua assinatura ou entre em contato com o suporte.',
+                type: 'assinatura_cancelada',
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20foi%20cancelada%20e%20preciso%20de%20ajuda.',
+                redirectTo: '/html/planos.html'
+            });
+        }
+
+        function testarExpirada() {
+            mostrarModalAssinaturaProblema({
+                error: 'Assinatura Expirada',
+                message: 'Sua assinatura expirou em 25/12/2025. Renove para continuar usando a plataforma.',
+                type: 'assinatura_expirada',
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20de%20ajuda%20para%20renovar.',
+                redirectTo: '/html/planos.html'
+            });
+        }
+
+        function testarPendente() {
+            mostrarModalAssinaturaProblema({
+                error: 'Pagamento Pendente',
+                message: 'Seu pagamento está pendente ou falhou. Por favor, regularize sua situação para continuar usando o Merfin.',
+                type: 'pagamento_pendente',
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Preciso%20de%20ajuda%20com%20minha%20assinatura%20do%20Merfin.',
+                redirectTo: '/html/planos.html'
+            });
+        }
+    </script>
+</body>
+</html>

@@ -261,8 +261,8 @@
             </div>
             
             <div class="auth-tabs">
-                <button class="auth-tab active" id="tab-login">Login</button>
-                <button class="auth-tab" id="tab-cadastro">Cadastro</button>
+                <button type="button" class="auth-tab active" id="tab-login">Login</button>
+                <button type="button" class="auth-tab" id="tab-cadastro">Cadastro</button>
             </div>
             
             <!-- Formulário de Login -->
@@ -296,7 +296,46 @@
                     <label for="cadastro-confirmar-senha">Confirmar Senha</label>
                     <input type="password" id="cadastro-confirmar-senha" placeholder="Digite a senha novamente" required>
                 </div>
-                <button type="submit" class="btn-auth">Cadastrar</button>
+                
+                <!-- Seleção de Planos -->
+                <div class="planos-cadastro">
+                    <h3 style="text-align: center; margin: 20px 0 10px 0; font-size: 1.1rem;">Escolha seu Plano</h3>
+                    <div class="planos-grid-cadastro">
+                        <div class="plano-card-cadastro" data-plano="mensal">
+                            <div class="plano-radio">
+                                <input type="radio" name="plano" id="plano-mensal" value="mensal" required>
+                                <label for="plano-mensal">
+                                    <div class="plano-nome">Plano Mensal</div>
+                                    <div class="plano-preco">R$ 20,00<span>/mês</span></div>
+                                    <ul class="plano-recursos-mini">
+                                        <li>✅ Gestão financeira</li>
+                                        <li>✅ Chat com IA</li>
+                                        <li>✅ Relatórios mensais</li>
+                                    </ul>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="plano-card-cadastro destaque" data-plano="anual">
+                            <div class="plano-badge">Mais Popular</div>
+                            <div class="plano-radio">
+                                <input type="radio" name="plano" id="plano-anual" value="anual" required checked>
+                                <label for="plano-anual">
+                                    <div class="plano-nome">Plano Anual</div>
+                                    <div class="plano-preco">R$ 190,00<span>/ano</span></div>
+                                    <div class="plano-economia">💰 Economize R$ 50,00</div>
+                                    <ul class="plano-recursos-mini">
+                                        <li>✅ Tudo do Mensal</li>
+                                        <li>✅ Suporte prioritário</li>
+                                        <li>✅ Relatórios avançados</li>
+                                    </ul>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-auth">Efetuar Pagamento</button>
             </form>
         </div>
     </div>

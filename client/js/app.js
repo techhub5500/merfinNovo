@@ -1,3 +1,354 @@
+// ========== SISTEMA DE NOTIFICAÇÕES CUSTOMIZADAS ==========
+function mostrarNotificacao(mensagem, tipo = 'info') {
+    // Tipos: 'success', 'error', 'warning', 'info'
+    const cores = {
+        success: { bg: '#27ae60', icon: '✓' },
+        error: { bg: '#e74c3c', icon: '✕' },
+        warning: { bg: '#f39c12', icon: '⚠' },
+        info: { bg: '#3498db', icon: 'ℹ' }
+    };
+    
+    const config = cores[tipo] || cores.info;
+    
+    const notificacao = document.createElement('div');
+    notificacao.style.cssText = `
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        background: ${config.bg};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 10px;
+        font-family: 'Crimson Text', serif;
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: 0.7px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+        z-index: 10001;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 400px;
+        animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 2.7s;
+        opacity: 1;
+        transform: translateX(0);
+    `;
+    
+    notificacao.innerHTML = `
+        <span style="font-size: 20px; font-weight: bold;">${config.icon}</span>
+        <span>${mensagem}</span>
+    `;
+    
+    // Adicionar animações CSS
+    if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notificacao);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        if (notificacao.parentElement) {
+            notificacao.remove();
+        }
+    }, 3000);
+}
+
+// Sistema de confirmação customizado
+function mostrarConfirmacao(mensagem, callback) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(8px);
+        z-index: 10002;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.2s ease;
+    `;
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: var(--color-surface, #1e1e1e);
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 450px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease;
+    `;
+    
+    modal.innerHTML = `
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <div style="color: var(--color-text-primary, white); font-family: 'Crimson Text', serif; font-size: 18px; line-height: 1.6; font-weight: 500; letter-spacing: 0.7px;">
+                ${mensagem}
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button id="btn-cancelar" style="
+                flex: 1;
+                padding: 14px;
+                border: 1px solid var(--color-border, #333);
+                border-radius: 8px;
+                background: var(--color-surface-elevated, #252525);
+                color: var(--color-text-primary, white);
+                font-family: 'Crimson Text', serif;
+                font-size: 16px;
+                font-weight: 600;
+                letter-spacing: 0.7px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            ">Cancelar</button>
+            <button id="btn-confirmar" style="
+                flex: 1;
+                padding: 14px;
+                border: none;
+                border-radius: 8px;
+                background: #e74c3c;
+                color: white;
+                font-family: 'Crimson Text', serif;
+                font-size: 16px;
+                font-weight: 600;
+                letter-spacing: 0.7px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            ">Confirmar</button>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const btnCancelar = modal.querySelector('#btn-cancelar');
+    const btnConfirmar = modal.querySelector('#btn-confirmar');
+    
+    btnCancelar.onmouseover = () => btnCancelar.style.background = 'var(--color-hover, #292929)';
+    btnCancelar.onmouseout = () => btnCancelar.style.background = 'var(--color-surface-elevated, #252525)';
+    
+    btnConfirmar.onmouseover = () => {
+        btnConfirmar.style.background = '#c0392b';
+        btnConfirmar.style.transform = 'translateY(-2px)';
+        btnConfirmar.style.boxShadow = '0 4px 12px rgba(231, 76, 60, 0.4)';
+    };
+    btnConfirmar.onmouseout = () => {
+        btnConfirmar.style.background = '#e74c3c';
+        btnConfirmar.style.transform = 'translateY(0)';
+        btnConfirmar.style.boxShadow = 'none';
+    };
+    
+    btnCancelar.onclick = () => {
+        overlay.remove();
+        callback(false);
+    };
+    
+    btnConfirmar.onclick = () => {
+        overlay.remove();
+        callback(true);
+    };
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+            callback(false);
+        }
+    };
+}
+
+// Modal de problema na assinatura com suporte WhatsApp
+function mostrarModalAssinaturaProblema(data) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        z-index: 10003;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        animation: slideUp 0.4s ease;
+    `;
+    
+    // Determinar ícone e cor baseado no tipo de erro
+    let icon = '⚠️';
+    let iconColor = '#f39c12';
+    
+    if (data.type === 'assinatura_cancelada') {
+        icon = '🚫';
+        iconColor = '#e74c3c';
+    } else if (data.type === 'assinatura_expirada') {
+        icon = '⏰';
+        iconColor = '#e67e22';
+    } else if (data.type === 'pagamento_pendente') {
+        icon = '💳';
+        iconColor = '#3498db';
+    }
+    
+    modal.innerHTML = `
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite;">${icon}</div>
+            <h2 style="color: ${iconColor}; font-family: 'Crimson Text', serif; font-size: 28px; font-weight: 700; margin-bottom: 15px; letter-spacing: 0.5px;">
+                ${data.error}
+            </h2>
+            <p style="color: var(--color-text-primary, white); font-family: 'Crimson Text', serif; font-size: 18px; line-height: 1.7; font-weight: 400; letter-spacing: 0.5px; margin-bottom: 25px;">
+                ${data.message}
+            </p>
+            <div style="background: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: left;">
+                <p style="color: var(--color-text-secondary, #ccc); font-size: 14px; margin: 0;">
+                    <strong style="color: #3498db;">💡 Precisa de ajuda?</strong><br>
+                    Nossa equipe de suporte está pronta para te ajudar a resolver este problema!
+                </p>
+            </div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <a href="${data.whatsappLink}" 
+               target="_blank"
+               id="btn-whatsapp-support"
+               style="
+                   flex: 1;
+                   padding: 16px 24px;
+                   border: none;
+                   border-radius: 12px;
+                   background: linear-gradient(135deg, #25D366, #128C7E);
+                   color: white;
+                   font-family: 'Crimson Text', serif;
+                   font-size: 18px;
+                   font-weight: 700;
+                   letter-spacing: 0.7px;
+                   cursor: pointer;
+                   transition: all 0.3s ease;
+                   text-decoration: none;
+                   display: flex;
+                   align-items: center;
+                   justify-content: center;
+                   gap: 12px;
+                   box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+               ">
+                <span style="font-size: 24px;">📱</span>
+                <span>Falar com Suporte</span>
+            </a>
+            
+            <button id="btn-ver-planos" style="
+                flex: 1;
+                padding: 14px 24px;
+                border: 2px solid var(--color-border, #444);
+                border-radius: 12px;
+                background: transparent;
+                color: var(--color-text-primary, white);
+                font-family: 'Crimson Text', serif;
+                font-size: 16px;
+                font-weight: 600;
+                letter-spacing: 0.7px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            ">Ver Planos</button>
+        </div>
+        
+        <p style="text-align: center; color: var(--color-text-tertiary, #888); font-size: 13px; margin-top: 20px;">
+            WhatsApp: <strong style="color: #25D366;">(11) 91538-1876</strong>
+        </p>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Adicionar animação de pulse ao ícone
+    if (!document.getElementById('assinatura-problema-styles')) {
+        const style = document.createElement('style');
+        style.id = 'assinatura-problema-styles';
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.1); opacity: 0.8; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    const btnWhatsapp = modal.querySelector('#btn-whatsapp-support');
+    const btnPlanos = modal.querySelector('#btn-ver-planos');
+    
+    // Hover no botão WhatsApp
+    btnWhatsapp.onmouseover = () => {
+        btnWhatsapp.style.transform = 'translateY(-3px) scale(1.02)';
+        btnWhatsapp.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.5)';
+    };
+    btnWhatsapp.onmouseout = () => {
+        btnWhatsapp.style.transform = 'translateY(0) scale(1)';
+        btnWhatsapp.style.boxShadow = '0 4px 15px rgba(37, 211, 102, 0.3)';
+    };
+    
+    // Hover no botão Ver Planos
+    btnPlanos.onmouseover = () => {
+        btnPlanos.style.background = 'rgba(255, 255, 255, 0.05)';
+        btnPlanos.style.borderColor = 'var(--color-primary, #3498db)';
+    };
+    btnPlanos.onmouseout = () => {
+        btnPlanos.style.background = 'transparent';
+        btnPlanos.style.borderColor = 'var(--color-border, #444)';
+    };
+    
+    // Click no botão Ver Planos
+    btnPlanos.onclick = () => {
+        overlay.remove();
+        window.location.href = data.redirectTo || '/html/planos.html';
+    };
+    
+    // Fechar ao clicar fora (opcional - remova se quiser forçar o usuário a escolher)
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+            window.location.href = data.redirectTo || '/html/planos.html';
+        }
+    };
+}
+
 // Função auxiliar para fazer requisições autenticadas
 async function fetchAPI(url, options = {}) {
     const token = localStorage.getItem('merfin_token');
@@ -22,6 +373,24 @@ async function fetchAPI(url, options = {}) {
         localStorage.removeItem('merfin_user');
         showAuthModal();
         throw new Error('Não autenticado');
+    }
+    
+    // Verificar se é erro de assinatura (403)
+    if (response.status === 403) {
+        const data = await response.json();
+        
+        // Se requer contato com suporte, mostrar modal especial
+        if (data.contactSupport) {
+            mostrarModalAssinaturaProblema(data);
+        } else {
+            // Apenas mostrar notificação e redirecionar
+            mostrarNotificacao(data.message, 'warning');
+            setTimeout(() => {
+                window.location.href = data.redirectTo;
+            }, 2000);
+        }
+        
+        throw new Error(data.error || 'Assinatura necessária');
     }
     
     return response;
@@ -64,10 +433,24 @@ function hideAuthModal() {
 }
 
 function switchAuthMode(mode) {
+    console.log('🔄 Mudando modo de autenticação para:', mode);
+    
     const loginForm = document.getElementById('login-form');
     const cadastroForm = document.getElementById('cadastro-form');
     const loginTab = document.getElementById('tab-login');
     const cadastroTab = document.getElementById('tab-cadastro');
+    
+    console.log('Elementos encontrados:', {
+        loginForm: !!loginForm,
+        cadastroForm: !!cadastroForm,
+        loginTab: !!loginTab,
+        cadastroTab: !!cadastroTab
+    });
+    
+    if (!loginForm || !cadastroForm || !loginTab || !cadastroTab) {
+        console.error('❌ Elementos do modal não encontrados!');
+        return;
+    }
     
     if (mode === 'login') {
         loginForm.style.display = 'block';
@@ -80,7 +463,12 @@ function switchAuthMode(mode) {
         loginTab.classList.remove('active');
         cadastroTab.classList.add('active');
     }
+    
+    console.log('✅ Modo alterado com sucesso');
 }
+
+// Função removida - a verificação de assinatura é feita pelo middleware no backend
+
 
 function handleLogin(event) {
     event.preventDefault();
@@ -89,7 +477,7 @@ function handleLogin(event) {
     const senha = document.getElementById('login-senha').value;
     
     if (!email || !senha) {
-        alert('Por favor, preencha todos os campos.');
+        mostrarNotificacao('Por favor, preencha todos os campos.', 'warning');
         return;
     }
     
@@ -108,14 +496,13 @@ function handleLogin(event) {
             localStorage.setItem('merfin_token', data.token);
             localStorage.setItem('merfin_user', JSON.stringify(data.user));
             hideAuthModal();
-            location.reload();
         } else {
-            alert(data.error || 'Email ou senha incorretos.');
+            mostrarNotificacao(data.error || 'Email ou senha incorretos.', 'error');
         }
     })
     .catch(error => {
         console.error('Erro no login:', error);
-        alert('Erro ao fazer login. Tente novamente.');
+        mostrarNotificacao('Erro ao fazer login. Tente novamente.', 'error');
     });
 }
 
@@ -126,58 +513,325 @@ function handleCadastro(event) {
     const email = document.getElementById('cadastro-email').value;
     const senha = document.getElementById('cadastro-senha').value;
     const confirmarSenha = document.getElementById('cadastro-confirmar-senha').value;
+    const planoSelecionado = document.querySelector('input[name="plano"]:checked')?.value;
     
     if (!nome || !email || !senha || !confirmarSenha) {
-        alert('Por favor, preencha todos os campos.');
+        mostrarNotificacao('Por favor, preencha todos os campos.', 'warning');
         return;
     }
     
     if (senha !== confirmarSenha) {
-        alert('As senhas não coincidem.');
+        mostrarNotificacao('As senhas não coincidem.', 'warning');
         return;
     }
     
     if (senha.length < 6) {
-        alert('A senha deve ter pelo menos 6 caracteres.');
+        mostrarNotificacao('A senha deve ter pelo menos 6 caracteres.', 'warning');
         return;
     }
     
-    // Fazer requisição para o backend
-    fetch('http://localhost:5000/api/auth/cadastro', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ nome, email, senha })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.token) {
-            // Salvar token e dados do usuário
-            localStorage.setItem('merfin_token', data.token);
-            localStorage.setItem('merfin_user', JSON.stringify(data.user));
-            alert('Cadastro realizado com sucesso!');
-            hideAuthModal();
-            location.reload();
-        } else {
-            alert(data.error || 'Erro ao fazer cadastro.');
-        }
-    })
-    .catch(error => {
-        console.error('Erro no cadastro:', error);
-        alert('Erro ao fazer cadastro. Tente novamente.');
-    });
+    if (!planoSelecionado) {
+        mostrarNotificacao('Por favor, selecione um plano.', 'warning');
+        return;
+    }
+    
+    // Salvar dados do cadastro temporariamente no localStorage
+    const dadosCadastro = {
+        nome,
+        email,
+        senha,
+        plano: planoSelecionado,
+        timestamp: Date.now()
+    };
+    
+    localStorage.setItem('merfin_cadastro_pendente', JSON.stringify(dadosCadastro));
+    
+    // Buscar o link de pagamento do plano selecionado
+    fetch('http://localhost:5000/api/pagamentos/planos')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.planos[planoSelecionado]) {
+                const linkPagamento = data.planos[planoSelecionado].link;
+                
+                // Adicionar email e plano como parâmetros na URL
+                const url = new URL(linkPagamento);
+                url.searchParams.append('client_reference_id', email);
+                url.searchParams.append('prefilled_email', email);
+                
+                // Adicionar return_url para indicar retorno do Stripe
+                const returnUrl = window.location.origin + window.location.pathname + '?from_stripe=true';
+                
+                // Informar ao usuário
+                mostrarNotificacao('💳 Redirecionando para pagamento...', 'info');
+                
+                // Redirecionar para o pagamento em nova aba
+                window.open(url.toString(), '_blank');
+                
+                // Mostrar mensagem na página atual
+                setTimeout(() => {
+                    const msg = document.createElement('div');
+                    msg.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #2a5298; color: white; padding: 15px 30px; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center;';
+                    msg.innerHTML = '💳 Complete o pagamento na nova aba<br><small>Após pagar, recarregue esta página</small>';
+                    document.body.appendChild(msg);
+                }, 1000);
+            } else {
+                mostrarNotificacao('Erro ao carregar informações do plano. Tente novamente.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao buscar plano:', error);
+            mostrarNotificacao('Erro ao processar pagamento. Tente novamente.', 'error');
+        });
 }
 
 function logout() {
-    if (confirm('Deseja realmente sair?')) {
-        localStorage.removeItem('merfin_token');
-        localStorage.removeItem('merfin_user');
-        location.href = 'chat.html';
+    mostrarConfirmacao('Deseja realmente sair?', (confirmado) => {
+        if (confirmado) {
+            localStorage.removeItem('merfin_token');
+            localStorage.removeItem('merfin_user');
+            location.href = 'chat.html';
+        }
+    });
+}
+
+// Verificar se usuário voltou do pagamento
+async function verificarRetornoPagamento() {
+    const cadastroPendente = localStorage.getItem('merfin_cadastro_pendente');
+    
+    // Se não tem dados pendentes, não fazer nada
+    if (!cadastroPendente) {
+        return;
+    }
+    
+    // Se tem dados pendentes, verificar se já passou tempo suficiente (mínimo 3 segundos)
+    const dados = JSON.parse(cadastroPendente);
+    const tempoDecorrido = Date.now() - dados.timestamp;
+    
+    // Se foi criado há menos de 3 segundos, ainda está sendo processado
+    if (tempoDecorrido < 3000) {
+        console.log('⏳ Aguardando processamento do pagamento...');
+        return;
+    }
+    
+    // Verificar se não expirou (máx 2 horas)
+    if (tempoDecorrido > 7200000) {
+        console.log('⌛ Dados de cadastro expiraram');
+        localStorage.removeItem('merfin_cadastro_pendente');
+        return;
+    }
+    
+    // Tentar finalizar cadastro
+    console.log('🔍 Tentando finalizar cadastro...');
+    
+    // Mostrar botão para o usuário clicar se quiser tentar agora
+    const existingBtn = document.getElementById('btn-finalizar-cadastro');
+    if (!existingBtn) {
+        const btnFinalizar = document.createElement('button');
+        btnFinalizar.id = 'btn-finalizar-cadastro';
+        btnFinalizar.style.cssText = `
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 18px 32px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            z-index: 10000;
+            font-family: 'Crimson Text', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.7px;
+            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+            transition: all 0.3s ease;
+            animation: pulse 2s ease-in-out infinite;
+        `;
+        btnFinalizar.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">✓</span>
+                <div style="text-align: left;">
+                    <div style="font-size: 16px; font-weight: 600;">Completei o pagamento!</div>
+                    <div style="font-size: 12px; font-weight: 400; opacity: 0.9;">Clique para finalizar cadastro</div>
+                </div>
+            </div>
+        `;
+        btnFinalizar.onmouseover = () => {
+            btnFinalizar.style.transform = 'translateY(-2px)';
+            btnFinalizar.style.boxShadow = '0 8px 20px rgba(39, 174, 96, 0.5)';
+        };
+        btnFinalizar.onmouseout = () => {
+            btnFinalizar.style.transform = 'translateY(0)';
+            btnFinalizar.style.boxShadow = '0 6px 16px rgba(39, 174, 96, 0.4)';
+        };
+        btnFinalizar.onclick = () => finalizarCadastroManual();
+        document.body.appendChild(btnFinalizar);
+        
+        // Adicionar animação de pulse
+        if (!document.getElementById('btn-finalizar-styles')) {
+            const style = document.createElement('style');
+            style.id = 'btn-finalizar-styles';
+            style.textContent = `
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.85; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    // Se tem dados pendentes, finalizar cadastro
+    if (cadastroPendente) {
+        const dados = JSON.parse(cadastroPendente);
+        
+        // Verificar se não expirou (máx 2 horas)
+        if (Date.now() - dados.timestamp > 7200000) {
+            localStorage.removeItem('merfin_cadastro_pendente');
+            return;
+        }
+        
+        // Mostrar notificação de processamento
+        mostrarNotificacao('⏳ Verificando pagamento...', 'info');
+        
+        // Aguardar 5 segundos para o webhook processar
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        try {
+            // Tentar finalizar cadastro
+            const response = await fetch('http://localhost:5000/api/pagamentos/finalizar-cadastro', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dados)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.token) {
+                // Cadastro concluído com sucesso
+                localStorage.setItem('merfin_token', data.token);
+                localStorage.setItem('merfin_user', JSON.stringify(data.user));
+                localStorage.removeItem('merfin_cadastro_pendente');
+                
+                processingMsg.textContent = '✅ Pagamento confirmado! Redirecionando...';
+                processingMsg.style.background = '#27ae60';
+                
+                setTimeout(() => {
+                    window.location.href = 'chat.html';
+                }, 1500);
+            } else {
+                // Pagamento ainda não processado
+                processingMsg.textContent = '⚠️ Pagamento não encontrado. Complete o pagamento para continuar.';
+                processingMsg.style.background = '#e74c3c';
+                
+                setTimeout(() => {
+                    processingMsg.remove();
+                }, 5000);
+            }
+        } catch (error) {
+            console.error('Erro ao verificar pagamento:', error);
+            processingMsg.textContent = '❌ Erro ao verificar pagamento. Tente fazer login.';
+            processingMsg.style.background = '#e74c3c';
+            
+            setTimeout(() => {
+                processingMsg.remove();
+            }, 5000);
+        }
+    }
+}
+
+// Função para finalizar cadastro manualmente (quando usuário clica no botão)
+async function finalizarCadastroManual() {
+    const cadastroPendente = localStorage.getItem('merfin_cadastro_pendente');
+    
+    if (!cadastroPendente) {
+        mostrarNotificacao('Nenhum cadastro pendente encontrado.', 'warning');
+        return;
+    }
+    
+    const dados = JSON.parse(cadastroPendente);
+    
+    // Mostrar mensagem de processamento
+    const btn = document.getElementById('btn-finalizar-cadastro');
+    if (btn) {
+        btn.innerHTML = '<div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 20px;">⏳</span><span>Processando...</span></div>';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+    }
+    
+    mostrarNotificacao('🔍 Verificando pagamento no Stripe...', 'info');
+    
+    try {
+        // Tentar finalizar cadastro
+        const response = await fetch('http://localhost:5000/api/pagamentos/finalizar-cadastro', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.token) {
+            // Cadastro concluído com sucesso
+            localStorage.setItem('merfin_token', data.token);
+            localStorage.setItem('merfin_user', JSON.stringify(data.user));
+            localStorage.removeItem('merfin_cadastro_pendente');
+            
+            mostrarNotificacao('✅ Cadastro concluído! Redirecionando...', 'success');
+            
+            if (btn) btn.remove();
+            
+            setTimeout(() => {
+                window.location.href = 'chat.html';
+            }, 1500);
+        } else {
+            // Pagamento ainda não processado
+            mostrarNotificacao('⚠️ ' + (data.error || 'Pagamento não confirmado ainda. Aguarde alguns segundos e tente novamente.'), 'warning');
+            
+            if (btn) {
+                btn.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 20px;">✓</span>
+                        <div style="text-align: left;">
+                            <div style="font-size: 16px; font-weight: 600;">Completei o pagamento!</div>
+                            <div style="font-size: 12px; font-weight: 400; opacity: 0.9;">Clique para finalizar cadastro</div>
+                        </div>
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao verificar pagamento:', error);
+        mostrarNotificacao('❌ Erro ao verificar pagamento. Tente novamente.', 'error');
+        
+        if (btn) {
+            btn.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 20px;">✓</span>
+                    <div style="text-align: left;">
+                        <div style="font-size: 16px; font-weight: 600;">Completei o pagamento!</div>
+                        <div style="font-size: 12px; font-weight: 400; opacity: 0.9;">Clique para finalizar cadastro</div>
+                    </div>
+                </div>
+            `;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
     }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('🚀 DOMContentLoaded disparado');
+    
+    // Verificar se voltou do pagamento do Stripe
+    verificarRetornoPagamento();
+    
     // Verificar autenticação
     const isIndexPage = window.location.pathname.endsWith('index.html') || 
                         window.location.pathname.endsWith('/') ||
@@ -200,26 +854,65 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    // Event listeners para autenticação
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
+    // Função para adicionar event listeners dos modals (com retry)
+    function setupAuthListeners(tentativa = 1) {
+        console.log(`🔧 Tentativa ${tentativa} de configurar listeners de autenticação`);
+        
+        const loginForm = document.getElementById('login-form');
+        const cadastroForm = document.getElementById('cadastro-form');
+        const tabLogin = document.getElementById('tab-login');
+        const tabCadastro = document.getElementById('tab-cadastro');
+        
+        console.log('📋 Elementos encontrados:', {
+            loginForm: !!loginForm,
+            cadastroForm: !!cadastroForm,
+            tabLogin: !!tabLogin,
+            tabCadastro: !!tabCadastro
+        });
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
+            console.log('✅ Listener de login adicionado');
+        }
+        
+        if (cadastroForm) {
+            cadastroForm.addEventListener('submit', handleCadastro);
+            console.log('✅ Listener de cadastro adicionado');
+        }
+        
+        if (tabLogin) {
+            console.log('✅ Tab Login encontrada, adicionando listener');
+            tabLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔵 TAB LOGIN CLICADO!');
+                switchAuthMode('login');
+            });
+        } else {
+            console.warn('⚠️ Tab Login NÃO encontrada');
+        }
+        
+        if (tabCadastro) {
+            console.log('✅ Tab Cadastro encontrada, adicionando listener');
+            tabCadastro.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🟢 TAB CADASTRO CLICADO!');
+                switchAuthMode('cadastro');
+            });
+        } else {
+            console.warn('⚠️ Tab Cadastro NÃO encontrada');
+        }
+        
+        // Se não encontrou os elementos e ainda tem tentativas, tenta novamente
+        if ((!tabLogin || !tabCadastro) && tentativa < 3) {
+            console.log('⏳ Aguardando 500ms para tentar novamente...');
+            setTimeout(() => setupAuthListeners(tentativa + 1), 500);
+        }
     }
     
-    const cadastroForm = document.getElementById('cadastro-form');
-    if (cadastroForm) {
-        cadastroForm.addEventListener('submit', handleCadastro);
-    }
-    
-    const tabLogin = document.getElementById('tab-login');
-    if (tabLogin) {
-        tabLogin.addEventListener('click', () => switchAuthMode('login'));
-    }
-    
-    const tabCadastro = document.getElementById('tab-cadastro');
-    if (tabCadastro) {
-        tabCadastro.addEventListener('click', () => switchAuthMode('cadastro'));
-    }
+    // Executar setup
+    setupAuthListeners();
 });
 
 // ========== MODAL DE ONBOARDING (PRIMEIRA VEZ) ==========
@@ -508,9 +1201,11 @@ function calculateOnboardingPatrimonio() {
 }
 
 function skipOnboarding() {
-    if (confirm('Tem certeza que deseja pular? Você pode preencher seu perfil depois.')) {
-        saveOnboardingData(true); // Salvar como não primeira vez mesmo sem dados
-    }
+    mostrarConfirmacao('Tem certeza que deseja pular? Você pode preencher seu perfil depois.', (confirmado) => {
+        if (confirmado) {
+            saveOnboardingData(true); // Salvar como não primeira vez mesmo sem dados
+        }
+    });
 }
 
 async function finishOnboarding() {
@@ -561,14 +1256,14 @@ async function saveOnboardingData(skipMode = false) {
         if (response.ok) {
             hideOnboardingModal();
             if (!skipMode) {
-                alert('Perfil configurado com sucesso! Bem-vindo ao Merfin! 🎉');
+                mostrarNotificacao('🎉 Perfil configurado com sucesso! Bem-vindo ao Merfin!', 'success');
             }
         } else {
             throw new Error('Erro ao salvar perfil');
         }
     } catch (error) {
         console.error('Erro ao salvar onboarding:', error);
-        alert('Erro ao salvar perfil. Tente novamente.');
+        mostrarNotificacao('Erro ao salvar perfil. Tente novamente.', 'error');
     }
 }
 
@@ -1046,53 +1741,57 @@ async function editarTitulo(conversaId) {
 
 // Deletar conversa
 async function deletarConversa(conversaId) {
-    if (!confirm('Tem certeza que deseja deletar esta conversa?')) return;
-    
-    try {
-        await fetchAPI(`/api/conversas/${conversaId}`, {
-            method: 'DELETE'
-        });
+    mostrarConfirmacao('Tem certeza que deseja deletar esta conversa?', async (confirmado) => {
+        if (!confirmado) return;
         
-        if (conversaAtualId === conversaId) {
-            conversaAtualId = null;
-            const chatMessages = document.getElementById('messages');
-            if (chatMessages) chatMessages.innerHTML = '';
+        try {
+            await fetchAPI(`/api/conversas/${conversaId}`, {
+                method: 'DELETE'
+            });
+            
+            if (conversaAtualId === conversaId) {
+                conversaAtualId = null;
+                const chatMessages = document.getElementById('messages');
+                if (chatMessages) chatMessages.innerHTML = '';
+            }
+            
+            await carregarConversas();
+            renderizarListaConversas();
+            showNotification('Conversa deletada!', 'success');
+        } catch (error) {
+            console.error('Erro ao deletar conversa:', error);
+            showNotification('Erro ao deletar conversa', 'error');
         }
-        
-        await carregarConversas();
-        renderizarListaConversas();
-        showNotification('Conversa deletada!', 'success');
-    } catch (error) {
-        console.error('Erro ao deletar conversa:', error);
-        showNotification('Erro ao deletar conversa', 'error');
-    }
+    });
 }
 
 // Apagar todas as conversas
 async function apagarTodosChats() {
-    if (!confirm('⚠️ ATENÇÃO: Esta ação irá deletar TODAS as suas conversas permanentemente. Tem certeza?')) return;
-    
-    try {
-        const response = await fetchAPI('/api/conversas', {
-            method: 'DELETE'
-        });
+    mostrarConfirmacao('⚠️ ATENÇÃO: Esta ação irá deletar TODAS as suas conversas permanentemente. Tem certeza?', async (confirmado) => {
+        if (!confirmado) return;
         
-        const data = await response.json();
-        
-        // Limpar conversa atual
-        conversaAtualId = null;
-        const chatMessages = document.getElementById('messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        
-        // Limpar lista local
-        conversas = [];
-        renderizarListaConversas();
-        
-        showNotification(`Todas as conversas foram deletadas! (${data.deletedCount} conversas)`, 'success');
-    } catch (error) {
-        console.error('Erro ao apagar todos os chats:', error);
-        showNotification('Erro ao apagar todos os chats', 'error');
-    }
+        try {
+            const response = await fetchAPI('/api/conversas', {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            // Limpar conversa atual
+            conversaAtualId = null;
+            const chatMessages = document.getElementById('messages');
+            if (chatMessages) chatMessages.innerHTML = '';
+            
+            // Limpar lista local
+            conversas = [];
+            renderizarListaConversas();
+            
+            showNotification(`Todas as conversas foram deletadas! (${data.deletedCount} conversas)`, 'success');
+        } catch (error) {
+            console.error('Erro ao apagar todos os chats:', error);
+            showNotification('Erro ao apagar todos os chats', 'error');
+        }
+    });
 }
 
 // Salvar mensagem na conversa atual

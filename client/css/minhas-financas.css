@@ -13,8 +13,9 @@
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 10000;
+    z-index: 9999;
     animation: fadeIn 0.3s ease;
+    pointer-events: auto;
 }
 
 @keyframes fadeIn {
@@ -31,10 +32,33 @@
     border-radius: 16px;
     padding: 32px;
     width: 90%;
-    max-width: 450px;
+    max-width: 750px;
+    max-height: 95vh;
+    overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
                 0 0 0 1px rgba(255, 255, 255, 0.1);
     animation: slideUp 0.4s ease;
+    position: relative;
+    z-index: 10000;
+    pointer-events: auto;
+}
+
+.auth-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.auth-modal-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.auth-modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.auth-modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 @keyframes slideUp {
@@ -84,6 +108,9 @@
     cursor: pointer;
     transition: all 0.3s ease;
     margin-bottom: -2px;
+    position: relative;
+    z-index: 10001;
+    pointer-events: auto;
 }
 
 .auth-tab:hover {
@@ -203,10 +230,10 @@
 }
 
 .subpage-content {
-    animation: fadeIn 0.3s ease-in;
+    animation: fadeInUp 0.3s ease-in;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInUp {
     from {
         opacity: 0;
         transform: translateY(10px);

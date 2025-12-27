@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos de Assinatura - Merfin.IA</title>
+    <link rel="stylesheet" href="../css/planos.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Escolha seu Plano</h1>
+            <p>Invista no seu futuro financeiro com a Merfin.IA</p>
+        </header>
+
+        <!-- Mensagem de erro/sucesso -->
+        <div id="mensagem" class="mensagem" style="display: none;"></div>
+
+        <!-- Container dos planos -->
+        <div id="planos-container" class="planos-grid">
+            <div class="loading">Carregando planos...</div>
+        </div>
+
+        <!-- Modal de confirmação -->
+        <div id="modal-confirmacao" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Confirmar Assinatura</h2>
+                <p id="modal-texto"></p>
+                <div class="modal-buttons">
+                    <button id="btn-confirmar" class="btn btn-primary">Prosseguir para Pagamento</button>
+                    <button id="btn-cancelar" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/planos.js"></script>
+</body>
+</html>

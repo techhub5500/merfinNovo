@@ -14,6 +14,9 @@
     --color-success: #28a745;
     --color-error: #dc3545;
     --color-warning: #ffc107;
+    --color-bg-primary: var(--color-background);
+    --color-bg-secondary: var(--color-surface);
+    --color-primary-dark: #e6e6e6;
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
@@ -613,4 +616,119 @@ body {
     .content {
         margin-left: 0;
     }
+}
+
+/* ========== PLANOS NO CADASTRO ========== */
+.planos-cadastro {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.planos-grid-cadastro {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.plano-card-cadastro {
+    position: relative;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.plano-card-cadastro:hover {
+    border-color: #1e3c72;
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.15);
+}
+
+.plano-card-cadastro.destaque {
+    border-color: #2a5298;
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+}
+
+.plano-badge {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.plano-radio input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+.plano-radio input[type="radio"]:checked + label {
+    background: linear-gradient(135deg, #e8f0ff 0%, #d0e0ff 100%);
+    border-radius: 8px;
+}
+
+.plano-radio input[type="radio"]:checked + label .plano-nome {
+    color: #1e3c72;
+    font-weight: 700;
+}
+
+.plano-radio label {
+    display: block;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.plano-nome {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.plano-preco {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e3c72;
+    margin-bottom: 5px;
+}
+
+.plano-preco span {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #666;
+}
+
+.plano-economia {
+    background: #ffeaa7;
+    color: #d63031;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    margin: 8px 0;
+}
+
+.plano-recursos-mini {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+.plano-recursos-mini li {
+    font-size: 0.85rem;
+    color: #555;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.plano-recursos-mini li:last-child {
+    border-bottom: none;
 }

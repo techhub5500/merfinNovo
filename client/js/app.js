@@ -184,8 +184,19 @@ function mostrarConfirmacao(mensagem, callback) {
     };
 }
 
+// Flag global para controlar se modal já está sendo exibido
+let modalAssinaturaAberto = false;
+
 // Modal de problema na assinatura com suporte WhatsApp
 function mostrarModalAssinaturaProblema(data) {
+    // Se modal já está aberto, não fazer nada
+    if (modalAssinaturaAberto) {
+        return;
+    }
+    
+    // Marcar que modal está aberto
+    modalAssinaturaAberto = true;
+    
     const overlay = document.createElement('div');
     overlay.style.cssText = `
         position: fixed;
@@ -193,8 +204,8 @@ function mostrarModalAssinaturaProblema(data) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(8px);
         z-index: 10003;
         display: flex;
         align-items: center;
@@ -204,13 +215,13 @@ function mostrarModalAssinaturaProblema(data) {
     
     const modal = document.createElement('div');
     modal.style.cssText = `
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 500px;
+        position: relative;
+        background: var(--color-surface, #1e1e1e);
+        border-radius: 16px;
+        padding: 28px 32px;
+        max-width: 420px;
         width: 90%;
-        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
         animation: slideUp 0.4s ease;
     `;
     
@@ -230,68 +241,64 @@ function mostrarModalAssinaturaProblema(data) {
     }
     
     modal.innerHTML = `
-        <div style="text-align: center; margin-bottom: 30px;">
-            <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite;">${icon}</div>
-            <h2 style="color: ${iconColor}; font-family: 'Crimson Text', serif; font-size: 28px; font-weight: 700; margin-bottom: 15px; letter-spacing: 0.5px;">
+        <button id="btn-fechar-modal" style="
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--color-text-secondary, #a0a0a0);
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        ">×</button>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 48px; margin-bottom: 12px; animation: pulse 2s ease-in-out infinite;">${icon}</div>
+            <h2 style="color: ${iconColor}; font-family: 'Crimson Text', serif; font-size: 22px; font-weight: 600; margin: 0 0 10px; letter-spacing: 0.5px;">
                 ${data.error}
             </h2>
-            <p style="color: var(--color-text-primary, white); font-family: 'Crimson Text', serif; font-size: 18px; line-height: 1.7; font-weight: 400; letter-spacing: 0.5px; margin-bottom: 25px;">
+            <p style="color: var(--color-text-secondary, #a0a0a0); font-family: 'Crimson Text', serif; font-size: 15px; line-height: 1.5; font-weight: 400; letter-spacing: 0.3px; margin: 0 0 20px;">
                 ${data.message}
             </p>
-            <div style="background: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: left;">
-                <p style="color: var(--color-text-secondary, #ccc); font-size: 14px; margin: 0;">
-                    <strong style="color: #3498db;">💡 Precisa de ajuda?</strong><br>
-                    Nossa equipe de suporte está pronta para te ajudar a resolver este problema!
-                </p>
-            </div>
         </div>
         
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
             <a href="${data.whatsappLink}" 
                target="_blank"
                id="btn-whatsapp-support"
                style="
-                   flex: 1;
-                   padding: 16px 24px;
+                   padding: 14px 20px;
                    border: none;
-                   border-radius: 12px;
-                   background: linear-gradient(135deg, #25D366, #128C7E);
+                   border-radius: 10px;
+                   background: #25D366;
                    color: white;
                    font-family: 'Crimson Text', serif;
-                   font-size: 18px;
-                   font-weight: 700;
-                   letter-spacing: 0.7px;
+                   font-size: 16px;
+                   font-weight: 600;
+                   letter-spacing: 0.5px;
                    cursor: pointer;
-                   transition: all 0.3s ease;
+                   transition: all 0.2s ease;
                    text-decoration: none;
                    display: flex;
                    align-items: center;
                    justify-content: center;
-                   gap: 12px;
-                   box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+                   gap: 10px;
+                   box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
                ">
-                <span style="font-size: 24px;">📱</span>
+                <span style="font-size: 20px;">📱</span>
                 <span>Falar com Suporte</span>
             </a>
-            
-            <button id="btn-ver-planos" style="
-                flex: 1;
-                padding: 14px 24px;
-                border: 2px solid var(--color-border, #444);
-                border-radius: 12px;
-                background: transparent;
-                color: var(--color-text-primary, white);
-                font-family: 'Crimson Text', serif;
-                font-size: 16px;
-                font-weight: 600;
-                letter-spacing: 0.7px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            ">Ver Planos</button>
         </div>
         
-        <p style="text-align: center; color: var(--color-text-tertiary, #888); font-size: 13px; margin-top: 20px;">
-            WhatsApp: <strong style="color: #25D366;">(11) 91538-1876</strong>
+        <p style="text-align: center; color: var(--color-text-tertiary, #6b7280); font-size: 12px; margin-top: 16px; margin-bottom: 0;">
+            WhatsApp: <strong style="color: var(--color-text-secondary, #a0a0a0);">(11) 91538-1876</strong>
         </p>
     `;
     
@@ -305,52 +312,61 @@ function mostrarModalAssinaturaProblema(data) {
         style.textContent = `
             @keyframes pulse {
                 0%, 100% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.1); opacity: 0.8; }
+                50% { transform: scale(1.05); opacity: 0.9; }
             }
         `;
         document.head.appendChild(style);
     }
     
+    const btnFechar = modal.querySelector('#btn-fechar-modal');
     const btnWhatsapp = modal.querySelector('#btn-whatsapp-support');
-    const btnPlanos = modal.querySelector('#btn-ver-planos');
+    
+    // Função para fechar modal e redirecionar
+    const fecharERedirecionarLogin = () => {
+        modalAssinaturaAberto = false;
+        document.body.removeChild(overlay);
+        localStorage.removeItem('merfin_token');
+        window.location.href = '/html/index.html';
+    };
+    
+    // Hover no botão fechar
+    btnFechar.onmouseover = () => {
+        btnFechar.style.background = 'var(--color-hover, #292929)';
+        btnFechar.style.color = 'var(--color-text-primary, white)';
+    };
+    btnFechar.onmouseout = () => {
+        btnFechar.style.background = 'none';
+        btnFechar.style.color = 'var(--color-text-secondary, #a0a0a0)';
+    };
+    
+    // Click no botão fechar
+    btnFechar.onclick = fecharERedirecionarLogin;
     
     // Hover no botão WhatsApp
     btnWhatsapp.onmouseover = () => {
-        btnWhatsapp.style.transform = 'translateY(-3px) scale(1.02)';
-        btnWhatsapp.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.5)';
+        btnWhatsapp.style.transform = 'translateY(-2px)';
+        btnWhatsapp.style.boxShadow = '0 6px 16px rgba(37, 211, 102, 0.35)';
     };
     btnWhatsapp.onmouseout = () => {
-        btnWhatsapp.style.transform = 'translateY(0) scale(1)';
-        btnWhatsapp.style.boxShadow = '0 4px 15px rgba(37, 211, 102, 0.3)';
+        btnWhatsapp.style.transform = 'translateY(0)';
+        btnWhatsapp.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.25)';
     };
     
-    // Hover no botão Ver Planos
-    btnPlanos.onmouseover = () => {
-        btnPlanos.style.background = 'rgba(255, 255, 255, 0.05)';
-        btnPlanos.style.borderColor = 'var(--color-primary, #3498db)';
-    };
-    btnPlanos.onmouseout = () => {
-        btnPlanos.style.background = 'transparent';
-        btnPlanos.style.borderColor = 'var(--color-border, #444)';
-    };
-    
-    // Click no botão Ver Planos
-    btnPlanos.onclick = () => {
-        overlay.remove();
-        window.location.href = data.redirectTo || '/html/planos.html';
-    };
-    
-    // Fechar ao clicar fora (opcional - remova se quiser forçar o usuário a escolher)
+    // Fechar ao clicar fora
     overlay.onclick = (e) => {
         if (e.target === overlay) {
-            overlay.remove();
-            window.location.href = data.redirectTo || '/html/planos.html';
+            fecharERedirecionarLogin();
         }
     };
 }
 
 // Função auxiliar para fazer requisições autenticadas
 async function fetchAPI(url, options = {}) {
+    // Se modal de assinatura está aberto, bloquear todas as requisições
+    if (modalAssinaturaAberto) {
+        throw new Error('Assinatura cancelada - acesso bloqueado');
+    }
+    
     const token = localStorage.getItem('merfin_token');
     
     const headers = {
@@ -470,7 +486,7 @@ function switchAuthMode(mode) {
 // Função removida - a verificação de assinatura é feita pelo middleware no backend
 
 
-function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
     
     const email = document.getElementById('login-email').value;
@@ -481,29 +497,85 @@ function handleLogin(event) {
         return;
     }
     
-    // Fazer requisição para o backend
-    fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, senha })
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        // Fazer requisição para o backend
+        const response = await fetch('http://localhost:5000/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, senha })
+        });
+        
+        const data = await response.json();
+        
         if (data.token) {
             // Salvar token e dados do usuário
             localStorage.setItem('merfin_token', data.token);
             localStorage.setItem('merfin_user', JSON.stringify(data.user));
+            
+            // VERIFICAR ASSINATURA IMEDIATAMENTE APÓS LOGIN
+            console.log('🔍 Verificando status da assinatura...');
+            
+            const checkResponse = await fetch(`http://localhost:5000/api/pagamentos/status/${data.user.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${data.token}`
+                }
+            });
+            
+            const statusData = await checkResponse.json();
+            
+            console.log('📊 Status da assinatura:', statusData);
+            
+            // Se não tem assinatura ou está cancelada/expirada, bloquear imediatamente
+            if (!statusData.success || 
+                statusData.status === 'cancelado' || 
+                statusData.status === 'expirado' ||
+                statusData.status === 'sem_assinatura') {
+                
+                console.log('❌ Assinatura inválida, bloqueando acesso');
+                
+                // Determinar tipo de erro
+                const errorData = {
+                    type: statusData.status,
+                    contactSupport: true,
+                    whatsapp: '5511915381876'
+                };
+                
+                if (statusData.status === 'cancelado') {
+                    errorData.error = 'Assinatura cancelada';
+                    errorData.message = 'Sua assinatura foi cancelada. Para continuar usando o Merfin, entre em contato com nosso suporte.';
+                    errorData.whatsappLink = 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20foi%20cancelada%20e%20preciso%20de%20ajuda.';
+                } else if (statusData.status === 'expirado') {
+                    errorData.error = 'Assinatura expirada';
+                    errorData.message = 'Sua assinatura expirou. Renove para continuar usando a plataforma.';
+                    errorData.whatsappLink = 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20renovar.';
+                } else if (statusData.status === 'pendente') {
+                    errorData.error = 'Pagamento pendente';
+                    errorData.message = 'Seu pagamento está pendente. Por favor, aguarde a confirmação ou entre em contato com o suporte.';
+                    errorData.whatsappLink = 'https://wa.me/5511915381876?text=Olá!%20Meu%20pagamento%20está%20pendente%20e%20preciso%20de%20ajuda.';
+                } else {
+                    errorData.error = 'Assinatura necessária';
+                    errorData.message = 'Você precisa de uma assinatura ativa para acessar o Merfin.';
+                    errorData.contactSupport = false;
+                    errorData.whatsappLink = 'https://wa.me/5511915381876?text=Olá!%20Preciso%20de%20uma%20assinatura%20para%20o%20Merfin.';
+                }
+                
+                // Mostrar modal de erro IMEDIATAMENTE (modal ficará na tela de login)
+                mostrarModalAssinaturaProblema(errorData);
+                return;
+            }
+            
+            // Assinatura OK, permitir acesso
+            console.log('✅ Assinatura válida, permitindo acesso');
             hideAuthModal();
         } else {
             mostrarNotificacao(data.error || 'Email ou senha incorretos.', 'error');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Erro no login:', error);
         mostrarNotificacao('Erro ao fazer login. Tente novamente.', 'error');
-    });
+    }
 }
 
 function handleCadastro(event) {

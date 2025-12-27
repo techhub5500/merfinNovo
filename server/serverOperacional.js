@@ -246,8 +246,16 @@ const checkSubscription = async (req, res, next) => {
     try {
         const assinatura = await Subscription.findOne({ userId: req.userId });
         
+        console.log(`\n🔍 [CHECK SUBSCRIPTION] User ID: ${req.userId}`);
+        console.log(`   Assinatura encontrada: ${assinatura ? 'SIM' : 'NÃO'}`);
+        if (assinatura) {
+            console.log(`   Status: ${assinatura.status}`);
+            console.log(`   Válido até: ${assinatura.validoAte}`);
+        }
+        
         // Se não tem assinatura
         if (!assinatura) {
+            console.log('❌ Bloqueando acesso: SEM ASSINATURA\n');
             return res.status(403).json({ 
                 error: 'Assinatura necessária',
                 message: 'Você precisa ter uma assinatura ativa para acessar esta funcionalidade.',
@@ -258,6 +266,7 @@ const checkSubscription = async (req, res, next) => {
 
         // Se a assinatura está pendente (pagamento não processado ou falhou)
         if (assinatura.status === 'pendente') {
+            console.log('❌ Bloqueando acesso: PAGAMENTO PENDENTE\n');
             return res.status(403).json({ 
                 error: 'Assinatura pendente',
                 message: 'Seu pagamento está pendente ou falhou. Por favor, regularize sua situação.',
@@ -271,6 +280,7 @@ const checkSubscription = async (req, res, next) => {
 
         // Se a assinatura está cancelada
         if (assinatura.status === 'cancelado') {
+            console.log('❌ Bloqueando acesso: ASSINATURA CANCELADA\n');
             return res.status(403).json({ 
                 error: 'Assinatura cancelada',
                 message: 'Sua assinatura foi cancelada. Para continuar usando o Merfin, reative sua assinatura ou entre em contato com o suporte.',
@@ -284,6 +294,7 @@ const checkSubscription = async (req, res, next) => {
 
         // Se a assinatura está expirada
         if (assinatura.status === 'expirado') {
+            console.log('❌ Bloqueando acesso: ASSINATURA EXPIRADA\n');
             return res.status(403).json({ 
                 error: 'Assinatura expirada',
                 message: 'Sua assinatura expirou. Renove para continuar usando a plataforma.',
@@ -297,6 +308,7 @@ const checkSubscription = async (req, res, next) => {
 
         // Verificar se a assinatura expirou (mesmo se marcada como ativo)
         if (assinatura.validoAte < new Date()) {
+            console.log('❌ Bloqueando acesso: DATA DE VALIDADE EXPIRADA\n');
             assinatura.status = 'expirado';
             await assinatura.save();
             
@@ -312,6 +324,7 @@ const checkSubscription = async (req, res, next) => {
         }
 
         // Assinatura ativa - permite acesso
+        console.log('✅ Acesso liberado: ASSINATURA ATIVA\n');
         req.subscription = assinatura;
         next();
     } catch (error) {
@@ -436,7 +449,7 @@ app.get('/api/auth/verify', authMiddleware, async (req, res) => {
 // ========== ROTAS DE PERFIL ==========
 
 // Buscar perfil do usuário
-app.get('/api/perfil', authMiddleware, async (req, res) => {
+app.get('/api/perfil', authMiddleware, checkSubscription, async (req, res) => {
     try {
         let perfil = await Perfil.findOne({ userId: req.userId });
         
@@ -457,7 +470,7 @@ app.get('/api/perfil', authMiddleware, async (req, res) => {
 });
 
 // Salvar/Atualizar perfil
-app.post('/api/perfil', authMiddleware, async (req, res) => {
+app.post('/api/perfil', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const perfilData = req.body;
         perfilData.userId = req.userId;
@@ -484,7 +497,7 @@ app.post('/api/perfil', authMiddleware, async (req, res) => {
 // ========== ROTAS DE DÍVIDAS ==========
 
 // Buscar todas as dívidas do usuário
-app.get('/api/dividas', authMiddleware, async (req, res) => {
+app.get('/api/dividas', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const dividas = await Divida.find({ userId: req.userId }).sort({ createdAt: -1 });
         res.json(dividas);
@@ -495,7 +508,7 @@ app.get('/api/dividas', authMiddleware, async (req, res) => {
 });
 
 // Criar nova dívida
-app.post('/api/dividas', authMiddleware, async (req, res) => {
+app.post('/api/dividas', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { nome, tipo, valorTotal, numParcelas, dataFim } = req.body;
 
@@ -536,7 +549,7 @@ app.post('/api/dividas', authMiddleware, async (req, res) => {
 });
 
 // Atualizar status de parcela (paga/não paga)
-app.patch('/api/dividas/:dividaId/parcela/:parcelaId', authMiddleware, async (req, res) => {
+app.patch('/api/dividas/:dividaId/parcela/:parcelaId', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { dividaId, parcelaId } = req.params;
         const { paga } = req.body;
@@ -563,7 +576,7 @@ app.patch('/api/dividas/:dividaId/parcela/:parcelaId', authMiddleware, async (re
 });
 
 // Deletar dívida
-app.delete('/api/dividas/:dividaId', authMiddleware, async (req, res) => {
+app.delete('/api/dividas/:dividaId', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { dividaId } = req.params;
 
@@ -583,7 +596,7 @@ app.delete('/api/dividas/:dividaId', authMiddleware, async (req, res) => {
 // ========== ROTAS DE FINANÇAS MENSAIS ==========
 
 // Buscar dados financeiros de um mês específico
-app.get('/api/financas/:mesAno', authMiddleware, async (req, res) => {
+app.get('/api/financas/:mesAno', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { mesAno } = req.params; // Formato: "YYYY-MM"
 
@@ -612,7 +625,7 @@ app.get('/api/financas/:mesAno', authMiddleware, async (req, res) => {
 
 // Buscar múltiplos meses (para dashboard com filtros)
 // IMPORTANTE: Esta rota deve vir ANTES de /api/financas/:mesAno
-app.post('/api/financas/multiplos-meses', authMiddleware, async (req, res) => {
+app.post('/api/financas/multiplos-meses', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { meses } = req.body; // Array de strings: ["2025-12", "2025-11", ...]
 
@@ -629,7 +642,7 @@ app.post('/api/financas/multiplos-meses', authMiddleware, async (req, res) => {
 });
 
 // Salvar/Atualizar dados financeiros de um mês
-app.post('/api/financas/:mesAno', authMiddleware, async (req, res) => {
+app.post('/api/financas/:mesAno', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { mesAno } = req.params;
         const { receitas, despesas } = req.body;
@@ -654,7 +667,7 @@ app.post('/api/financas/:mesAno', authMiddleware, async (req, res) => {
 // ========== ROTAS DE NOTAS ==========
 
 // Buscar todas as notas do usuário
-app.get('/api/notas', authMiddleware, async (req, res) => {
+app.get('/api/notas', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const notas = await Nota.find({ userId: req.userId }).sort({ pagina: 1 });
         res.json(notas);
@@ -665,7 +678,7 @@ app.get('/api/notas', authMiddleware, async (req, res) => {
 });
 
 // Buscar nota específica por página
-app.get('/api/notas/:pagina', authMiddleware, async (req, res) => {
+app.get('/api/notas/:pagina', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { pagina } = req.params;
 
@@ -692,7 +705,7 @@ app.get('/api/notas/:pagina', authMiddleware, async (req, res) => {
 });
 
 // Salvar/Atualizar nota
-app.post('/api/notas/:pagina', authMiddleware, async (req, res) => {
+app.post('/api/notas/:pagina', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { pagina } = req.params;
         const { conteudo } = req.body;
@@ -714,7 +727,7 @@ app.post('/api/notas/:pagina', authMiddleware, async (req, res) => {
 });
 
 // Deletar nota
-app.delete('/api/notas/:pagina', authMiddleware, async (req, res) => {
+app.delete('/api/notas/:pagina', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { pagina } = req.params;
 
@@ -737,7 +750,7 @@ app.delete('/api/notas/:pagina', authMiddleware, async (req, res) => {
 // ========== ROTAS DE CONVERSAS (HISTÓRICO DE CHAT) ==========
 
 // Buscar todas as conversas do usuário
-app.get('/api/conversas', authMiddleware, async (req, res) => {
+app.get('/api/conversas', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const conversas = await Conversa.find({ userId: req.userId })
             .select('titulo resumo createdAt updatedAt mensagens')
@@ -751,7 +764,7 @@ app.get('/api/conversas', authMiddleware, async (req, res) => {
 });
 
 // Buscar conversa específica por ID
-app.get('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
+app.get('/api/conversas/:conversaId', authMiddleware, checkSubscription, async (req, res) => {
     const timestamp = new Date().toISOString();
     try {
         const { conversaId } = req.params;
@@ -822,7 +835,7 @@ app.get('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
 });
 
 // Criar nova conversa
-app.post('/api/conversas', authMiddleware, async (req, res) => {
+app.post('/api/conversas', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { titulo } = req.body;
         
@@ -845,7 +858,7 @@ app.post('/api/conversas', authMiddleware, async (req, res) => {
 });
 
 // Adicionar mensagem a uma conversa
-app.post('/api/conversas/:conversaId/mensagem', authMiddleware, async (req, res) => {
+app.post('/api/conversas/:conversaId/mensagem', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { conversaId } = req.params;
         const { tipo, conteudo, sectionsUsed, timeframe } = req.body;
@@ -887,7 +900,7 @@ app.post('/api/conversas/:conversaId/mensagem', authMiddleware, async (req, res)
 });
 
 // Atualizar título da conversa
-app.patch('/api/conversas/:conversaId/titulo', authMiddleware, async (req, res) => {
+app.patch('/api/conversas/:conversaId/titulo', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { conversaId } = req.params;
         const { titulo } = req.body;
@@ -913,7 +926,7 @@ app.patch('/api/conversas/:conversaId/titulo', authMiddleware, async (req, res) 
 });
 
 // Deletar TODAS as conversas do usuário (deve vir ANTES da rota específica)
-app.delete('/api/conversas', authMiddleware, async (req, res) => {
+app.delete('/api/conversas', authMiddleware, checkSubscription, async (req, res) => {
     console.log('🗑️ [DEBUG] DELETE /api/conversas chamado');
     try {
         const result = await Conversa.deleteMany({ userId: req.userId });
@@ -929,7 +942,7 @@ app.delete('/api/conversas', authMiddleware, async (req, res) => {
 });
 
 // Deletar conversa específica
-app.delete('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
+app.delete('/api/conversas/:conversaId', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { conversaId } = req.params;
         
@@ -950,7 +963,7 @@ app.delete('/api/conversas/:conversaId', authMiddleware, async (req, res) => {
 });
 
 // Buscar resumo de uma conversa
-app.get('/api/conversas/:conversaId/resumo', authMiddleware, async (req, res) => {
+app.get('/api/conversas/:conversaId/resumo', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { conversaId } = req.params;
         
@@ -979,7 +992,7 @@ app.get('/api/conversas/:conversaId/resumo', authMiddleware, async (req, res) =>
 });
 
 // Atualizar resumo de uma conversa
-app.patch('/api/conversas/:conversaId/resumo', authMiddleware, async (req, res) => {
+app.patch('/api/conversas/:conversaId/resumo', authMiddleware, checkSubscription, async (req, res) => {
     try {
         const { conversaId } = req.params;
         const { resumo, palavrasResumo } = req.body;

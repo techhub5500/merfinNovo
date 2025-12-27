@@ -260,7 +260,9 @@ const checkSubscription = async (req, res, next) => {
                 error: 'Assinatura necessária',
                 message: 'Você precisa ter uma assinatura ativa para acessar esta funcionalidade.',
                 type: 'sem_assinatura',
-                redirectTo: '/html/planos.html'
+                contactSupport: true,
+                whatsapp: '5511915381876',
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Preciso%20de%20ajuda%20com%20minha%20assinatura%20do%20Merfin.'
             });
         }
 
@@ -273,8 +275,7 @@ const checkSubscription = async (req, res, next) => {
                 type: 'pagamento_pendente',
                 contactSupport: true,
                 whatsapp: '5511915381876',
-                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Preciso%20de%20ajuda%20com%20minha%20assinatura%20do%20Merfin.',
-                redirectTo: '/html/planos.html'
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Preciso%20de%20ajuda%20com%20minha%20assinatura%20do%20Merfin.'
             });
         }
 
@@ -287,8 +288,7 @@ const checkSubscription = async (req, res, next) => {
                 type: 'assinatura_cancelada',
                 contactSupport: true,
                 whatsapp: '5511915381876',
-                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20foi%20cancelada%20e%20preciso%20de%20ajuda.',
-                redirectTo: '/html/planos.html'
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20foi%20cancelada%20e%20preciso%20de%20ajuda.'
             });
         }
 
@@ -301,8 +301,7 @@ const checkSubscription = async (req, res, next) => {
                 type: 'assinatura_expirada',
                 contactSupport: true,
                 whatsapp: '5511915381876',
-                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20de%20ajuda%20para%20renovar.',
-                redirectTo: '/html/planos.html'
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20de%20ajuda%20para%20renovar.'
             });
         }
 
@@ -318,8 +317,7 @@ const checkSubscription = async (req, res, next) => {
                 type: 'assinatura_expirada',
                 contactSupport: true,
                 whatsapp: '5511915381876',
-                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20renovar.',
-                redirectTo: '/html/planos.html'
+                whatsappLink: 'https://wa.me/5511915381876?text=Olá!%20Minha%20assinatura%20expirou%20e%20preciso%20renovar.'
             });
         }
 

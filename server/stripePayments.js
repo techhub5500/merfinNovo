@@ -117,9 +117,9 @@ router.post('/webhook', async (req, res) => {
     try {
         // Verificar se o evento veio realmente do Stripe
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-        console.log('✅ Webhook recebido:', event.type);
+        console.log('\n✅ [WEBHOOK RECEBIDO]', event.type);
     } catch (err) {
-        console.error('❌ Erro no webhook:', err.message);
+        console.error('❌ [WEBHOOK] Erro:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -153,20 +153,9 @@ router.post('/webhook', async (req, res) => {
                     break;
                 }
                 
-                console.log('🔍 Buscando usuário com email:', emailToSearch);
-                
                 // Verificar se é um novo cadastro
                 let user = await User.findOne({ email: emailToSearch });
                 
-                if (user) {
-                    console.log('✅ Usuário já existe no banco:', user.email);
-                } else {
-                    console.log('⚠️ Usuário não existe ainda - será criado pelo frontend via /finalizar-cadastro');
-                    console.log('   O webhook está marcando o pagamento como confirmado no Stripe');
-                }
-                
-                // Sempre criar/atualizar a assinatura no Stripe
-                // Isso permite que o frontend valide o pagamento depois
                 if (user) {
                     // Determinar tipo de plano baseado no valor
                     const amount = session.amount_total / 100; // Stripe retorna em centavos
@@ -174,10 +163,6 @@ router.post('/webhook', async (req, res) => {
                     const validoAte = amount >= 190
                         ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // +365 dias
                         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);  // +30 dias
-                    
-                    console.log('💾 Criando assinatura no banco...');
-                    console.log('   Plano:', tipoPiano);
-                    console.log('   Válido até:', validoAte);
                     
                     // Criar ou atualizar assinatura
                     await Subscription.findOneAndUpdate(
@@ -194,10 +179,10 @@ router.post('/webhook', async (req, res) => {
                         { upsert: true, new: true }
                     );
                     
-                    console.log('✅ Assinatura ativada para:', user.email);
+                    console.log('✅ [WEBHOOK] Assinatura ativada:', user.email);
+                } else {
+                    console.log('ℹ️ [WEBHOOK] Aguardando cadastro via frontend');
                 }
-                
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                 break;
 
             case 'customer.subscription.created':
@@ -236,13 +221,27 @@ router.post('/webhook', async (req, res) => {
             case 'customer.subscription.deleted':
                 // Assinatura cancelada/deletada
                 const canceledSub = event.data.object;
-                console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨');
                 console.log('❌ ASSINATURA CANCELADA/DELETADA');
                 console.log('   Subscription ID:', canceledSub.id);
                 console.log('   Customer ID:', canceledSub.customer);
                 console.log('   Motivo:', canceledSub.cancellation_details?.reason || 'Não especificado');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
                 
+                console.log('\n🔍 Buscando assinatura no MongoDB...');
+                const assinaturaAntes = await Subscription.findOne({ stripeSubscriptionId: canceledSub.id });
+                
+                if (assinaturaAntes) {
+                    console.log('✅ Assinatura ENCONTRADA no banco:');
+                    console.log('   Status ANTES:', assinaturaAntes.status);
+                    console.log('   User ID:', assinaturaAntes.userId);
+                    console.log('   Válido até:', assinaturaAntes.validoAte);
+                } else {
+                    console.error('❌ Assinatura NÃO ENCONTRADA no banco!');
+                    console.log('🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n');
+                    break;
+                }
+                
+                console.log('\n💾 Atualizando status para CANCELADO...');
                 const updatedSubscription = await Subscription.findOneAndUpdate(
                     { stripeSubscriptionId: canceledSub.id },
                     {
@@ -253,11 +252,14 @@ router.post('/webhook', async (req, res) => {
                 );
                 
                 if (updatedSubscription) {
-                    console.log(`✅ Assinatura marcada como cancelada no banco de dados`);
-                    console.log(`   User ID: ${updatedSubscription.userId}`);
+                    console.log('✅✅✅ ASSINATURA CANCELADA COM SUCESSO NO MONGODB!');
+                    console.log('   Status DEPOIS:', updatedSubscription.status);
+                    console.log('   User ID:', updatedSubscription.userId);
+                    console.log('   ⚠️  O usuário será BLOQUEADO no próximo login ou requisição!');
                 } else {
-                    console.warn('⚠️ Assinatura não encontrada no banco de dados');
+                    console.error('❌ FALHA ao atualizar assinatura!');
                 }
+                console.log('🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n');
                 break;
 
             case 'invoice.payment_failed':
@@ -300,11 +302,7 @@ router.post('/finalizar-cadastro', async (req, res) => {
     try {
         const { nome, email, senha, plano, timestamp } = req.body;
         
-        console.log('📝 Dados recebidos:');
-        console.log('   Nome:', nome);
-        console.log('   Email:', email);
-        console.log('   Plano:', plano);
-        console.log('   Timestamp:', timestamp ? new Date(timestamp).toISOString() : 'N/A');
+        console.log('🎯 [CADASTRO] Finalizando:', email);
         
         if (!nome || !email || !senha || !plano) {
             console.error('❌ Dados incompletos');
@@ -321,8 +319,6 @@ router.post('/finalizar-cadastro', async (req, res) => {
         let user = await User.findOne({ email });
         
         if (user) {
-            console.log('✅ Usuário já existe no banco:', user.email);
-            
             // Verificar se tem assinatura ativa
             const assinatura = await Subscription.findOne({ userId: user._id });
             
@@ -394,8 +390,6 @@ router.post('/finalizar-cadastro', async (req, res) => {
         }
         
         // Usuário NÃO existe - criar novo
-        console.log('🆕 Criando novo usuário...');
-        console.log('🔍 Verificando pagamento no Stripe...');
         
         // Buscar pagamento no Stripe pelo email
         const customers = await stripe.customers.list({
@@ -404,7 +398,6 @@ router.post('/finalizar-cadastro', async (req, res) => {
         });
         
         if (customers.data.length === 0) {
-            console.error('❌ Nenhum pagamento encontrado no Stripe para:', email);
             return res.json({
                 success: false,
                 error: 'Pagamento não encontrado. Por favor, complete o pagamento primeiro.'
@@ -412,7 +405,6 @@ router.post('/finalizar-cadastro', async (req, res) => {
         }
         
         const customer = customers.data[0];
-        console.log('✅ Cliente encontrado no Stripe:', customer.id);
         
         // Verificar se tem subscription ativa
         const subscriptions = await stripe.subscriptions.list({
@@ -422,23 +414,34 @@ router.post('/finalizar-cadastro', async (req, res) => {
         });
         
         if (subscriptions.data.length === 0) {
-            console.error('❌ Nenhuma assinatura ativa encontrada');
             return res.json({
                 success: false,
                 error: 'Pagamento ainda não foi processado. Aguarde alguns segundos e tente novamente.'
             });
         }
         
-        const subscription = subscriptions.data[0];
-        console.log('✅ Assinatura ativa encontrada:', subscription.id);
-        console.log('📊 Detalhes da assinatura do Stripe:');
-        console.log('   - Status:', subscription.status);
-        console.log('   - current_period_end:', subscription.current_period_end);
-        console.log('   - current_period_start:', subscription.current_period_start);
+        const subscriptionId = subscriptions.data[0].id;
+        
+        // Buscar detalhes completos da assinatura
+        console.log('🔍 Buscando detalhes completos da assinatura:', subscriptionId);
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        
+        // O current_period_end está dentro de items.data[0]
+        const subscriptionItem = subscription.items?.data?.[0];
+        
+        if (!subscriptionItem || !subscriptionItem.current_period_end) {
+            console.error('❌ ERRO: Não foi possível obter current_period_end!');
+            console.error('   Subscription items:', subscription.items);
+            return res.status(500).json({
+                success: false,
+                error: 'Erro ao buscar dados da assinatura no Stripe'
+            });
+        }
+        
+        const validoAte = new Date(subscriptionItem.current_period_end * 1000);
+        console.log('✅ Assinatura encontrada - Válido até:', validoAte.toLocaleString('pt-BR'));
         
         // Criar usuário no banco
-        console.log('👤 Criando usuário no MongoDB...');
-        
         const bcrypt = require('bcryptjs');
         const senhaHash = await bcrypt.hash(senha, 10);
         
@@ -451,24 +454,8 @@ router.post('/finalizar-cadastro', async (req, res) => {
         
         console.log('✅ Usuário criado com sucesso:', user._id);
         
-        // Criar assinatura no banco
-        console.log('💳 Criando registro de assinatura...');
-        
+        // Criar assinatura no banco usando os dados completos do Stripe
         const tipoPiano = plano === 'anual' ? 'premium' : 'basico';
-        
-        // Validar current_period_end antes de usar
-        if (!subscription.current_period_end || isNaN(subscription.current_period_end)) {
-            console.error('❌ current_period_end inválido:', subscription.current_period_end);
-            console.log('📅 Usando data padrão: +30 dias para mensal ou +365 dias para anual');
-        }
-        
-        const validoAte = subscription.current_period_end 
-            ? new Date(subscription.current_period_end * 1000)
-            : plano === 'anual'
-                ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-                : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        
-        console.log('📅 Data de validade calculada:', validoAte);
         
         await Subscription.create({
             userId: user._id,
@@ -479,7 +466,7 @@ router.post('/finalizar-cadastro', async (req, res) => {
             validoAte: validoAte
         });
         
-        console.log('✅ Assinatura criada com sucesso');
+        console.log('✅ Assinatura criada - Válido até:', validoAte.toLocaleString('pt-BR'));
         
         // Gerar token JWT
         const jwt = require('jsonwebtoken');
@@ -489,8 +476,7 @@ router.post('/finalizar-cadastro', async (req, res) => {
             { expiresIn: '7d' }
         );
         
-        console.log('✅ Token gerado com sucesso');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        console.log('✅ Token gerado com sucesso\n');
         
         res.json({
             success: true,

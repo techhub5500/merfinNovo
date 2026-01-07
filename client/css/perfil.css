@@ -620,23 +620,466 @@
     background: var(--color-primary-dark, #0066cc);
 }
 
-/* Responsivo */
+/* Responsivo - Mobile */
 @media (max-width: 768px) {
+    .perfil-container {
+        padding: 16px;
+    }
+
+    .perfil-header h1 {
+        font-size: 22px;
+        margin-bottom: 24px;
+    }
+
     .perfil-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .perfil-section {
+        padding: 16px;
+    }
+
+    .perfil-section h2 {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .perfil-section h3 {
+        font-size: 15px;
+        margin-top: 16px;
+        margin-bottom: 10px;
+    }
+
+    .section-description {
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+
+    .form-group {
+        margin-bottom: 12px;
+    }
+
+    .form-group label {
+        font-size: 13px;
+        margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 8px 10px;
+        font-size: 13px;
     }
     
     .form-group-inline {
         flex-direction: column;
+        gap: 0;
     }
     
     .patrimonio-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .patrimonio-item label {
+        font-size: 13px;
     }
     
     .patrimonio-item input {
         width: 100%;
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .patrimonio-total {
+        font-size: 16px;
+        margin-top: 16px;
+        padding-top: 12px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .btn-add-divida {
+        padding: 8px 16px;
+        font-size: 13px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    #dividas-list {
+        gap: 10px;
+    }
+
+    .divida-card {
+        padding: 12px;
+    }
+
+    .divida-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .divida-nome {
+        font-size: 15px;
+    }
+
+    .divida-tipo {
+        font-size: 11px;
+    }
+
+    .divida-info {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .parcela-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .parcela-info {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .btn-toggle-paga {
+        width: 100%;
+        justify-content: center;
+        padding: 8px;
+    }
+
+    .perfil-actions {
+        justify-content: center;
+        margin-top: 16px;
+    }
+
+    .btn-save {
+        padding: 10px 24px;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 24px;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 18px;
+    }
+
+    .modal-body {
+        padding: 16px 20px;
+    }
+
+    .modal-footer {
+        padding: 16px 20px;
+        flex-direction: column;
+    }
+
+    .btn-cancel,
+    .btn-confirm {
+        width: 100%;
+        padding: 12px;
+    }
+
+    .auth-modal-content {
+        max-width: 95%;
+        padding: 16px;
+    }
+
+    .auth-modal-header h2 {
+        font-size: 20px;
+    }
+
+    .auth-tab {
+        font-size: 14px;
+        padding: 10px 12px;
+    }
+
+    .auth-form input {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .btn-auth {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .empty-message {
+        padding: 30px 20px;
+        font-size: 13px;
+    }
+}
+
+/* Responsivo - Widescreen */
+@media (min-width: 1920px) {
+    .perfil-container {
+        padding: 40px;
+        max-width: 1800px;
+        margin: 0 auto;
+    }
+
+    .perfil-header h1 {
+        font-size: 36px;
+        margin-bottom: 40px;
+    }
+
+    .perfil-grid {
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+
+    .perfil-section {
+        padding: 32px;
+        border-radius: 16px;
+    }
+
+    .perfil-section h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+    }
+
+    .perfil-section h3 {
+        font-size: 18px;
+        margin-top: 24px;
+        margin-bottom: 16px;
+    }
+
+    .section-description {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 14px 16px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .form-group-inline {
+        gap: 16px;
+    }
+
+    .patrimonio-item {
+        margin-bottom: 16px;
+        padding: 10px 0;
+    }
+
+    .patrimonio-item label {
+        font-size: 16px;
+    }
+
+    .patrimonio-item input {
+        width: 220px;
+        padding: 10px 14px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .patrimonio-total {
+        margin-top: 24px;
+        padding-top: 20px;
+        font-size: 22px;
+    }
+
+    .patrimonio-total span {
+        font-size: 24px;
+    }
+
+    .section-header {
+        margin-bottom: 24px;
+    }
+
+    .btn-add-divida {
+        padding: 12px 24px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    #dividas-list {
+        gap: 16px;
+    }
+
+    .divida-card {
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .divida-header {
+        margin-bottom: 10px;
+    }
+
+    .divida-nome {
+        font-size: 18px;
+    }
+
+    .divida-tipo {
+        font-size: 14px;
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+
+    .divida-info {
+        gap: 32px;
+        font-size: 16px;
+    }
+
+    .divida-parcelas {
+        margin-top: 16px;
+        padding-top: 16px;
+    }
+
+    .parcela-item {
+        padding: 12px;
+        margin-bottom: 6px;
+        font-size: 15px;
+        border-radius: 8px;
+    }
+
+    .parcela-item.paga {
+        border-left-width: 4px;
+    }
+
+    .parcela-info {
+        gap: 32px;
+    }
+
+    .btn-toggle-paga {
+        padding: 8px 16px;
+        font-size: 14px;
+        border-radius: 6px;
+    }
+
+    .btn-toggle-paga i {
+        font-size: 16px;
+    }
+
+    .perfil-actions {
+        margin-top: 32px;
+        padding-top: 24px;
+    }
+
+    .btn-save {
+        padding: 16px 40px;
+        font-size: 18px;
+        border-radius: 10px;
+        margin-bottom: 48px;
+    }
+
+    .modal-content {
+        max-width: 700px;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 28px 32px;
+    }
+
+    .modal-header h2 {
+        font-size: 24px;
+    }
+
+    .modal-close {
+        font-size: 32px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .modal-body {
+        padding: 32px;
+    }
+
+    .modal-footer {
+        padding: 28px 32px;
+        gap: 16px;
+    }
+
+    .btn-cancel,
+    .btn-confirm {
+        padding: 12px 32px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .auth-modal-content {
+        max-width: 900px;
+        padding: 32px;
+        border-radius: 16px;
+    }
+
+    .auth-modal-header h2 {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .auth-modal-header p {
+        font-size: 16px;
+    }
+
+    .auth-tabs {
+        margin-bottom: 32px;
+    }
+
+    .auth-tab {
+        font-size: 18px;
+        padding: 14px 20px;
+    }
+
+    .auth-form {
+        gap: 24px;
+    }
+
+    .auth-form label {
+        font-size: 16px;
+    }
+
+    .auth-form input {
+        padding: 16px 18px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .btn-auth {
+        padding: 18px;
+        font-size: 18px;
+        border-radius: 10px;
+        margin-top: 16px;
+    }
+
+    .empty-message {
+        padding: 48px;
+        font-size: 16px;
     }
 }

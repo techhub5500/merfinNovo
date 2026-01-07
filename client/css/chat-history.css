@@ -433,7 +433,7 @@
     border-left: 4px solid #667eea;
 }
 
-/* Responsivo */
+/* Responsivo - Mobile */
 @media (max-width: 768px) {
     .btn-historico {
         top: 12px;
@@ -460,14 +460,51 @@
     .modal-historico-content {
         width: 95%;
         max-height: 90vh;
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .modal-historico-header {
+        padding: 16px 20px;
     }
 
     .modal-historico-header h2 {
-        font-size: 20px;
+        font-size: 18px;
+    }
+
+    .modal-historico-busca {
+        padding: 12px 16px;
+    }
+
+    .modal-historico-busca input {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .modal-historico-acoes {
+        padding: 12px 16px;
+    }
+
+    .btn-nova-conversa {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .btn-apagar-todos {
+        padding: 10px 16px;
+        font-size: 13px;
+        margin-left: 8px;
+    }
+
+    .modal-historico-lista {
+        padding: 12px;
     }
 
     .conversa-item {
         padding: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
     }
 
     .conversa-titulo span {
@@ -478,6 +515,135 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 4px;
+        font-size: 11px;
+    }
+
+    .conversa-acoes {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .btn-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .notification {
+        bottom: 16px;
+        right: 16px;
+        padding: 12px 18px;
+        font-size: 13px;
+    }
+}
+
+/* Responsivo - Widescreen */
+@media (min-width: 1920px) {
+    .btn-historico,
+    .btn-novo-chat {
+        width: 56px;
+        height: 56px;
+        top: 32px;
+        right: 32px;
+    }
+
+    .btn-novo-chat {
+        top: 96px;
+    }
+
+    .btn-historico i,
+    .btn-novo-chat i {
+        font-size: 20px;
+    }
+
+    .modal-historico-content {
+        max-width: 900px;
+        border-radius: 20px;
+    }
+
+    .modal-historico-header {
+        padding: 28px 32px;
+    }
+
+    .modal-historico-header h2 {
+        font-size: 24px;
+    }
+
+    .modal-historico-header h2 i {
+        font-size: 22px;
+    }
+
+    .btn-fechar-modal {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .modal-historico-busca {
+        padding: 20px 32px;
+    }
+
+    .modal-historico-busca i {
+        font-size: 18px;
+    }
+
+    .modal-historico-busca input {
+        padding: 12px 16px;
+        font-size: 16px;
+    }
+
+    .modal-historico-acoes {
+        padding: 20px 32px;
+    }
+
+    .btn-nova-conversa,
+    .btn-apagar-todos {
+        padding: 14px 24px;
+        font-size: 16px;
+    }
+
+    .modal-historico-lista {
+        padding: 24px 32px;
+    }
+
+    .conversa-item {
+        padding: 20px;
+        margin-bottom: 16px;
+        border-radius: 14px;
+    }
+
+    .conversa-titulo span {
+        font-size: 18px;
+    }
+
+    .conversa-titulo i {
+        font-size: 18px;
+    }
+
+    .conversa-meta {
+        font-size: 14px;
+        gap: 20px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .empty-state i {
+        font-size: 56px;
+    }
+
+    .empty-state p {
+        font-size: 18px;
+    }
+
+    .notification {
+        bottom: 32px;
+        right: 32px;
+        padding: 20px 28px;
+        font-size: 16px;
+        border-radius: 10px;
     }
 }
 

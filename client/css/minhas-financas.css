@@ -635,10 +635,269 @@
     cursor: pointer;
 }
 
-/* Responsividade */
+/* Responsividade - Mobile */
 @media (max-width: 768px) {
+    .financas-container {
+        padding: 16px;
+    }
+
+    .financas-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .financas-header h1 {
+        font-size: 22px;
+    }
+
+    .subpage-tabs {
+        gap: 6px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    .tab-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
     .financas-overview {
         flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .card h3 {
+        font-size: 14px;
+    }
+
+    .card p {
+        font-size: 20px;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .dashboard-section {
+        padding: 16px;
+    }
+
+    .dashboard-section h3 {
+        font-size: 16px;
+    }
+
+    .categoria-card {
+        padding: 10px;
+    }
+
+    .categoria-nome {
+        font-size: 13px;
+    }
+
+    .categoria-valor {
+        font-size: 13px;
+    }
+
+    .subcategoria-item {
+        font-size: 12px;
+        padding: 6px;
+    }
+
+    .month-selector {
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .month-selector button {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    .current-month {
+        font-size: 16px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 20px;
+    }
+
+    .dashboard-charts {
+        padding: 16px;
+        margin-top: 24px;
+    }
+
+    .dashboard-charts h3 {
+        font-size: 16px;
+    }
+
+    .dashboard-charts p {
+        font-size: 13px;
+    }
+
+    #financeChart {
+        height: 250px;
+    }
+
+    .financas-form form {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .financas-form input {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .financas-form button {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .notas-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .nota-page {
+        min-height: 250px;
+        padding: 12px;
+    }
+
+    .nota-textarea {
+        height: 230px;
+        font-size: 13px;
+    }
+
+    .nota-nav {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+    }
+
+    .btn-add-nota,
+    .btn-save-nota {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .meta-item {
+        padding: 12px;
+    }
+
+    .meta-item h4 {
+        font-size: 14px;
+    }
+
+    .meta-descricao {
+        font-size: 12px;
+    }
+
+    .meta-info {
+        font-size: 13px;
+    }
+
+    .progress-bar {
+        height: 16px;
+    }
+
+    .meta-percent {
+        font-size: 13px;
+    }
+
+    .month-summary-cards {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin: 16px 0;
+    }
+    
+    .summary-card {
+        width: 100%;
+        max-width: 300px;
+        padding: 16px;
+    }
+
+    .card-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+
+    .card-content h3 {
+        font-size: 12px;
+    }
+
+    .card-value {
+        font-size: 20px;
+    }
+
+    .auth-modal-content {
+        max-width: 95%;
+        padding: 16px;
+    }
+
+    .auth-modal-header h2 {
+        font-size: 20px;
+    }
+
+    .auth-tab {
+        font-size: 14px;
+        padding: 10px 12px;
+    }
+
+    .auth-form input {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .btn-auth {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .financas-tables {
+        gap: 24px;
+    }
+
+    #receitas-table th, #receitas-table td,
+    #despesas-table th, #despesas-table td {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .filter-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .filter-container label {
+        font-size: 13px;
+    }
+
+    .filter-container select {
+        padding: 5px 10px;
+        font-size: 13px;
+        width: 100%;
+    }
+
+    .add-row-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .delete-row-btn {
+        font-size: 14px;
     }
 }
 
@@ -830,10 +1089,326 @@
     transform: scale(1.1);
 }
 
-/* Responsivo */
+/* Responsivo - Mobile (Tabelas) */
 @media (max-width: 768px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Responsividade - Widescreen */
+@media (min-width: 1920px) {
+    .financas-container {
+        padding: 40px;
+        max-width: 1800px;
+        margin: 0 auto;
+    }
+
+    .financas-header {
+        margin-bottom: 28px;
+    }
+
+    .financas-header h1 {
+        font-size: 36px;
+    }
+
+    .subpage-tabs {
+        gap: 12px;
+        margin-bottom: 32px;
+    }
+
+    .tab-btn {
+        padding: 16px 32px;
+        font-size: 18px;
+        border-radius: 10px;
+    }
+
+    .financas-overview {
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+
+    .card {
+        padding: 28px;
+        border-radius: 16px;
+    }
+
+    .card h3 {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .card p {
+        font-size: 32px;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+
+    .dashboard-section {
+        padding: 28px;
+        border-radius: 16px;
+    }
+
+    .dashboard-section h3 {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    .categoria-card {
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .categoria-nome {
+        font-size: 16px;
+    }
+
+    .categoria-valor {
+        font-size: 16px;
+    }
+
+    .subcategoria-item {
+        font-size: 15px;
+        padding: 10px;
+    }
+
+    .month-selector {
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .month-selector button {
+        padding: 12px 16px;
+        font-size: 18px;
+    }
+
+    .current-month {
+        font-size: 22px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 28px;
+    }
+
+    .dashboard-charts {
+        padding: 32px;
+        margin-top: 40px;
+        border-radius: 16px;
+    }
+
+    .dashboard-charts h3 {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    .dashboard-charts p {
+        font-size: 16px;
+    }
+
+    #financeChart {
+        height: 400px;
+    }
+
+    .financas-form form {
+        gap: 16px;
+    }
+
+    .financas-form input {
+        padding: 16px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .financas-form button {
+        padding: 16px 20px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .notas-container {
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .nota-page {
+        min-height: 350px;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .nota-textarea {
+        height: 320px;
+        font-size: 16px;
+    }
+
+    .nota-footer {
+        font-size: 14px;
+    }
+
+    .nota-nav {
+        width: 48px;
+        height: 48px;
+        font-size: 28px;
+    }
+
+    .btn-add-nota,
+    .btn-save-nota {
+        padding: 10px 18px;
+        font-size: 16px;
+    }
+
+    .meta-item {
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .meta-item h4 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .meta-descricao {
+        font-size: 15px;
+        margin-bottom: 16px;
+    }
+
+    .meta-info {
+        font-size: 16px;
+    }
+
+    .progress-bar {
+        height: 24px;
+        border-radius: 12px;
+    }
+
+    .meta-percent {
+        font-size: 16px;
+    }
+
+    .month-summary-cards {
+        gap: 28px;
+        margin: 28px 0;
+    }
+    
+    .summary-card {
+        min-width: 280px;
+        padding: 28px;
+        border-radius: 16px;
+    }
+
+    .card-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        border-radius: 12px;
+    }
+
+    .card-content h3 {
+        font-size: 16px;
+    }
+
+    .card-value {
+        font-size: 32px;
+        margin-top: 8px;
+    }
+
+    .auth-modal-content {
+        max-width: 900px;
+        padding: 32px;
+        border-radius: 16px;
+    }
+
+    .auth-modal-header h2 {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .auth-modal-header p {
+        font-size: 16px;
+    }
+
+    .auth-tabs {
+        margin-bottom: 32px;
+    }
+
+    .auth-tab {
+        font-size: 18px;
+        padding: 14px 20px;
+    }
+
+    .auth-form {
+        gap: 24px;
+    }
+
+    .auth-form label {
+        font-size: 16px;
+    }
+
+    .auth-form input {
+        padding: 16px 18px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .btn-auth {
+        padding: 18px;
+        font-size: 18px;
+        border-radius: 10px;
+        margin-top: 16px;
+    }
+
+    .financas-tables {
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+
+    .table-container h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    #receitas-table, #despesas-table {
+        border-radius: 16px;
+    }
+
+    #receitas-table th, #receitas-table td,
+    #despesas-table th, #despesas-table td {
+        padding: 16px 20px;
+        font-size: 16px;
+    }
+
+    #receitas-table input, #receitas-table select,
+    #despesas-table input, #despesas-table select {
+        padding: 8px 12px;
+        font-size: 15px;
+        border-radius: 8px;
+    }
+
+    .filter-container label {
+        font-size: 16px;
+    }
+
+    .filter-container select {
+        padding: 8px 14px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+
+    .add-row-btn {
+        margin-top: 20px;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+
+    .delete-row-btn {
+        font-size: 18px;
+        padding: 8px;
     }
 }
 

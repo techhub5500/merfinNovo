@@ -41,14 +41,55 @@
             position: relative;
         }
         
-        /* Spinner customizado */
-        .timeline-event.current .fa-spinner {
-            animation: spin 1s linear infinite;
+        /* Bolinhas animadas */
+        .wave-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
         }
         
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .wave-dots i {
+            font-size: 8px;
+            color: #a8dadc;
+            animation: wave 1.4s ease-in-out infinite;
+        }
+        
+        .wave-dots i:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .wave-dots i:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .wave-dots i:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes wave {
+            0%, 100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-8px);
+                opacity: 0.5;
+            }
+        }
+        
+        /* Spinner inicial de loading */
+        .initial-loading {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 60px;
+            padding-left: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -177,7 +218,14 @@
             thinkingEl.className = 'thinking-container';
             thinkingEl.id = 'thinking-indicator';
             thinkingEl.innerHTML = `
-                <div class="progress-timeline">
+                <div class="initial-loading" id="initial-loading">
+                    <div class="wave-dots">
+                        <i class="fa-solid fa-circle"></i>
+                        <i class="fa-solid fa-circle"></i>
+                        <i class="fa-solid fa-circle"></i>
+                    </div>
+                </div>
+                <div class="progress-timeline" id="progress-timeline" style="display: none;">
                     <div class="timeline-container" id="timeline-events"></div>
                 </div>
             `;
@@ -188,6 +236,14 @@
 
         // Adicionar evento à timeline
         function addTimelineEvent(eventData) {
+            // Remover spinner inicial na primeira execução
+            const initialLoading = document.getElementById('initial-loading');
+            const progressTimeline = document.getElementById('progress-timeline');
+            if (initialLoading && progressTimeline) {
+                initialLoading.style.display = 'none';
+                progressTimeline.style.display = 'flex';
+            }
+            
             const timeline = document.getElementById('timeline-events');
             if (!timeline) return;
 
@@ -235,9 +291,9 @@
                 ? '<i class="fas fa-circle"></i>' 
                 : '<i class="fas fa-circle" style="font-size: 8px;"></i>';
             
-            // Adicionar spinner se for o pensamento atual (running)
+            // Adicionar bolinhas animadas se for o pensamento atual (running)
             const spinnerHtml = eventData.status === 'running' 
-                ? '<i class="fas fa-spinner fa-spin" style="margin-right: 8px; color: #a8dadc;"></i>' 
+                ? '<span class="wave-dots" style="margin-right: 8px; display: inline-flex;"><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i></span>' 
                 : '';
             
             eventEl.innerHTML = `
@@ -403,8 +459,8 @@
                     status: 'running'
                 });
                 
-                // Delay realista
-                const delay = thought.type === 'main' ? 400 : 250;
+                // Delay realista (30% mais lento)
+                const delay = thought.type === 'main' ? 520 : 325;
                 await new Promise(resolve => setTimeout(resolve, delay));
                 
                 // Marcar como "done"

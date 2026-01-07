@@ -1095,7 +1095,8 @@ module.exports.models = {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// ⚠️ Render requer escutar em 0.0.0.0, não localhost
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor Operacional rodando na porta ${PORT}`);
     console.log(`📊 API Status: http://localhost:${PORT}/api/status`);
     console.log(`🌐 Frontend: http://localhost:${PORT}/html/chat.html`);

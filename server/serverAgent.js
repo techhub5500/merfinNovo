@@ -57,8 +57,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'merfin_secret_key_2025';
 const SEARCH_API_KEY = process.env.SEARCH_API_KEY;
 
 console.log('🔧 Configurações do Agent Server:');
+console.log('   PORT (Render):', process.env.PORT || 'Não definida');
+console.log('   AGENT_PORT (fallback):', process.env.AGENT_PORT || 'Não definida');
+console.log('   PORTA REAL EM USO:', PORT);
 console.log('   OPERATIONAL_SERVER_URL:', OPERATIONAL_SERVER_URL);
-console.log('   AGENT_PORT:', PORT);
 
 // ========== SEÇÕES DE DADOS DISPONÍVEIS ==========
 const AVAILABLE_SECTIONS = {

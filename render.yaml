@@ -67,8 +67,8 @@ services:
     region: oregon
     plan: free
     buildCommand: npm install -g http-server
-    startCommand: http-server ./client -p $PORT
+    startCommand: http-server ./client -p $PORT -a 0.0.0.0
     routes:
       - type: rewrite
-        source: /*
-        destination: /index.html
+        source: /
+        destination: /html/index.html

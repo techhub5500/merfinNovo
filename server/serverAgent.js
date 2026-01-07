@@ -15,14 +15,49 @@ const ThoughtEmitter = require('./thoughtEmitter');
 const app = express();
 const PORT = process.env.AGENT_PORT || 5001;
 
+// Configuração de CORS para aceitar Render e localhost
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://localhost:5001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5000',
+    'http://127.0.0.1:5001',
+    'https://merfin-home.onrender.com',
+    'https://merfin-operacional.onrender.com',
+    'https://merfin-agent.onrender.com'
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permitir requisições sem origin (ex: servidor para servidor)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('❌ CORS bloqueou origem:', origin);
+            callback(new Error('Origem não permitida pelo CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // ========== CONFIGURAÇÃO ==========
+// URL do servidor operacional (usa variável de ambiente ou localhost)
 const OPERATIONAL_SERVER_URL = process.env.OPERATIONAL_SERVER_URL || 'http://localhost:5000';
 const JWT_SECRET = process.env.JWT_SECRET || 'merfin_secret_key_2025';
 const SEARCH_API_KEY = process.env.SEARCH_API_KEY;
+
+console.log('🔧 Configurações do Agent Server:');
+console.log('   OPERATIONAL_SERVER_URL:', OPERATIONAL_SERVER_URL);
+console.log('   AGENT_PORT:', PORT);
 
 // ========== SEÇÕES DE DADOS DISPONÍVEIS ==========
 const AVAILABLE_SECTIONS = {

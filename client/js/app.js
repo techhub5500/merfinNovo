@@ -378,7 +378,7 @@ async function fetchAPI(url, options = {}) {
         headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`http://localhost:5000${url}`, {
+    const response = await fetch(`${window.API_URL}${url}`, {
         ...options,
         headers
     });
@@ -499,7 +499,7 @@ async function handleLogin(event) {
     
     try {
         // Fazer requisição para o backend
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+        const response = await fetch(`${window.API_URL}/api/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -517,7 +517,7 @@ async function handleLogin(event) {
             // VERIFICAR ASSINATURA IMEDIATAMENTE APÓS LOGIN
             console.log('🔍 Verificando status da assinatura...');
             
-            const checkResponse = await fetch(`http://localhost:5000/api/pagamentos/status/${data.user.id}`, {
+            const checkResponse = await fetch(`${window.API_URL}/api/pagamentos/status/${data.user.id}`, {
                 headers: {
                     'Authorization': `Bearer ${data.token}`
                 }
@@ -619,7 +619,7 @@ function handleCadastro(event) {
     localStorage.setItem('merfin_cadastro_pendente', JSON.stringify(dadosCadastro));
     
     // Buscar o link de pagamento do plano selecionado
-    fetch('http://localhost:5000/api/pagamentos/planos')
+    fetch(`${window.API_URL}/api/pagamentos/planos`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.planos[planoSelecionado]) {
@@ -771,7 +771,7 @@ async function verificarRetornoPagamento() {
         
         try {
             // Tentar finalizar cadastro
-            const response = await fetch('http://localhost:5000/api/pagamentos/finalizar-cadastro', {
+            const response = await fetch(`${window.API_URL}/api/pagamentos/finalizar-cadastro`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -837,7 +837,7 @@ async function finalizarCadastroManual() {
     
     try {
         // Tentar finalizar cadastro
-        const response = await fetch('http://localhost:5000/api/pagamentos/finalizar-cadastro', {
+        const response = await fetch(`${window.API_URL}/api/pagamentos/finalizar-cadastro`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

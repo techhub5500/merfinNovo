@@ -14,8 +14,38 @@ console.log('PORT:', process.env.PORT ? '✅ Definida' : '❌ Indefinida');
 
 const app = express();
 
+// Configuração de CORS para aceitar Render e localhost
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://localhost:5001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5000',
+    'http://127.0.0.1:5001',
+    'https://merfin-home.onrender.com',
+    'https://merfin-operacional.onrender.com',
+    'https://merfin-agent.onrender.com'
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permitir requisições sem origin (ex: Postman, mobile apps)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('❌ CORS bloqueou origem:', origin);
+            callback(new Error('Origem não permitida pelo CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 
 // Log de todas as requisições (DEBUG)
 app.use((req, res, next) => {

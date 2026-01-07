@@ -12,9 +12,22 @@ const getAPIUrl = () => {
         return 'http://localhost:5000';
     }
     
-    // Em produção, usa o domínio real
-    // ⚠️ ALTERE ESTA URL QUANDO FOR PARA PRODUÇÃO
-    return 'https://seudominio.com';
+    // Em produção no Render, usa o domínio do servidor operacional
+    return 'https://merfin-operacional.onrender.com';
+};
+
+/**
+ * Detecta automaticamente a URL do Agent Server
+ */
+const getAgentAPIUrl = () => {
+    // Se estiver em localhost, usa URL local
+    if (window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:5001';
+    }
+    
+    // Em produção no Render, usa o domínio do servidor agent
+    return 'https://merfin-agent.onrender.com';
 };
 
 /**
@@ -22,6 +35,7 @@ const getAPIUrl = () => {
  * Use esta constante em todas as requisições fetch()
  */
 const API_URL = getAPIUrl();
+const AGENT_API_URL = getAgentAPIUrl();
 
 /**
  * Função auxiliar para fazer requisições à API
@@ -80,6 +94,8 @@ async function apiRequest(endpoint, options = {}) {
 
 // Exportar para uso global
 window.API_URL = API_URL;
+window.AGENT_API_URL = AGENT_API_URL;
 window.apiRequest = apiRequest;
 
-console.log(`🌐 API configurada para: ${API_URL}`);
+console.log(`🌐 API Operacional configurada para: ${API_URL}`);
+console.log(`🤖 API Agent configurada para: ${AGENT_API_URL}`);

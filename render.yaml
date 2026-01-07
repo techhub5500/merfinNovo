@@ -1,0 +1,80 @@
+# Configuração do Render para deploy dos 3 serviços do Merfin.IA
+# Este arquivo configura automaticamente os 3 deploys necessários
+
+services:
+  # ============================================
+  # 1. SERVIDOR OPERACIONAL (Backend Principal)
+  # ============================================
+  - type: web
+    name: merfin-operacional
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && node serverOperacional.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false  # Configurar no dashboard do Render
+      - key: JWT_SECRET
+        sync: false  # Configurar no dashboard do Render
+      - key: STRIPE_SECRET_KEY
+        sync: false  # Configurar no dashboard do Render
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false  # Configurar no dashboard do Render
+      - key: STRIPE_PRICE_ID_BASICO
+        sync: false
+      - key: STRIPE_PRICE_ID_PREMIUM
+        sync: false
+      - key: STRIPE_PRICE_ID_EMPRESARIAL
+        sync: false
+    healthCheckPath: /api/status
+
+  # ============================================
+  # 2. SERVIDOR AGENT (IA e Processamento)
+  # ============================================
+  - type: web
+    name: merfin-agent
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && node serverAgent.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AGENT_PORT
+        value: 5001
+      - key: PORT
+        value: 5001
+      - key: OPERATIONAL_SERVER_URL
+        value: https://merfin-operacional.onrender.com
+      - key: JWT_SECRET
+        sync: false  # Configurar no dashboard do Render
+      - key: OPENAI_API_KEY
+        sync: false  # Configurar no dashboard do Render
+      - key: SEARCH_API_KEY
+        sync: false  # Configurar no dashboard do Render (opcional)
+    healthCheckPath: /health
+
+  # ============================================
+  # 3. FRONTEND (Cliente Web)
+  # ============================================
+  - type: web
+    name: merfin-home
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: echo "No build needed for static site"
+    staticPublishPath: ./client
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

@@ -1,5 +1,5 @@
-// URL da API
-const API_URL = 'http://localhost:5000';
+// URL da API (usa configuração global do config.js)
+const API_URL = window.API_URL || 'http://localhost:5000';
 
 // Variável para armazenar o plano selecionado
 let planoSelecionado = null;

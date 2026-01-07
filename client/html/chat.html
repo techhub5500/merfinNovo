@@ -394,7 +394,7 @@
                 }
 
                 // Fazer requisição para obter resposta e pensamentos
-                const response = await fetch('http://localhost:5001/api/chat', {
+                const response = await fetch(`${window.AGENT_API_URL}/api/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

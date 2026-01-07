@@ -13,7 +13,7 @@ const getAPIUrl = () => {
     }
     
     // Em produção no Render, usa o domínio do servidor operacional
-    return 'https://merfin-operacional.onrender.com';
+    return 'https://merfinoperacional.onrender.com';
 };
 
 /**
@@ -27,7 +27,7 @@ const getAgentAPIUrl = () => {
     }
     
     // Em produção no Render, usa o domínio do servidor agent
-    return 'https://merfin-agent.onrender.com';
+    return 'https://merfinagent.onrender.com';
 };
 
 /**

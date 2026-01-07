@@ -46,12 +46,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: AGENT_PORT
-        value: 5001
       - key: PORT
-        value: 5001
+        value: 10000
       - key: OPERATIONAL_SERVER_URL
-        value: https://merfin-operacional.onrender.com
+        value: https://merfinoperacional.onrender.com
       - key: JWT_SECRET
         sync: false  # Configurar no dashboard do Render
       - key: OPENAI_API_KEY
@@ -65,15 +63,11 @@ services:
   # ============================================
   - type: web
     name: merfin-home
-    env: static
+    env: node
     region: oregon
     plan: free
-    buildCommand: echo "No build needed for static site"
-    staticPublishPath: ./client
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=3600
+    buildCommand: npm install -g http-server
+    startCommand: http-server ./client -p $PORT
     routes:
       - type: rewrite
         source: /*

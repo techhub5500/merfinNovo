@@ -33,11 +33,11 @@
             color: #a8dadc;
         }
         
-        /* Container de timeline com altura fixa para 2 eventos */
+        /* Container de timeline para 2 eventos visíveis */
         .timeline-container {
-            min-height: 80px;
-            max-height: 120px;
-            overflow: hidden;
+            min-height: 120px;
+            max-height: none;
+            overflow: visible;
             position: relative;
         }
         
@@ -174,7 +174,7 @@
         // Criar elemento de "pensando"
         function showThinkingIndicator() {
             const thinkingEl = document.createElement('div');
-            thinkingEl.className = 'message bot thinking';
+            thinkingEl.className = 'thinking-container';
             thinkingEl.id = 'thinking-indicator';
             thinkingEl.innerHTML = `
                 <div class="progress-timeline">

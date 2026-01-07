@@ -109,6 +109,15 @@ router.get('/status/:userId', async (req, res) => {
 // ========== WEBHOOK: RECEBER EVENTOS DO STRIPE ==========
 // NOTA: O express.raw já foi aplicado no serverOperacional.js para esta rota
 router.post('/webhook', async (req, res) => {
+    const fs = require('fs');
+    const logPath = __dirname + '/webhook-debug.log';
+    const timestamp = new Date().toLocaleString('pt-BR');
+    fs.appendFileSync(logPath, `\n[${timestamp}] WEBHOOK RECEBIDO\n`);
+    
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔔 [WEBHOOK CHAMADO]', timestamp);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -117,8 +126,10 @@ router.post('/webhook', async (req, res) => {
     try {
         // Verificar se o evento veio realmente do Stripe
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-        console.log('\n✅ [WEBHOOK RECEBIDO]', event.type);
+        fs.appendFileSync(logPath, `[${timestamp}] Event Type: ${event.type}\n`);
+        console.log('✅ [WEBHOOK RECEBIDO]', event.type);
     } catch (err) {
+        fs.appendFileSync(logPath, `[${timestamp}] ERRO: ${err.message}\n`);
         console.error('❌ [WEBHOOK] Erro:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
@@ -128,6 +139,9 @@ router.post('/webhook', async (req, res) => {
 
     // Processar os diferentes tipos de eventos
     try {
+        console.log('🔍 [WEBHOOK DEBUG] Processando evento:', event.type);
+        console.log('🔍 [WEBHOOK DEBUG] Event ID:', event.id);
+        
         switch (event.type) {
             case 'checkout.session.completed':
                 // Pagamento foi concluído com sucesso
@@ -221,6 +235,8 @@ router.post('/webhook', async (req, res) => {
             case 'customer.subscription.deleted':
                 // Assinatura cancelada/deletada
                 const canceledSub = event.data.object;
+                fs.appendFileSync(logPath, `[${timestamp}] 🚨 CANCELAMENTO DETECTADO: ${canceledSub.id}\n`);
+                
                 console.log('\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨');
                 console.log('❌ ASSINATURA CANCELADA/DELETADA');
                 console.log('   Subscription ID:', canceledSub.id);
@@ -242,6 +258,8 @@ router.post('/webhook', async (req, res) => {
                 }
                 
                 console.log('\n💾 Atualizando status para CANCELADO...');
+                fs.appendFileSync(logPath, `[${timestamp}] Atualizando MongoDB para cancelado...\n`);
+                
                 const updatedSubscription = await Subscription.findOneAndUpdate(
                     { stripeSubscriptionId: canceledSub.id },
                     {
@@ -252,11 +270,13 @@ router.post('/webhook', async (req, res) => {
                 );
                 
                 if (updatedSubscription) {
+                    fs.appendFileSync(logPath, `[${timestamp}] ✅ MongoDB atualizado com sucesso! Status: ${updatedSubscription.status}\n`);
                     console.log('✅✅✅ ASSINATURA CANCELADA COM SUCESSO NO MONGODB!');
                     console.log('   Status DEPOIS:', updatedSubscription.status);
                     console.log('   User ID:', updatedSubscription.userId);
                     console.log('   ⚠️  O usuário será BLOQUEADO no próximo login ou requisição!');
                 } else {
+                    fs.appendFileSync(logPath, `[${timestamp}] ❌ FALHA ao atualizar MongoDB!\n`);
                     console.error('❌ FALHA ao atualizar assinatura!');
                 }
                 console.log('🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n');
@@ -286,11 +306,15 @@ router.post('/webhook', async (req, res) => {
 
             default:
                 console.log(`⚪ Evento não tratado: ${event.type}`);
+                console.log('   Event ID:', event.id);
         }
 
+        console.log('\n✅ [WEBHOOK PROCESSADO COM SUCESSO]');
         res.json({ received: true });
     } catch (error) {
         console.error('❌ Erro ao processar webhook:', error);
+        console.error('Stack:', error.stack);
+        res.status(500).json({ error: 'Erro ao processar evento' });
         res.status(500).json({ error: 'Erro ao processar evento' });
     }
 });

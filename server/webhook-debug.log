@@ -1,0 +1,45 @@
+
+[27/12/2025, 17:04:13] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:13] Event Type: customer.updated
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: charge.succeeded
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: customer.created
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: customer.subscription.created
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: invoice.created
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: invoice.finalized
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: payment_intent.created
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: payment_intent.succeeded
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: checkout.session.completed
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: invoice.payment_succeeded
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: invoice.paid
+
+[27/12/2025, 17:04:16] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:16] Event Type: payment_method.attached
+
+[27/12/2025, 17:04:17] WEBHOOK RECEBIDO
+[27/12/2025, 17:04:17] Event Type: invoice_payment.paid
+
+[27/12/2025, 17:11:58] WEBHOOK RECEBIDO
+[27/12/2025, 17:11:58] Event Type: customer.subscription.deleted
+[27/12/2025, 17:11:58] 🚨 CANCELAMENTO DETECTADO: sub_1Sj4elGyFEMUQzRrWmksidgH
+[27/12/2025, 17:11:58] Atualizando MongoDB para cancelado...
+[27/12/2025, 17:11:58] ✅ MongoDB atualizado com sucesso! Status: cancelado

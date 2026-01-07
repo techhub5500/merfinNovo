@@ -29,18 +29,18 @@
 
 .auth-modal-content {
     background: var(--color-bg-secondary);
-    border-radius: 16px;
-    padding: 32px;
+    border-radius: 12px;
+    padding: 24px;
     width: 90%;
-    max-width: 750px;
-    max-height: 95vh;
+    max-width: 700px;
+    max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
-                0 0 0 1px rgba(255, 255, 255, 0.1);
-    animation: slideUp 0.4s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
     position: relative;
     z-index: 10000;
     pointer-events: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .auth-modal-content::-webkit-scrollbar {
@@ -157,22 +157,24 @@
 }
 
 .btn-auth {
-    padding: 14px;
-    background: var(--color-primary);
-    border: none;
-    border-radius: 6px;
+    padding: 16px;
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
     color: white;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 8px;
+    transition: all 0.2s ease;
+    margin-top: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .btn-auth:hover {
-    background: var(--color-primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+    background: #111111;
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .btn-auth:active {

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Timeline de Progresso Merfin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Text', serif;
+            background: #121212;
+            color: #f4f4f5;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .demo-container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 32px;
+            color: #f4f4f5;
+        }
+
+        .message-thinking {
+            background: rgba(37, 37, 37, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 18px;
+            border: 1px solid rgba(244, 244, 245, 0.08);
+        }
+
+        .progress-timeline {
+            padding: 16px 0;
+            min-height: 100px;
+        }
+
+        .timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            padding-left: 12px;
+        }
+
+        .timeline-event {
+            display: grid;
+            grid-template-columns: 20px 20px 1fr;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-event.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .event-line {
+            position: absolute;
+            left: 9px;
+            top: 20px;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                rgba(244, 244, 245, 0.3) 0%, 
+                rgba(244, 244, 245, 0.1) 100%
+            );
+        }
+
+        .timeline-event:last-child .event-line {
+            display: none;
+        }
+
+        .timeline-event.branch .event-line {
+            background: rgba(244, 244, 245, 0.15);
+        }
+
+        .event-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 12px;
+            z-index: 2;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .timeline-event.main .event-icon {
+            color: #f4f4f5;
+            font-size: 10px;
+        }
+
+        .timeline-event.branch .event-icon {
+            color: rgba(244, 244, 245, 0.5);
+            font-size: 6px;
+            margin-left: 12px;
+        }
+
+        .timeline-event.done .event-icon {
+            color: #a8dadc;
+        }
+
+        .timeline-event.running .event-icon {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.05);
+            }
+        }
+
+        .event-label {
+            color: #a0a0a0;
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+            padding: 4px 0;
+            transition: color 0.3s ease;
+        }
+
+        .timeline-event.main .event-label {
+            color: #f4f4f5;
+            font-weight: 500;
+        }
+
+        .timeline-event.done .event-label {
+            color: #a0a0a0;
+        }
+
+        .timeline-event.branch .event-label {
+            font-size: 14px;
+            padding-left: 8px;
+            color: rgba(244, 244, 245, 0.6);
+        }
+
+        .timeline-event.main {
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+
+        .timeline-event.branch {
+            margin-left: 8px;
+            margin-bottom: 2px;
+        }
+
+        .timeline-event.main:first-child {
+            margin-top: 0;
+        }
+
+        button {
+            display: block;
+            margin: 30px auto;
+            padding: 12px 32px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .info {
+            text-align: center;
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🤖 Timeline de Progresso Merfin</h1>
+        
+        <div class="message-thinking">
+            <div class="progress-timeline">
+                <div class="timeline-container" id="timeline-events"></div>
+            </div>
+        </div>
+
+        <button onclick="startDemo()">▶️ Iniciar Demonstração</button>
+        
+        <div class="info">
+            Esta é uma demonstração do novo sistema de timeline de progresso.<br>
+            Substitui as três bolinhas por eventos contextuais em tempo real.
+        </div>
+    </div>
+
+    <script>
+        const events = [
+            { id: 'understand', label: 'Entendendo o pedido', type: 'main' },
+            { id: 'identify', label: 'Identificando objetivo', type: 'branch' },
+            { id: 'collect', label: 'Coletando informações', type: 'main' },
+            { id: 'filter', label: 'Filtrando dados relevantes', type: 'branch' },
+            { id: 'ignore', label: 'Ignorando ruído', type: 'branch' },
+            { id: 'analyze', label: 'Analisando possibilidades', type: 'main' },
+            { id: 'compare', label: 'Comparando alternativas', type: 'branch' },
+            { id: 'decide', label: 'Tomando decisões', type: 'main' },
+            { id: 'prioritize', label: 'Priorizando caminhos', type: 'branch' },
+            { id: 'structure', label: 'Estruturando solução', type: 'main' },
+            { id: 'organize', label: 'Organizando etapas', type: 'branch' },
+            { id: 'prepare', label: 'Preparando resposta', type: 'main' },
+            { id: 'finalize', label: 'Finalizando', type: 'main' }
+        ];
+
+        function addTimelineEvent(eventData) {
+            const timeline = document.getElementById('timeline-events');
+            const eventId = `event-${eventData.id}`;
+            let eventEl = document.getElementById(eventId);
+
+            if (eventEl) {
+                if (eventData.status === 'done') {
+                    eventEl.classList.remove('running');
+                    eventEl.classList.add('done');
+                    const icon = eventEl.querySelector('.event-icon');
+                    if (icon) {
+                        icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    }
+                }
+                return;
+            }
+
+            const eventType = eventData.type || 'main';
+            const isMain = eventType === 'main';
+            
+            eventEl = document.createElement('div');
+            eventEl.id = eventId;
+            eventEl.className = `timeline-event ${eventType} ${eventData.status}`;
+            
+            const icon = isMain 
+                ? '<i class="fas fa-circle"></i>' 
+                : '<i class="fas fa-circle" style="font-size: 8px;"></i>';
+            
+            eventEl.innerHTML = `
+                <div class="event-line ${isMain ? 'main-line' : 'branch-line'}"></div>
+                <div class="event-icon">${icon}</div>
+                <div class="event-label">${eventData.label}</div>
+            `;
+            
+            timeline.appendChild(eventEl);
+            
+            setTimeout(() => {
+                eventEl.classList.add('visible');
+            }, 50);
+        }
+
+        async function startDemo() {
+            // Limpar timeline
+            document.getElementById('timeline-events').innerHTML = '';
+            
+            // Simular eventos
+            for (let i = 0; i < events.length; i++) {
+                const event = events[i];
+                
+                // Adicionar com status "running"
+                addTimelineEvent({
+                    id: event.id,
+                    label: event.label,
+                    type: event.type,
+                    status: 'running'
+                });
+                
+                // Delay entre eventos
+                const delay = event.type === 'main' ? 500 : 300;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
+                // Marcar como "done"
+                addTimelineEvent({
+                    id: event.id,
+                    label: event.label,
+                    type: event.type,
+                    status: 'done'
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 150));
+            }
+        }
+
+        // Iniciar automaticamente
+        window.addEventListener('load', () => {
+            setTimeout(startDemo, 500);
+        });
+    </script>
+</body>
+</html>

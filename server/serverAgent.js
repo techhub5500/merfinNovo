@@ -10,6 +10,7 @@ require('dotenv').config();
 const { INTENTS, INTENT_DETECTION_PROMPT } = require('./intents');
 const spreadsheetActions = require('./spreadsheetActions');
 const ThoughtProcess = require('./thoughtProcess');
+const ThoughtEmitter = require('./thoughtEmitter');
 
 const app = express();
 const PORT = process.env.AGENT_PORT || 5001;
@@ -120,7 +121,7 @@ async function pesquisarNaInternet(query) {
 }
 
 // Função para decidir se precisa pesquisar na internet
-async function precisaPesquisar(mensagemUsuario, intentData) {
+async function precisaPesquisar(mensagemUsuario, intentData, thoughtEmitter = null) {
     // Se não tem API key, não adianta tentar
     if (!SEARCH_API_KEY) {
         return { precisa: false, motivo: 'API key não configurada' };
@@ -447,6 +448,65 @@ Analise a pergunta do usuário e responda APENAS com JSON válido neste formato:
     "count": 2,
     "reasoning": "explicação"
   }
+}
+
+// ========== GERADOR DE EVENTOS DE PROGRESSO ==========
+
+function generateProgressEvents(intentType, sectionsUsed = []) {
+    const baseEvents = [
+        { id: 'understand', label: 'Entendendo o pedido', type: 'main' },
+        { id: 'identify', label: 'Identificando objetivo', type: 'branch' }
+    ];
+
+    const contextualEvents = {
+        'lançamento único': [
+            { id: 'collect', label: 'Coletando informações', type: 'main' },
+            { id: 'validate', label: 'Validando dados', type: 'branch' },
+            { id: 'structure', label: 'Estruturando solução', type: 'main' },
+            { id: 'organize', label: 'Organizando etapas', type: 'branch' }
+        ],
+        'consulta financeira': [
+            { id: 'collect', label: 'Coletando informações', type: 'main' },
+            { id: 'filter', label: 'Filtrando dados relevantes', type: 'branch' },
+            { id: 'ignore', label: 'Ignorando ruído', type: 'branch' },
+            { id: 'analyze', label: 'Analisando possibilidades', type: 'main' },
+            { id: 'compare', label: 'Comparando alternativas', type: 'branch' },
+            { id: 'decide', label: 'Tomando decisões', type: 'main' },
+            { id: 'prioritize', label: 'Priorizando caminhos', type: 'branch' },
+            { id: 'structure', label: 'Estruturando solução', type: 'main' },
+            { id: 'organize', label: 'Organizando etapas', type: 'branch' }
+        ],
+        'edição': [
+            { id: 'collect', label: 'Localizando registro', type: 'main' },
+            { id: 'validate', label: 'Validando alterações', type: 'branch' },
+            { id: 'structure', label: 'Preparando atualização', type: 'main' }
+        ],
+        'exclusão': [
+            { id: 'collect', label: 'Localizando registro', type: 'main' },
+            { id: 'validate', label: 'Confirmando exclusão', type: 'branch' },
+            { id: 'structure', label: 'Preparando remoção', type: 'main' }
+        ],
+        'conversação': [
+            { id: 'analyze', label: 'Processando contexto', type: 'main' },
+            { id: 'structure', label: 'Estruturando resposta', type: 'main' }
+        ]
+    };
+
+    // Selecionar eventos contextuais
+    let events = [...baseEvents];
+    const contextKey = Object.keys(contextualEvents).find(key => 
+        intentType.toLowerCase().includes(key)
+    ) || 'conversação';
+    
+    events = events.concat(contextualEvents[contextKey]);
+
+    // Adicionar evento de preparação de resposta
+    events.push(
+        { id: 'prepare', label: 'Preparando resposta', type: 'main' },
+        { id: 'finalize', label: 'Finalizando', type: 'main' }
+    );
+
+    return events;
 }
 
 TIPOS DE TIMEFRAME:
@@ -848,9 +908,13 @@ function loadCategories() {
 }
 
 // ========== DETECTOR DE INTENT ==========
-async function detectIntent(message, currentDate, conversationContext = '') {
+async function detectIntent(message, currentDate, conversationContext = '', thoughtEmitter = null) {
     console.log('🔍 DETECÇÃO DE INTENT');
     console.log('   💬 Analisando mensagem...');
+    
+    if (thoughtEmitter) {
+        thoughtEmitter.emit('Interpretando o que você quer');
+    }
     
     try {
         // Carregar categorias
@@ -1297,6 +1361,9 @@ Me envie com a descrição que eu faço o lançamento! 😊`
 
 // ========== ROTA PRINCIPAL DO CHAT ==========
 app.post('/api/chat', verifyUserToken, async (req, res) => {
+    // Criar emissor de pensamentos
+    const thoughtEmitter = new ThoughtEmitter();
+    
     try {
         const { message } = req.body;
         const currentMonth = getCurrentMonth();
@@ -1315,6 +1382,10 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         console.log(`💬 Pergunta: "${message}"`);
         console.log('─────────────────────────────────────────────────────────\n');
         
+        console.log('═════════════════════════════════════════════════════════');
+        console.log('              🧠 INICIANDO META-RACIOCÍNIO               ');
+        console.log('═════════════════════════════════════════════════════════\n');
+        
         console.log('─────────────────────────────────────────────────────────\n');
         
         // ========== BUSCAR CONVERSAÇÃO E RESUMO ANTES DE DETECTAR INTENT ==========
@@ -1323,6 +1394,7 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         let resumoContexto = '';
         
         if (conversaId) {
+            thoughtEmitter.emit('Carregando contexto da conversa');
             try {
                 const resumoResponse = await axios.get(
                     `${OPERATIONAL_SERVER_URL}/api/conversas/${conversaId}/resumo`,
@@ -1331,6 +1403,7 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                 resumoContexto = resumoResponse.data.resumo || '';
                 if (resumoContexto) {
                     console.log('   📚 Resumo carregado:', resumoContexto.substring(0, 100) + '...');
+                    thoughtEmitter.emitSub('Contexto recuperado');
                 }
             } catch (error) {
                 console.log('   ⚠️ Erro ao buscar resumo:', error.message);
@@ -1344,7 +1417,7 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         console.log('║             PASSO 0: DETECÇÃO DE INTENT                 ║');
         console.log('╚═════════════════════════════════════════════════════════╝');
         
-        const intentData = await detectIntent(message, currentDate, resumoContexto);
+        const intentData = await detectIntent(message, currentDate, resumoContexto, thoughtEmitter);
         
         // ========== VERIFICAR SE É AÇÃO DIRETA NA PLANILHA ==========
         const spreadsheetIntents = [
@@ -1370,6 +1443,7 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
             // Verificar duplicatas apenas para ADD_INCOME e ADD_EXPENSE
             if (intentData.intent === INTENTS.ADD_EXPENSE) {
                 console.log('   🔍 Verificando se já existe essa despesa...');
+                thoughtEmitter.emit('Verificando se já existe registro');
                 duplicateCheck = await spreadsheetActions.checkDuplicateExpense(
                     req.userToken,
                     OPERATIONAL_SERVER_URL,
@@ -1397,6 +1471,9 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
             // Se encontrou duplicata, responder naturalmente sem adicionar
             if (duplicateCheck?.isDuplicate) {
                 console.log('   ✅ Duplicata identificada - respondendo contextualmente');
+                
+                thoughtEmitter.emitSub('Registro já existe');
+                thoughtEmitter.emit('Confirmando informações');
                 
                 const item = duplicateCheck.existingItem;
                 const tipoLancamento = intentData.intent === INTENTS.ADD_EXPENSE ? 'despesa' : 'receita';
@@ -1436,6 +1513,7 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                     success: true,
                     response: responseMessage,
                     conversaId: conversaId,
+                    thoughts: thoughtEmitter.getAll(),
                     debug: {
                         intent: intentData.intent,
                         confidence: intentData.confidence,
@@ -1449,6 +1527,9 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
             
             // Se não há duplicata, executar ação normalmente
             console.log('   ⚡ Executando ação antes de gerar resposta...\n');
+            
+            thoughtEmitter.emit('Executando ação solicitada');
+            thoughtEmitter.emitSub('Atualizando sua planilha');
             
             const actionResult = await executeAction(
                 intentData.intent,
@@ -1482,18 +1563,22 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                     await atualizarResumoConversa(conversaId, message, actionResult.message, req.userToken);
                 }
                 
+                thoughtEmitter.emit('Finalizando');
+                
                 console.log('\n╔═════════════════════════════════════════════════════════╗');
                 console.log('║            ✨ CONSULTA FINALIZADA COM SUCESSO           ║');
                 console.log('╚═════════════════════════════════════════════════════════╝\n');
                 
                 console.log('📤 RESPOSTA ENVIADA PARA O FRONTEND:');
                 console.log('   ', actionResult.message);
+                console.log(`   💭 Pensamentos gerados: ${thoughtEmitter.count()}`);
                 console.log('─────────────────────────────────────────────────────────\n');
                 
                 return res.json({
                     success: true,
                     response: actionResult.message,
                     conversaId: conversaId,
+                    thoughts: thoughtEmitter.getAll(),
                     debug: {
                         intent: intentData.intent,
                         confidence: intentData.confidence,
@@ -1513,6 +1598,7 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
                     success: false,
                     response: errorResponse,
                     conversaId: req.body.conversaId,
+                    thoughts: thoughtEmitter.getAll(),
                     debug: {
                         intent: intentData.intent,
                         confidence: intentData.confidence,
@@ -1532,28 +1618,35 @@ app.post('/api/chat', verifyUserToken, async (req, res) => {
         console.log('║      PASSO 0.5: VERIFICAÇÃO DE PESQUISA NECESSÁRIA      ║');
         console.log('╚═════════════════════════════════════════════════════════╝');
         
+        thoughtEmitter.emit('Avaliando necessidade de pesquisa');
         let resultadosPesquisa = null;
-        const decisaoPesquisa = await precisaPesquisar(message, intentData);
+        const decisaoPesquisa = await precisaPesquisar(message, intentData, thoughtEmitter);
         
         console.log('   🤔 Decisão:', decisaoPesquisa.precisa ? 'PRECISA pesquisar' : 'NÃO precisa pesquisar');
         console.log('   💭 Motivo:', decisaoPesquisa.motivo);
         
         if (decisaoPesquisa.precisa && decisaoPesquisa.queryPesquisa) {
             console.log('   🌐 Realizando pesquisa na internet...');
+            thoughtEmitter.emitSub('Pesquisando informações atualizadas');
             resultadosPesquisa = await pesquisarNaInternet(decisaoPesquisa.queryPesquisa);
             
             if (resultadosPesquisa?.temResultados) {
                 console.log('   ✅ Pesquisa bem-sucedida - dados disponíveis para contexto');
+                thoughtEmitter.emitSub('Dados externos encontrados');
             } else {
                 console.log('   ⚠️ Pesquisa não retornou resultados úteis');
             }
+        } else {
+            thoughtEmitter.emitSub('Pesquisa não necessária');
         }
 
         // ========== PASSO 1: IA DECIDE QUAIS DADOS PRECISA ==========
-        console.log('╔═════════════════════════════════════════════════════════╗');
+        console.log('\n╔═════════════════════════════════════════════════════════╗');
         console.log('║        PASSO 1: ANÁLISE DE DADOS NECESSÁRIOS            ║');
         console.log('╚═════════════════════════════════════════════════════════╝');
         console.log('🔍 Analisando quais dados são necessários...');
+        
+        thoughtEmitter.emit('Planejando busca de dados');
         
         const decisionPrompt = `${DECISION_PROMPT}
 
@@ -1625,6 +1718,17 @@ Responda apenas com JSON válido.`;
         console.log('🔍 Buscando dados do usuário...');
         console.log('   📥 Conectando ao servidor operacional:', OPERATIONAL_SERVER_URL);
         
+        thoughtEmitter.emit('Buscando seus dados financeiros');
+        if (decision.requiredSections.includes('perfil')) {
+            thoughtEmitter.emitSub('Carregando perfil e metas');
+        }
+        if (decision.requiredSections.includes('financas')) {
+            thoughtEmitter.emitSub('Carregando receitas e despesas');
+        }
+        if (decision.requiredSections.includes('dividas')) {
+            thoughtEmitter.emitSub('Carregando dívidas');
+        }
+        
         const userData = await fetchOrganizedData(
             req.userToken,
             decision.requiredSections,
@@ -1644,6 +1748,10 @@ Responda apenas com JSON válido.`;
         console.log('║         PASSO 3: GERAÇÃO DE RESPOSTA PERSONALIZADA      ║');
         console.log('╚═════════════════════════════════════════════════════════╝');
         console.log('🔍 Gerando resposta personalizada...');
+        
+        thoughtEmitter.emit('Analisando seus dados');
+        thoughtEmitter.emitSub('Processando informações');
+        thoughtEmitter.emit('Estruturando resposta');
         
         // Incluir resumo da conversa no prompt, se existir
         let contextoPrevio = '';
@@ -1823,18 +1931,22 @@ Forneça uma resposta completa, personalizada e útil baseada nos dados reais do
             console.log('\n   ⚠️ ConversaId não disponível - resumo não será atualizado');
         }
         
+        thoughtEmitter.emit('Finalizando resposta');
+        
         console.log('\n╔═════════════════════════════════════════════════════════╗');
         console.log('║            ✨ CONSULTA FINALIZADA COM SUCESSO           ║');
         console.log('╚═════════════════════════════════════════════════════════╝\n');
 
         console.log('📤 RESPOSTA ENVIADA PARA O FRONTEND:');
         console.log('   ', aiMessage);
+        console.log(`   💭 Pensamentos gerados: ${thoughtEmitter.count()}`);
         console.log('─────────────────────────────────────────────────────────\n');
 
         res.json({
             success: true,
             response: aiMessage,
             conversaId: conversaId,
+            thoughts: thoughtEmitter.getAll(),
             debug: {
                 intent: intentData.intent,
                 confidence: intentData.confidence,

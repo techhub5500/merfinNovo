@@ -8,6 +8,49 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/chat.css">
     <link rel="stylesheet" href="../css/chat-history.css">
+    <style>
+        /* Animações para timeline de pensamentos */
+        .timeline-event {
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .timeline-event.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .timeline-event.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease-out;
+        }
+        
+        /* Efeito de destaque no pensamento atual */
+        .timeline-event.current .event-label {
+            font-weight: 500;
+            color: #a8dadc;
+        }
+        
+        /* Container de timeline com altura fixa para 2 eventos */
+        .timeline-container {
+            min-height: 80px;
+            max-height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Spinner customizado */
+        .timeline-event.current .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -134,15 +177,84 @@
             thinkingEl.className = 'message bot thinking';
             thinkingEl.id = 'thinking-indicator';
             thinkingEl.innerHTML = `
-                <div class="thinking-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                <div class="progress-timeline">
+                    <div class="timeline-container" id="timeline-events"></div>
                 </div>
             `;
             messages.appendChild(thinkingEl);
             messages.scrollTop = messages.scrollHeight;
             return thinkingEl;
+        }
+
+        // Adicionar evento à timeline
+        function addTimelineEvent(eventData) {
+            const timeline = document.getElementById('timeline-events');
+            if (!timeline) return;
+
+            const eventId = `event-${eventData.id}`;
+            let eventEl = document.getElementById(eventId);
+
+            // Se evento já existe, apenas atualizar status
+            if (eventEl) {
+                if (eventData.status === 'done') {
+                    eventEl.classList.add('done');
+                    eventEl.classList.remove('current');
+                    const icon = eventEl.querySelector('.event-icon');
+                    if (icon) {
+                        icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    }
+                }
+                return;
+            }
+
+            // Gerenciar limite de 2 eventos visíveis
+            const existingEvents = timeline.querySelectorAll('.timeline-event');
+            if (existingEvents.length >= 2) {
+                // Remover o primeiro com fade out
+                const firstEvent = existingEvents[0];
+                firstEvent.classList.add('fade-out');
+                setTimeout(() => {
+                    firstEvent.remove();
+                }, 300);
+            }
+
+            // Criar novo evento
+            const eventType = eventData.type || 'main';
+            const isMain = eventType === 'main';
+            
+            eventEl = document.createElement('div');
+            eventEl.id = eventId;
+            eventEl.className = `timeline-event ${eventType} ${eventData.status}`;
+            
+            // Adicionar classe 'current' se for running
+            if (eventData.status === 'running') {
+                eventEl.classList.add('current');
+            }
+            
+            const icon = isMain 
+                ? '<i class="fas fa-circle"></i>' 
+                : '<i class="fas fa-circle" style="font-size: 8px;"></i>';
+            
+            // Adicionar spinner se for o pensamento atual (running)
+            const spinnerHtml = eventData.status === 'running' 
+                ? '<i class="fas fa-spinner fa-spin" style="margin-right: 8px; color: #a8dadc;"></i>' 
+                : '';
+            
+            eventEl.innerHTML = `
+                <div class="event-line ${isMain ? 'main-line' : 'branch-line'}"></div>
+                <div class="event-icon">${icon}</div>
+                <div class="event-label">${spinnerHtml}${eventData.label}</div>
+            `;
+            
+            timeline.appendChild(eventEl);
+            
+            // Animar entrada lateral
+            setTimeout(() => {
+                eventEl.classList.add('visible');
+            }, 50);
+            
+            // Auto-scroll
+            messages.scrollTop = messages.scrollHeight;
         }
 
         // Remover indicador de "pensando"
@@ -213,7 +325,7 @@
             }
         }
 
-        // Enviar mensagem para a API
+        // Enviar mensagem para a API e exibir pensamentos reais do agente
         async function sendMessage(messageText) {
             try {
                 setLoading(true);
@@ -225,6 +337,7 @@
                     throw new Error('Você precisa estar autenticado para usar o chat');
                 }
 
+                // Fazer requisição para obter resposta e pensamentos
                 const response = await fetch('http://localhost:5001/api/chat', {
                     method: 'POST',
                     headers: {
@@ -233,13 +346,26 @@
                     },
                     body: JSON.stringify({
                         message: messageText,
-                        conversaId: conversaAtualId // Enviar ID da conversa ativa para manter contexto
+                        conversaId: conversaAtualId
                     })
                 });
 
                 const data = await response.json();
+                
+                console.log('📦 Resposta recebida:', data);
+                console.log('💭 Pensamentos:', data.thoughts);
 
                 if (data.success && data.response) {
+                    // Exibir pensamentos reais do agente (se houver)
+                    if (data.thoughts && data.thoughts.length > 0) {
+                        console.log(`✅ Exibindo ${data.thoughts.length} pensamentos`);
+                        await displayThoughts(data.thoughts);
+                    } else {
+                        console.log('⚠️ Nenhum pensamento recebido - usando fallback');
+                        // Fallback: remover indicador se não houver pensamentos
+                        removeThinkingIndicator();
+                    }
+                    
                     addBotMessageTyping(data.response);
                     
                     // Atualizar conversaId retornado pelo servidor
@@ -261,6 +387,35 @@
                 addBotMessageTyping('Desculpe, tive um problema ao processar sua mensagem. Verifique se o servidor está rodando e tente novamente. 😔');
             } finally {
                 setLoading(false);
+            }
+        }
+
+        // Exibir pensamentos reais do agente
+        async function displayThoughts(thoughts) {
+            for (let i = 0; i < thoughts.length; i++) {
+                const thought = thoughts[i];
+                
+                // Adicionar com status "running"
+                addTimelineEvent({
+                    id: thought.id,
+                    label: thought.text,
+                    type: thought.type,
+                    status: 'running'
+                });
+                
+                // Delay realista
+                const delay = thought.type === 'main' ? 400 : 250;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
+                // Marcar como "done"
+                addTimelineEvent({
+                    id: thought.id,
+                    label: thought.text,
+                    type: thought.type,
+                    status: 'done'
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
         }
 
@@ -357,7 +512,6 @@
                         </div>
                         
                         <div class="plano-card-cadastro destaque" data-plano="anual">
-                            <div class="plano-badge">Mais Popular</div>
                             <div class="plano-radio">
                                 <input type="radio" name="plano" id="plano-anual" value="anual" required checked>
                                 <label for="plano-anual">

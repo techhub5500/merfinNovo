@@ -28,7 +28,8 @@ async function cleanTestUser() {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Conectado!\n');
         
-        const email = 'tececonsultoria28@gmail.com';
+        // Pegar email do argumento da linha de comando ou usar padrão
+        const email = process.argv[2] || 'tececonsultoria28@gmail.com';
         
         console.log('🔍 Buscando usuário:', email);
         const user = await User.findOne({ email });

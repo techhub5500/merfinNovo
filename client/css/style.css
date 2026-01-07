@@ -634,33 +634,40 @@ body {
 
 .plano-card-cadastro {
     position: relative;
-    border: 2px solid #e0e0e0;
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 15px;
+    padding: 20px;
     transition: all 0.3s ease;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .plano-card-cadastro:hover {
-    border-color: #1e3c72;
-    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--color-surface-elevated);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
 }
 
 .plano-card-cadastro.destaque {
-    border-color: #2a5298;
-    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+    border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
 }
 
-.plano-badge {
+.plano-card-cadastro.destaque::before {
+    content: "Mais Popular";
     position: absolute;
-    top: -10px;
-    right: 10px;
-    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
+    top: -8px;
+    right: 12px;
+    background: white;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .plano-radio input[type="radio"] {
@@ -668,65 +675,71 @@ body {
     opacity: 0;
 }
 
-.plano-radio input[type="radio"]:checked + label {
-    background: linear-gradient(135deg, #e8f0ff 0%, #d0e0ff 100%);
-    border-radius: 8px;
+.plano-card-cadastro:has(.plano-radio input[type="radio"]:checked) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-primary);
 }
 
-.plano-radio input[type="radio"]:checked + label .plano-nome {
-    color: #1e3c72;
-    font-weight: 700;
+.plano-card-cadastro:has(.plano-radio input[type="radio"]:checked)::after {
+    content: "●";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
 }
 
 .plano-radio label {
     display: block;
-    padding: 10px;
+    padding: 0;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .plano-nome {
-    font-size: 1rem;
+    font-size: 18px;
     font-weight: 600;
-    color: #333;
-    margin-bottom: 5px;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
 }
 
 .plano-preco {
-    font-size: 1.5rem;
+    font-size: 24px;
     font-weight: 700;
-    color: #1e3c72;
-    margin-bottom: 5px;
+    color: var(--color-primary);
+    margin-bottom: 8px;
 }
 
 .plano-preco span {
-    font-size: 0.9rem;
+    font-size: 14px;
     font-weight: 400;
-    color: #666;
+    color: var(--color-text-secondary);
 }
 
 .plano-economia {
-    background: #ffeaa7;
-    color: #d63031;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 0.85rem;
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffd700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 600;
     text-align: center;
-    margin: 8px 0;
+    margin: 10px 0;
+    border: 1px solid rgba(255, 215, 0, 0.2);
 }
 
 .plano-recursos-mini {
     list-style: none;
     padding: 0;
-    margin: 10px 0 0 0;
+    margin: 12px 0 0 0;
 }
 
 .plano-recursos-mini li {
-    font-size: 0.85rem;
-    color: #555;
+    font-size: 14px;
+    color: var(--color-text-secondary);
     padding: 4px 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .plano-recursos-mini li:last-child {

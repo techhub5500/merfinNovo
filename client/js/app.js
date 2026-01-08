@@ -1373,6 +1373,14 @@ async function initChatHistory() {
     console.log('🚀 SISTEMA DE HISTÓRICO DE CONVERSAS INICIADO');
     console.log('📅 Data:', new Date().toLocaleString('pt-BR'));
     console.log('═══════════════════════════════════════════════════════════\n');
+    
+    // Verificar se usuário está autenticado antes de carregar conversas
+    const token = localStorage.getItem('merfin_token');
+    if (!token) {
+        console.log('⚠️ [INIT] Usuário não autenticado, pulando carregamento de conversas');
+        return;
+    }
+    
     await carregarConversas();
     
     // Verificar se deve mostrar o placeholder inicialmente

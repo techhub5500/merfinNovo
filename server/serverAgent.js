@@ -933,6 +933,19 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Rota raiz - redirect para health
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Merfin Agent API',
+        status: 'online',
+        endpoints: {
+            health: '/health',
+            chat: '/api/chat (POST)'
+        },
+        documentation: 'https://github.com/seu-repo/merfin-ia'
+    });
+});
+
 // ========== CARREGAR CATEGORIAS ==========
 function loadCategories() {
     try {

@@ -63,6 +63,11 @@ app.use(express.json());
 // Servir arquivos estáticos da pasta client
 app.use(express.static(path.join(__dirname, '../client')));
 
+// Rota raiz - redirect para página principal
+app.get('/', (req, res) => {
+    res.redirect('/html/index.html');
+});
+
 // Conexão com MongoDB (versão atualizada - sem opções deprecadas)
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {

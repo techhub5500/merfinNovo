@@ -37,6 +37,10 @@ const getAgentAPIUrl = () => {
 const API_URL = getAPIUrl();
 const AGENT_API_URL = getAgentAPIUrl();
 
+console.log('🔍 [CONFIG] Detectado hostname:', window.location.hostname);
+console.log('🌐 [CONFIG] API Operacional configurada para:', API_URL);
+console.log('🤖 [CONFIG] API Agent configurada para:', AGENT_API_URL);
+
 /**
  * Função auxiliar para fazer requisições à API
  * @param {string} endpoint - Endpoint da API (ex: '/api/auth/login')

@@ -61,9 +61,14 @@ services:
   # ============================================
   # 3. FRONTEND (Cliente Web)
   # ============================================
-  # Opção: Usar o servidor operacional para servir o frontend
-  # O frontend já está sendo servido pelo servidor operacional
-  # URL: https://merfinoperacional.onrender.com/html/index.html
-  # 
-  # Se quiser um domínio separado para o frontend, crie um 
-  # Static Site no Render Dashboard manualmente e aponte para ./client
+  - type: web
+    name: merfin-home
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: echo "Static site - no build needed"
+    staticPublishPath: ./client
+    routes:
+      - type: rewrite
+        source: /
+        destination: /html/chat.html

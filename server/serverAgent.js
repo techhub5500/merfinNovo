@@ -13,17 +13,19 @@ const ThoughtProcess = require('./thoughtProcess');
 const ThoughtEmitter = require('./thoughtEmitter');
 
 const app = express();
-// ⚠️ IMPORTANTE: Render sempre fornece PORT, use-o primeiro!
-const PORT = process.env.PORT || process.env.AGENT_PORT || 5001;
+// ⚠️ IMPORTANTE: Em desenvolvimento, Agent usa porta 5001. Em produção (Render), usa PORT
+const PORT = process.env.AGENT_PORT || (process.env.NODE_ENV === 'production' ? process.env.PORT : 5001);
 
 // Configuração de CORS para aceitar Render e localhost
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5000',
     'http://localhost:5001',
+    'http://localhost:5500',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:5000',
     'http://127.0.0.1:5001',
+    'http://127.0.0.1:5500',
     'https://merfinhome.onrender.com',
     'https://merfinoperacional.onrender.com',
     'https://merfinagent.onrender.com'

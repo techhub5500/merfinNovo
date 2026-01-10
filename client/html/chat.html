@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/chat.css">
     <link rel="stylesheet" href="../css/chat-history.css">
+    <link rel="stylesheet" href="../css/planejador.css">
     <style>
         /* Animações para timeline de pensamentos */
         .timeline-event {
@@ -135,9 +136,10 @@
         <main class="chat-container">
             <section id="messages" class="messages" aria-live="polite"></section>
             <div id="chat-placeholder" class="chat-placeholder">
-                <div class="placeholder-content">
+                <div class="placeholder-text">
                     Pergunte sobre suas finanças
                 </div>
+                <!-- Card do planejador será inserido aqui pelo JS -->
             </div>
         </main>
 
@@ -152,8 +154,31 @@
     <script src="../js/config.js"></script>
     <script src="../js/app.js"></script>
     <script src="../js/dashboard.js"></script>
+    <script src="../js/planejador.js"></script>
 
     <script>
+    // Sistema para esconder placeholder ao digitar
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageInput = document.getElementById('message-input');
+        const chatPlaceholder = document.getElementById('chat-placeholder');
+        
+        if (messageInput && chatPlaceholder) {
+            messageInput.addEventListener('input', function() {
+                const messages = document.getElementById('messages');
+                
+                // Esconder placeholder SOMENTE se está digitando
+                if (this.value.trim().length > 0) {
+                    chatPlaceholder.style.display = 'none';
+                } else {
+                    // Mostrar placeholder se input vazio E sem mensagens
+                    if (messages && messages.children.length === 0) {
+                        chatPlaceholder.style.display = 'flex';
+                    }
+                }
+            });
+        }
+    });
+    
     // Configurar Marked.js para melhor renderização
     if (typeof marked !== 'undefined') {
         marked.setOptions({
@@ -385,6 +410,23 @@
         // Enviar mensagem para a API e exibir pensamentos reais do agente
         async function sendMessage(messageText) {
             try {
+                // VERIFICAR SE ESTÁ NO MODO PLANEJADOR
+                if (window.planejador && window.planejador.isAtivo()) {
+                    console.log('🎯 Modo planejador ativo - processando mensagem');
+                    
+                    // Se é a primeira mensagem (objetivo), processar
+                    if (window.planejador.contexto.etapa === 'inicial') {
+                        await window.planejador.processarObjetivo(messageText);
+                        return;
+                    }
+                    
+                    // Se já está completo, permitir perguntas de follow-up
+                    if (window.planejador.contexto.etapa === 'completo') {
+                        console.log('📝 Pergunta de follow-up no planejamento');
+                        // Continuar fluxo normal mas com contexto do planejamento
+                    }
+                }
+
                 setLoading(true);
                 showThinkingIndicator();
 
@@ -394,6 +436,17 @@
                     throw new Error('Você precisa estar autenticado para usar o chat');
                 }
 
+                // Preparar corpo da requisição
+                const requestBody = {
+                    message: messageText,
+                    conversaId: conversaAtualId
+                };
+
+                // Se está no modo planejador completo, adicionar contexto
+                if (window.planejador && window.planejador.isAtivo() && window.planejador.contexto.etapa === 'completo') {
+                    requestBody.planejadorContexto = window.planejador.getContexto();
+                }
+
                 // Fazer requisição para obter resposta e pensamentos
                 const response = await fetch(`${window.AGENT_API_URL}/api/chat`, {
                     method: 'POST',
@@ -401,10 +454,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({
-                        message: messageText,
-                        conversaId: conversaAtualId
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();

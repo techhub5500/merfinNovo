@@ -472,36 +472,43 @@ body {
 
 /* ========== PLACEHOLDER DO CHAT ========== */
 .chat-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    color: var(--color-text-secondary);
     z-index: 1;
-    pointer-events: none;
     opacity: 1;
     transition: opacity 0.3s ease;
 }
 
 .chat-placeholder.hidden {
     opacity: 0;
+    pointer-events: none;
 }
 
-.placeholder-content {
-    max-width: 600px;
+.placeholder-text {
     font-family: 'Crimson Text', serif;
     font-size: 50px;
     font-weight: 500;
     color: var(--color-text-primary);
     line-height: 1.2;
     white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Card do planejador dentro do placeholder tem pointer-events */
+.chat-placeholder .planner-card {
+    pointer-events: auto;
 }
 
 /* Responsividade do placeholder */
 @media (max-width: 600px) {
-    .placeholder-content {
-        max-width: 90vw;
+    .placeholder-text {
         font-size: 33px;
         white-space: normal;
         word-wrap: break-word;

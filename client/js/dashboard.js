@@ -2,6 +2,7 @@
 
 // Variáveis para controle de filtro e cálculos
 let currentFilterMonths = 1; // Padrão: mês selecionado apenas
+let dashboardInitialized = false; // Flag para controlar inicialização
 
 // Função auxiliar para obter o mês atual no formato YYYY-MM
 function getCurrentMonthId() {
@@ -20,6 +21,9 @@ function getCurrentMonthId() {
 }
 
 function initializeDashboard() {
+    if (dashboardInitialized) return; // Evitar inicialização duplicada
+    dashboardInitialized = true;
+    
     // Inicializar filtro
     setupFilterButton();
 
@@ -679,8 +683,12 @@ function createCategoriaCard(nome, dados, tipo) {
 
 // Inicializar quando DOM carregar
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDashboard();
-    initializeNotas();
+    // Só inicializar se usuário estiver autenticado
+    const token = localStorage.getItem('merfin_token');
+    if (token) {
+        initializeDashboard();
+        initializeNotas();
+    }
 });
 
 // Função para salvar progresso das metas no banco de dados

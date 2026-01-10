@@ -569,6 +569,15 @@ async function handleLogin(event) {
             // Assinatura OK, permitir acesso
             console.log('✅ Assinatura válida, permitindo acesso');
             hideAuthModal();
+            
+            // Inicializar dados da página se estivermos em minhas-financas.html
+            if (typeof window.initializeFinancasData === 'function') {
+                console.log('🔄 Inicializando dados financeiros...');
+                await window.initializeFinancasData();
+            }
+            
+            // Verificar se é primeiro login para mostrar onboarding
+            await checkFirstLogin();
         } else {
             mostrarNotificacao(data.error || 'Email ou senha incorretos.', 'error');
         }

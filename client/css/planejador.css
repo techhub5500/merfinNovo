@@ -1,0 +1,542 @@
+/**
+ * PLANEJADOR FINANCEIRO - ESTILO VISUAL
+ * Design moderno e harmonioso com a identidade visual do Merfin
+ */
+
+/* ========== CARD DE ENTRADA NO CHAT ========== */
+.planner-card {
+    background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+    border: 1px solid rgba(168, 218, 220, 0.2);
+    border-radius: 16px;
+    padding: 18px 22px; /* 25% menor em altura */
+    margin: 12px auto;
+    max-width: 375px; /* 25% menor em largura (era 500px) */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.planner-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(168, 218, 220, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.planner-card:hover::before {
+    left: 100%;
+}
+
+.planner-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(168, 218, 220, 0.15);
+    border-color: rgba(168, 218, 220, 0.4);
+}
+
+.planner-card-icon {
+    display: none; /* REMOVIDO - não mostrar ícone */
+}
+
+.planner-card-title {
+    font-family: 'Crimson Text', serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: #a8dadc;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.planner-card-description {
+    font-family: 'Crimson Text', serif;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    line-height: 1.6;
+    letter-spacing: 0.3px;
+}
+
+/* ========== MODO PLANEJADOR ATIVO ========== */
+/* Barra antiga removida - substituída por botão simples */
+
+/* ========== BOTÃO DE SAIR SIMPLES ========== */
+.planner-exit-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Crimson Text', serif;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.planner-exit-btn:hover {
+    background: rgba(192, 57, 43, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.planner-exit-btn i {
+    font-size: 14px;
+}
+
+/* Código antigo da barra (não usado mais) */
+.planner-active-bar-old {
+    background: linear-gradient(90deg, #1a1f2e 0%, #2d3748 50%, #1a1f2e 100%);
+    border-bottom: 2px solid rgba(168, 218, 220, 0.3);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.planner-active-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.planner-active-icon {
+    font-size: 24px;
+    filter: drop-shadow(0 2px 4px rgba(168, 218, 220, 0.3));
+}
+
+.planner-active-text h3 {
+    font-family: 'Crimson Text', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #a8dadc;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.5px;
+}
+
+.planner-active-text p {
+    font-family: 'Crimson Text', serif;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+
+.planner-exit-btn {
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: #e74c3c;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Crimson Text', serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.planner-exit-btn:hover {
+    background: rgba(231, 76, 60, 0.25);
+    border-color: rgba(231, 76, 60, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+}
+
+/* ========== CONTAINER DE PERGUNTAS ========== */
+.planner-questions-container {
+    background: rgba(26, 31, 46, 0.6);
+    border: 1px solid rgba(168, 218, 220, 0.2);
+    border-radius: 16px;
+    padding: 28px;
+    margin: 20px 0;
+    animation: slideUpFade 0.4s ease;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.planner-questions-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(168, 218, 220, 0.15);
+}
+
+.planner-questions-header-icon {
+    font-size: 28px;
+    filter: drop-shadow(0 2px 4px rgba(168, 218, 220, 0.3));
+}
+
+.planner-questions-header-text h3 {
+    font-family: 'Crimson Text', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #a8dadc;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.5px;
+}
+
+.planner-questions-header-text p {
+    font-family: 'Crimson Text', serif;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+
+/* ========== PERGUNTA INDIVIDUAL ========== */
+.planner-question {
+    margin-bottom: 28px;
+    animation: fadeInUp 0.3s ease backwards;
+}
+
+.planner-question:nth-child(1) { animation-delay: 0.05s; }
+.planner-question:nth-child(2) { animation-delay: 0.1s; }
+.planner-question:nth-child(3) { animation-delay: 0.15s; }
+.planner-question:nth-child(4) { animation-delay: 0.2s; }
+.planner-question:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.planner-question-label {
+    font-family: 'Crimson Text', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 10px;
+    display: block;
+    letter-spacing: 0.3px;
+}
+
+.planner-question-description {
+    font-family: 'Crimson Text', serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(168, 218, 220, 0.8);
+    margin-bottom: 15px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    background: rgba(168, 218, 220, 0.05);
+    border-left: 3px solid rgba(168, 218, 220, 0.3);
+    border-radius: 6px;
+}
+
+.planner-question-required {
+    color: #e74c3c;
+    margin-left: 4px;
+}
+
+/* ========== INPUTS ========== */
+.planner-input,
+.planner-textarea,
+.planner-select {
+    width: 100%;
+    background: rgba(45, 55, 72, 0.6);
+    border: 1px solid rgba(168, 218, 220, 0.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'Crimson Text', serif;
+    font-size: 15px;
+    color: white;
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+}
+
+.planner-input:focus,
+.planner-textarea:focus,
+.planner-select:focus {
+    outline: none;
+    border-color: #a8dadc;
+    box-shadow: 0 0 0 3px rgba(168, 218, 220, 0.1);
+    background: rgba(45, 55, 72, 0.8);
+}
+
+.planner-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.planner-input::placeholder,
+.planner-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ========== OPÇÕES DE MÚLTIPLA ESCOLHA ========== */
+.planner-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.planner-option {
+    background: rgba(45, 55, 72, 0.4);
+    border: 2px solid rgba(168, 218, 220, 0.2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-family: 'Crimson Text', serif;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: 0.3px;
+}
+
+.planner-option:hover {
+    background: rgba(45, 55, 72, 0.6);
+    border-color: rgba(168, 218, 220, 0.4);
+    transform: translateX(4px);
+}
+
+.planner-option.selected {
+    background: rgba(168, 218, 220, 0.15);
+    border-color: #a8dadc;
+    color: #a8dadc;
+}
+
+.planner-option-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(168, 218, 220, 0.4);
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.planner-option.selected .planner-option-radio {
+    border-color: #a8dadc;
+}
+
+.planner-option.selected .planner-option-radio::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background: #a8dadc;
+    border-radius: 50%;
+    animation: radioScale 0.3s ease;
+}
+
+@keyframes radioScale {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* ========== BOTÃO DE ENVIAR RESPOSTAS ========== */
+.planner-submit-btn {
+    background: linear-gradient(135deg, #a8dadc 0%, #457b9d 100%);
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    border-radius: 10px;
+    font-family: 'Crimson Text', serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 24px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 16px rgba(168, 218, 220, 0.3);
+}
+
+.planner-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(168, 218, 220, 0.4);
+}
+
+.planner-submit-btn:active {
+    transform: translateY(0);
+}
+
+.planner-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ========== BADGE DE PROGRESSO ========== */
+.planner-progress-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(168, 218, 220, 0.15);
+    border: 1px solid rgba(168, 218, 220, 0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: 'Crimson Text', serif;
+    font-size: 13px;
+    color: #a8dadc;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+/* ========== RESULTADO DO PLANEJAMENTO ========== */
+.planner-result {
+    background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(45, 55, 72, 0.8) 100%);
+    border: 1px solid rgba(168, 218, 220, 0.3);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 20px 0;
+    animation: slideUpFade 0.5s ease;
+}
+
+.planner-result-header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid rgba(168, 218, 220, 0.2);
+}
+
+.planner-result-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 12px rgba(168, 218, 220, 0.4));
+}
+
+.planner-result-title {
+    font-family: 'Crimson Text', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #a8dadc;
+    margin: 0 0 8px 0;
+    letter-spacing: 0.5px;
+}
+
+.planner-result-subtitle {
+    font-family: 'Crimson Text', serif;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+
+.planner-result-content {
+    display: grid;
+    gap: 20px;
+}
+
+.planner-result-section {
+    background: rgba(45, 55, 72, 0.4);
+    border: 1px solid rgba(168, 218, 220, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.planner-result-section h4 {
+    font-family: 'Crimson Text', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #a8dadc;
+    margin: 0 0 16px 0;
+    letter-spacing: 0.4px;
+}
+
+.planner-result-section p,
+.planner-result-section ul {
+    font-family: 'Crimson Text', serif;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.7;
+    letter-spacing: 0.3px;
+}
+
+.planner-result-section ul {
+    padding-left: 20px;
+    margin: 12px 0;
+}
+
+.planner-result-section li {
+    margin-bottom: 8px;
+}
+
+/* ========== RESPONSIVIDADE ========== */
+@media (max-width: 768px) {
+    .planner-card {
+        padding: 20px;
+        margin: 12px;
+    }
+
+    .planner-questions-container {
+        padding: 20px;
+    }
+
+    .planner-result {
+        padding: 24px 20px;
+    }
+
+    .planner-active-bar {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .planner-exit-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ========== ANIMAÇÕES ADICIONAIS ========== */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.planner-loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}

@@ -3,6 +3,7 @@
 // Dados das categorias e subcategorias (carregados do arquivo JSON)
 let receitasCategorias = {};
 let despesasCategorias = {};
+let financasInitialized = false; // Flag para controlar inicialização
 
 // Função para carregar categorias do JSON
 async function loadCategories() {
@@ -19,11 +20,13 @@ async function loadCategories() {
     }
 }
 
-// Armazenamento de dados por mês (formato YYYY-MM)
-let monthData = {};
-let currentMonthDate = new Date();
-
-document.addEventListener('DOMContentLoaded', async function() {
+// Função global para inicializar dados após login
+async function initializeFinancasData() {
+    if (financasInitialized) return; // Evitar inicialização duplicada
+    financasInitialized = true;
+    
+    console.log('✅ Inicializando dados financeiros após login...');
+    
     // Carregar categorias primeiro
     await loadCategories();
 
@@ -34,18 +37,45 @@ document.addEventListener('DOMContentLoaded', async function() {
     initializeMonthSelectors();
 
     // Carregar dados do mês atual
-    loadMonthData();
+    await loadMonthData();
 
     // Adicionar botões para adicionar linhas
     addAddRowButton('receitas-table', ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'status']);
     addAddRowButton('despesas-table', ['data', 'descricao', 'categoria', 'subcategoria', 'valor', 'formaPagamento', 'status']);
     
-    // Auto-save ao sair de uma célula
-    document.addEventListener('change', function(e) {
-        if (e.target.closest('#receitas-table') || e.target.closest('#despesas-table')) {
-            saveMonthData();
-        }
-    });
+    // Inicializar dashboard se estiver disponível
+    if (typeof initializeDashboard === 'function') {
+        initializeDashboard();
+    }
+    if (typeof initializeNotas === 'function') {
+        initializeNotas();
+    }
+}
+
+// Tornar função disponível globalmente
+window.initializeFinancasData = initializeFinancasData;
+
+// Armazenamento de dados por mês (formato YYYY-MM)
+let monthData = {};
+let currentMonthDate = new Date();
+
+// Auto-save ao sair de uma célula (registrar uma única vez)
+document.addEventListener('change', function(e) {
+    if (e.target.closest('#receitas-table') || e.target.closest('#despesas-table')) {
+        saveMonthData();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Verificar autenticação antes de carregar dados
+    const token = localStorage.getItem('merfin_token');
+    if (!token) {
+        console.log('⏸️ Aguardando login para carregar dados financeiros...');
+        return;
+    }
+    
+    // Inicializar dados
+    await initializeFinancasData();
 });
 
 function initializeTabs() {

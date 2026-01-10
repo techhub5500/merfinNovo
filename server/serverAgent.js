@@ -13,8 +13,8 @@ const ThoughtProcess = require('./thoughtProcess');
 const ThoughtEmitter = require('./thoughtEmitter');
 
 const app = express();
-// ⚠️ IMPORTANTE: Em desenvolvimento, Agent usa porta 5001. Em produção (Render), usa PORT
-const PORT = process.env.AGENT_PORT || (process.env.NODE_ENV === 'production' ? process.env.PORT : 5001);
+// ⚠️ IMPORTANTE: No Render, sempre usa PORT (definido automaticamente). Localmente, usa AGENT_PORT ou fallback 5001
+const PORT = process.env.PORT || process.env.AGENT_PORT || 5001;
 
 // Configuração de CORS para aceitar Render e localhost
 const allowedOrigins = [
@@ -59,9 +59,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'merfin_secret_key_2025';
 const SEARCH_API_KEY = process.env.SEARCH_API_KEY;
 
 console.log('🔧 Configurações do Agent Server:');
-console.log('   PORT (Render):', process.env.PORT || 'Não definida');
-console.log('   AGENT_PORT (fallback):', process.env.AGENT_PORT || 'Não definida');
-console.log('   PORTA REAL EM USO:', PORT);
+console.log('   PORT (Render/Produção):', process.env.PORT || 'Não definida (usando fallback)');
+console.log('   AGENT_PORT (Dev local):', process.env.AGENT_PORT || 'Não definida');
+console.log('   PORTA FINAL EM USO:', PORT);
 console.log('   OPERATIONAL_SERVER_URL:', OPERATIONAL_SERVER_URL);
 
 // ========== SEÇÕES DE DADOS DISPONÍVEIS ==========

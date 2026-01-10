@@ -5,8 +5,8 @@
 
 /* ========== CARD DE ENTRADA NO CHAT ========== */
 .planner-card {
-    background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
-    border: 1px solid rgba(168, 218, 220, 0.2);
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(37, 37, 37, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 16px;
     padding: 18px 22px; /* 25% menor em altura */
     margin: 12px auto;
@@ -15,6 +15,7 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .planner-card::before {
@@ -24,7 +25,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(168, 218, 220, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
     transition: left 0.5s;
 }
 
@@ -34,8 +35,8 @@
 
 .planner-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(168, 218, 220, 0.15);
-    border-color: rgba(168, 218, 220, 0.4);
+    box-shadow: 0 12px 32px rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .planner-card-icon {
@@ -43,22 +44,22 @@
 }
 
 .planner-card-title {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 24px;
     font-weight: 600;
-    color: #a8dadc;
+    color: #ffffff;
     text-align: center;
     margin-bottom: 8px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .planner-card-description {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
     line-height: 1.6;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 /* ========== MODO PLANEJADOR ATIVO ========== */
@@ -75,7 +76,7 @@
     padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 14px;
     font-weight: 600;
     display: flex;
@@ -98,8 +99,8 @@
 
 /* Código antigo da barra (não usado mais) */
 .planner-active-bar-old {
-    background: linear-gradient(90deg, #1a1f2e 0%, #2d3748 50%, #1a1f2e 100%);
-    border-bottom: 2px solid rgba(168, 218, 220, 0.3);
+    background: linear-gradient(90deg, rgba(30, 30, 30, 0.95) 0%, rgba(37, 37, 37, 0.95) 50%, rgba(30, 30, 30, 0.95) 100%);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
     padding: 16px 24px;
     display: flex;
     align-items: center;
@@ -122,20 +123,20 @@
 }
 
 .planner-active-text h3 {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 18px;
     font-weight: 600;
-    color: #a8dadc;
+    color: #ffffff;
     margin: 0 0 4px 0;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .planner-active-text p {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 13px;
     color: rgba(255, 255, 255, 0.6);
     margin: 0;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 .planner-exit-btn {
@@ -144,7 +145,7 @@
     color: #e74c3c;
     padding: 10px 20px;
     border-radius: 8px;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -163,12 +164,13 @@
 
 /* ========== CONTAINER DE PERGUNTAS ========== */
 .planner-questions-container {
-    background: rgba(26, 31, 46, 0.6);
-    border: 1px solid rgba(168, 218, 220, 0.2);
+    background: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     padding: 28px;
     margin: 20px 0;
     animation: slideUpFade 0.4s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes slideUpFade {
@@ -188,7 +190,7 @@
     gap: 12px;
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 1px solid rgba(168, 218, 220, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .planner-questions-header-icon {
@@ -197,20 +199,20 @@
 }
 
 .planner-questions-header-text h3 {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 20px;
     font-weight: 600;
-    color: #a8dadc;
+    color: #ffffff;
     margin: 0 0 4px 0;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .planner-questions-header-text p {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 14px;
     color: rgba(255, 255, 255, 0.6);
     margin: 0;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 /* ========== PERGUNTA INDIVIDUAL ========== */
@@ -237,25 +239,25 @@
 }
 
 .planner-question-label {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 16px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     margin-bottom: 10px;
     display: block;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 .planner-question-description {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 14px;
     font-weight: 400;
-    color: rgba(168, 218, 220, 0.8);
+    color: rgba(255, 255, 255, 0.7);
     margin-bottom: 15px;
     line-height: 1.5;
     padding: 10px 12px;
-    background: rgba(168, 218, 220, 0.05);
-    border-left: 3px solid rgba(168, 218, 220, 0.3);
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
 }
 
@@ -269,24 +271,24 @@
 .planner-textarea,
 .planner-select {
     width: 100%;
-    background: rgba(45, 55, 72, 0.6);
-    border: 1px solid rgba(168, 218, 220, 0.2);
+    background: rgba(37, 37, 37, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 10px;
     padding: 14px 16px;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     color: white;
     transition: all 0.3s ease;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 .planner-input:focus,
 .planner-textarea:focus,
 .planner-select:focus {
     outline: none;
-    border-color: #a8dadc;
-    box-shadow: 0 0 0 3px rgba(168, 218, 220, 0.1);
-    background: rgba(45, 55, 72, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+    background: rgba(37, 37, 37, 0.8);
 }
 
 .planner-textarea {
@@ -307,11 +309,11 @@
 }
 
 .planner-option {
-    background: rgba(45, 55, 72, 0.4);
-    border: 2px solid rgba(168, 218, 220, 0.2);
+    background: rgba(37, 37, 37, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.12);
     border-radius: 10px;
     padding: 14px 18px;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
@@ -319,32 +321,32 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 .planner-option:hover {
-    background: rgba(45, 55, 72, 0.6);
-    border-color: rgba(168, 218, 220, 0.4);
+    background: rgba(37, 37, 37, 0.6);
+    border-color: rgba(255, 255, 255, 0.3);
     transform: translateX(4px);
 }
 
 .planner-option.selected {
-    background: rgba(168, 218, 220, 0.15);
-    border-color: #a8dadc;
-    color: #a8dadc;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
 }
 
 .planner-option-radio {
     width: 20px;
     height: 20px;
-    border: 2px solid rgba(168, 218, 220, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     position: relative;
     transition: all 0.3s ease;
 }
 
 .planner-option.selected .planner-option-radio {
-    border-color: #a8dadc;
+    border-color: #ffffff;
 }
 
 .planner-option.selected .planner-option-radio::after {
@@ -355,7 +357,7 @@
     transform: translate(-50%, -50%);
     width: 10px;
     height: 10px;
-    background: #a8dadc;
+    background: #ffffff;
     border-radius: 50%;
     animation: radioScale 0.3s ease;
 }
@@ -374,25 +376,25 @@
 
 /* ========== BOTÃO DE ENVIAR RESPOSTAS ========== */
 .planner-submit-btn {
-    background: linear-gradient(135deg, #a8dadc 0%, #457b9d 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
     border: none;
-    color: white;
+    color: #121212;
     padding: 16px 32px;
     border-radius: 10px;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     width: 100%;
     margin-top: 24px;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 16px rgba(168, 218, 220, 0.3);
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
 }
 
 .planner-submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(168, 218, 220, 0.4);
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
 }
 
 .planner-submit-btn:active {
@@ -410,32 +412,33 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(168, 218, 220, 0.15);
-    border: 1px solid rgba(168, 218, 220, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 20px;
     padding: 6px 14px;
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 13px;
-    color: #a8dadc;
+    color: #ffffff;
     font-weight: 600;
     margin-bottom: 16px;
 }
 
 /* ========== RESULTADO DO PLANEJAMENTO ========== */
 .planner-result {
-    background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(45, 55, 72, 0.8) 100%);
-    border: 1px solid rgba(168, 218, 220, 0.3);
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.9) 0%, rgba(37, 37, 37, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 16px;
     padding: 32px;
     margin: 20px 0;
     animation: slideUpFade 0.5s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .planner-result-header {
     text-align: center;
     margin-bottom: 32px;
     padding-bottom: 24px;
-    border-bottom: 2px solid rgba(168, 218, 220, 0.2);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .planner-result-icon {
@@ -445,20 +448,20 @@
 }
 
 .planner-result-title {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 28px;
     font-weight: 700;
-    color: #a8dadc;
+    color: #ffffff;
     margin: 0 0 8px 0;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .planner-result-subtitle {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 16px;
     color: rgba(255, 255, 255, 0.7);
     margin: 0;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 .planner-result-content {
@@ -467,28 +470,28 @@
 }
 
 .planner-result-section {
-    background: rgba(45, 55, 72, 0.4);
-    border: 1px solid rgba(168, 218, 220, 0.15);
+    background: rgba(37, 37, 37, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 20px;
 }
 
 .planner-result-section h4 {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 18px;
     font-weight: 600;
-    color: #a8dadc;
+    color: #ffffff;
     margin: 0 0 16px 0;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.3px;
 }
 
 .planner-result-section p,
 .planner-result-section ul {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.7;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
 
 .planner-result-section ul {
@@ -500,30 +503,423 @@
     margin-bottom: 8px;
 }
 
-/* ========== RESPONSIVIDADE ========== */
+/* ========== RESPONSIVIDADE - MOBILE ========== */
 @media (max-width: 768px) {
     .planner-card {
-        padding: 20px;
-        margin: 12px;
+        max-width: calc(100% - 24px);
+        padding: 16px 18px;
+        margin: 10px 12px;
+        border-radius: 12px;
     }
 
-    .planner-questions-container {
-        padding: 20px;
+    .planner-card-title {
+        font-size: 20px;
+        margin-bottom: 6px;
+        letter-spacing: 0.2px;
     }
 
-    .planner-result {
-        padding: 24px 20px;
-    }
-
-    .planner-active-bar {
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch;
+    .planner-card-description {
+        font-size: 13px;
+        line-height: 1.5;
     }
 
     .planner-exit-btn {
-        width: 100%;
-        justify-content: center;
+        top: 12px;
+        right: 12px;
+        padding: 8px 16px;
+        font-size: 12px;
+        gap: 6px;
+        border-radius: 6px;
+    }
+
+    .planner-exit-btn i {
+        font-size: 12px;
+    }
+
+    .planner-active-bar-old {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .planner-active-info {
+        gap: 10px;
+    }
+
+    .planner-active-icon {
+        font-size: 20px;
+    }
+
+    .planner-active-text h3 {
+        font-size: 16px;
+        letter-spacing: 0.2px;
+    }
+
+    .planner-active-text p {
+        font-size: 12px;
+    }
+
+    .planner-questions-container {
+        padding: 20px 16px;
+        margin: 16px 12px;
+        border-radius: 12px;
+    }
+
+    .planner-questions-header {
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 14px;
+    }
+
+    .planner-questions-header-icon {
+        font-size: 24px;
+    }
+
+    .planner-questions-header-text h3 {
+        font-size: 18px;
+        margin-bottom: 3px;
+    }
+
+    .planner-questions-header-text p {
+        font-size: 12px;
+    }
+
+    .planner-question {
+        margin-bottom: 24px;
+    }
+
+    .planner-question-label {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .planner-question-description {
+        font-size: 12px;
+        margin-bottom: 12px;
+        padding: 8px 10px;
+        border-left-width: 2px;
+        border-radius: 4px;
+    }
+
+    .planner-input,
+    .planner-textarea,
+    .planner-select {
+        padding: 12px 14px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+    .planner-textarea {
+        min-height: 80px;
+    }
+
+    .planner-options {
+        gap: 10px;
+    }
+
+    .planner-option {
+        padding: 12px 14px;
+        font-size: 14px;
+        gap: 10px;
+        border-radius: 8px;
+    }
+
+    .planner-option-radio {
+        width: 18px;
+        height: 18px;
+    }
+
+    .planner-option.selected .planner-option-radio::after {
+        width: 9px;
+        height: 9px;
+    }
+
+    .planner-submit-btn {
+        padding: 14px 28px;
+        font-size: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+        letter-spacing: 0.2px;
+    }
+
+    .planner-progress-badge {
+        gap: 6px;
+        padding: 5px 12px;
+        font-size: 12px;
+        margin-bottom: 14px;
+        border-radius: 16px;
+    }
+
+    .planner-result {
+        padding: 24px 16px;
+        margin: 16px 12px;
+        border-radius: 12px;
+    }
+
+    .planner-result-header {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+    }
+
+    .planner-result-icon {
+        font-size: 44px;
+        margin-bottom: 12px;
+    }
+
+    .planner-result-title {
+        font-size: 22px;
+        margin-bottom: 6px;
+    }
+
+    .planner-result-subtitle {
+        font-size: 14px;
+    }
+
+    .planner-result-content {
+        gap: 16px;
+    }
+
+    .planner-result-section {
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .planner-result-section h4 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .planner-result-section p,
+    .planner-result-section ul {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .planner-result-section ul {
+        padding-left: 16px;
+        margin: 10px 0;
+    }
+
+    .planner-result-section li {
+        margin-bottom: 6px;
+    }
+}
+
+/* ========== RESPONSIVIDADE - WIDESCREEN ========== */
+@media (min-width: 1920px) {
+    .planner-card {
+        max-width: 500px;
+        padding: 24px 28px;
+        margin: 16px auto;
+        border-radius: 20px;
+    }
+
+    .planner-card-title {
+        font-size: 30px;
+        margin-bottom: 12px;
+        letter-spacing: 0.4px;
+    }
+
+    .planner-card-description {
+        font-size: 18px;
+        line-height: 1.7;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-exit-btn {
+        top: 28px;
+        right: 28px;
+        padding: 14px 28px;
+        font-size: 16px;
+        gap: 10px;
+        border-radius: 10px;
+    }
+
+    .planner-exit-btn i {
+        font-size: 16px;
+    }
+
+    .planner-active-bar-old {
+        padding: 20px 32px;
+        border-bottom-width: 3px;
+    }
+
+    .planner-active-info {
+        gap: 16px;
+    }
+
+    .planner-active-icon {
+        font-size: 32px;
+    }
+
+    .planner-active-text h3 {
+        font-size: 22px;
+        margin-bottom: 6px;
+        letter-spacing: 0.4px;
+    }
+
+    .planner-active-text p {
+        font-size: 15px;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-questions-container {
+        padding: 36px;
+        margin: 28px 0;
+        border-radius: 20px;
+    }
+
+    .planner-questions-header {
+        gap: 16px;
+        margin-bottom: 32px;
+        padding-bottom: 20px;
+    }
+
+    .planner-questions-header-icon {
+        font-size: 36px;
+    }
+
+    .planner-questions-header-text h3 {
+        font-size: 26px;
+        margin-bottom: 6px;
+        letter-spacing: 0.4px;
+    }
+
+    .planner-questions-header-text p {
+        font-size: 16px;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-question {
+        margin-bottom: 36px;
+    }
+
+    .planner-question-label {
+        font-size: 18px;
+        margin-bottom: 12px;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-question-description {
+        font-size: 16px;
+        margin-bottom: 18px;
+        line-height: 1.6;
+        padding: 14px 16px;
+        border-left-width: 4px;
+        border-radius: 8px;
+    }
+
+    .planner-input,
+    .planner-textarea,
+    .planner-select {
+        padding: 18px 20px;
+        font-size: 17px;
+        border-radius: 12px;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-textarea {
+        min-height: 130px;
+    }
+
+    .planner-options {
+        gap: 16px;
+    }
+
+    .planner-option {
+        padding: 18px 22px;
+        font-size: 17px;
+        gap: 14px;
+        border-radius: 12px;
+        border-width: 2px;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-option-radio {
+        width: 24px;
+        height: 24px;
+        border-width: 3px;
+    }
+
+    .planner-option.selected .planner-option-radio::after {
+        width: 12px;
+        height: 12px;
+    }
+
+    .planner-submit-btn {
+        padding: 20px 40px;
+        font-size: 18px;
+        border-radius: 12px;
+        margin-top: 32px;
+        letter-spacing: 0.4px;
+    }
+
+    .planner-progress-badge {
+        gap: 10px;
+        padding: 8px 18px;
+        font-size: 15px;
+        margin-bottom: 20px;
+        border-radius: 24px;
+    }
+
+    .planner-result {
+        padding: 44px;
+        margin: 28px 0;
+        border-radius: 20px;
+    }
+
+    .planner-result-header {
+        margin-bottom: 40px;
+        padding-bottom: 32px;
+        border-bottom-width: 3px;
+    }
+
+    .planner-result-icon {
+        font-size: 72px;
+        margin-bottom: 20px;
+    }
+
+    .planner-result-title {
+        font-size: 36px;
+        margin-bottom: 12px;
+        letter-spacing: 0.4px;
+    }
+
+    .planner-result-subtitle {
+        font-size: 20px;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-result-content {
+        gap: 28px;
+    }
+
+    .planner-result-section {
+        padding: 28px;
+        border-radius: 16px;
+    }
+
+    .planner-result-section h4 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        letter-spacing: 0.4px;
+    }
+
+    .planner-result-section p,
+    .planner-result-section ul {
+        font-size: 18px;
+        line-height: 1.8;
+        letter-spacing: 0.3px;
+    }
+
+    .planner-result-section ul {
+        padding-left: 28px;
+        margin: 16px 0;
+    }
+
+    .planner-result-section li {
+        margin-bottom: 12px;
     }
 }
 

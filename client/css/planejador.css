@@ -506,9 +506,9 @@
 /* ========== RESPONSIVIDADE - MOBILE ========== */
 @media (max-width: 768px) {
     .planner-card {
-        max-width: calc(100% - 24px);
-        padding: 16px 18px;
-        margin: 10px 12px;
+        max-width: 90%;
+        padding: 16px 22px;
+        margin: 10px auto;
         border-radius: 12px;
     }
 
@@ -519,8 +519,8 @@
     }
 
     .planner-card-description {
-        font-size: 13px;
-        line-height: 1.5;
+        font-size: 14px;
+        line-height: 1.4;
     }
 
     .planner-exit-btn {
@@ -561,8 +561,9 @@
     }
 
     .planner-questions-container {
-        padding: 20px 16px;
-        margin: 16px 12px;
+        padding: 20px 22px;
+        margin: 16px auto;
+        max-width: 90%;
         border-radius: 12px;
     }
 
@@ -652,8 +653,9 @@
     }
 
     .planner-result {
-        padding: 24px 16px;
-        margin: 16px 12px;
+        padding: 24px 22px;
+        margin: 16px auto;
+        max-width: 90%;
         border-radius: 12px;
     }
 

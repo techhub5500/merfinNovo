@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste MRM Simples</title>
+    <link rel="stylesheet" href="client/css/chat.css">
+    <style>
+        body {
+            background: #121212;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4a9eff;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .test-title {
+            color: #ffc107;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background: #3b82f6;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+        
+        .status.error {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste do Sistema MRM</h1>
+    
+    <div class="test-section">
+        <div class="test-title">Status do Sistema</div>
+        <div id="system-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">Teste 1: Gráfico de Barras</div>
+        <button onclick="testarGrafico()">Testar Gráfico</button>
+        <div class="result" id="result1"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">Teste 2: Card de Sucesso</div>
+        <button onclick="testarCard()">Testar Card</button>
+        <div class="result" id="result2"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">Teste 3: Barra de Progresso</div>
+        <button onclick="testarProgress()">Testar Progress</button>
+        <div class="result" id="result3"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">Teste 4: Markdown Simples</div>
+        <button onclick="testarMarkdown()">Testar Markdown</button>
+        <div class="result" id="result4"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">Teste 5: Completo (Gráfico + Card + Markdown)</div>
+        <button onclick="testarCompleto()">Testar Completo</button>
+        <div class="result" id="result5"></div>
+    </div>
+
+    <!-- Bibliotecas necessárias -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Sistema MRM -->
+    <script src="client/js/markdown/mrm-parser.js"></script>
+    <script src="client/js/markdown/components/card.js"></script>
+    <script src="client/js/markdown/components/progress.js"></script>
+    <script src="client/js/markdown/components/chart.js"></script>
+    <script src="client/js/markdown/mrm-init.js"></script>
+    
+    <script>
+        // Verificar status do sistema
+        function verificarStatus() {
+            const statusDiv = document.getElementById('system-status');
+            let status = '';
+            
+            if (typeof marked !== 'undefined') {
+                status += '<div class="status success">✅ Marked.js carregado</div>';
+            } else {
+                status += '<div class="status error">❌ Marked.js NÃO carregado</div>';
+            }
+            
+            if (typeof Chart !== 'undefined') {
+                status += '<div class="status success">✅ Chart.js carregado</div>';
+            } else {
+                status += '<div class="status error">❌ Chart.js NÃO carregado</div>';
+            }
+            
+            if (typeof window.mrmParser !== 'undefined') {
+                status += '<div class="status success">✅ MRM Parser inicializado</div>';
+                
+                const componentes = Array.from(window.mrmParser.components.keys());
+                status += `<div class="status success">✅ Componentes: ${componentes.join(', ')}</div>`;
+            } else {
+                status += '<div class="status error">❌ MRM Parser NÃO inicializado</div>';
+            }
+            
+            if (typeof window.renderMarkdown !== 'undefined') {
+                status += '<div class="status success">✅ renderMarkdown() disponível</div>';
+            } else {
+                status += '<div class="status error">❌ renderMarkdown() NÃO disponível</div>';
+            }
+            
+            statusDiv.innerHTML = status;
+        }
+        
+        function testarGrafico() {
+            const texto = `
+## Gastos dos Últimos 2 Meses
+
+@chart[tipo=bar,titulo=Despesas Mensais,formato=moeda]
+{
+  "labels": ["Dezembro", "Janeiro"],
+  "datasets": [{
+    "label": "Despesas",
+    "data": [3500, 2800],
+    "backgroundColor": "#ff6b9d"
+  }]
+}
+@/chart
+
+Você economizou **R$ 700** em Janeiro! 🎉
+`;
+            
+            document.getElementById('result1').innerHTML = window.renderMarkdown(texto);
+        }
+        
+        function testarCard() {
+            const texto = `
+@card[tipo=sucesso,icone=✓]
+**Parabéns!**
+Você alcançou sua meta mensal de economia.
+@/card
+`;
+            
+            document.getElementById('result2').innerHTML = window.renderMarkdown(texto);
+        }
+        
+        function testarProgress() {
+            const texto = `
+## Progresso da Meta
+
+@progress[valor=7500,meta=10000,label=Fundo de Emergência]
+
+Faltam apenas **R$ 2.500** para completar!
+`;
+            
+            document.getElementById('result3').innerHTML = window.renderMarkdown(texto);
+        }
+        
+        function testarMarkdown() {
+            const texto = `
+## Título Exemplo
+
+Este é um **texto em negrito** e este é *itálico*.
+
+- Item 1
+- Item 2
+- Item 3
+
+[Link para o Google](https://google.com)
+`;
+            
+            document.getElementById('result4').innerHTML = window.renderMarkdown(texto);
+        }
+        
+        function testarCompleto() {
+            const texto = `
+# 📊 Análise Financeira Completa
+
+## Resumo do Mês
+
+@card[tipo=info,icone=💰]
+**Saldo Positivo!**
+Você economizou **R$ 1.200** este mês.
+@/card
+
+## Evolução dos Gastos
+
+@chart[tipo=line,titulo=Evolução Mensal,formato=moeda]
+{
+  "labels": ["Nov", "Dez", "Jan"],
+  "datasets": [{
+    "label": "Despesas",
+    "data": [3200, 3500, 2800],
+    "borderColor": "#ff6b9d",
+    "tension": 0.4
+  }]
+}
+@/chart
+
+## Meta de Economia
+
+@progress[valor=7500,meta=10000,label=Fundo de Emergência]
+
+### Dicas:
+- Continue economizando
+- Evite gastos desnecessários
+- Mantenha o foco
+
+**Você está no caminho certo!** 🚀
+`;
+            
+            document.getElementById('result5').innerHTML = window.renderMarkdown(texto);
+        }
+        
+        // Verificar status ao carregar
+        setTimeout(verificarStatus, 500);
+    </script>
+</body>
+</html>

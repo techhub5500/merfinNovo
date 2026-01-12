@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste MRM - Merfin Rich Markup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #ffffff;
+            --color-text-primary: #fff1f1;
+            --color-text-secondary: #a0a0a0;
+            --color-background: #121212;
+            --color-surface: #1e1e1e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--color-background);
+            color: var(--color-text-primary);
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 36px;
+            background: linear-gradient(90deg, #4a9eff, #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .test-section {
+            margin: 40px 0;
+            padding: 20px;
+            background: var(--color-surface);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .test-title {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #4a9eff;
+            border-bottom: 2px solid #4a9eff;
+            padding-bottom: 8px;
+        }
+        
+        .code-block {
+            background: #000;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .code-block code {
+            color: #e6edf3;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .result-container {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border-left: 4px solid #4a9eff;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4a9eff, #357abd);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 12px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 16px;
+            background: rgba(39, 174, 96, 0.1);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        /* Estilos para markdown-content (compatibilidade) */
+        .markdown-content {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+        }
+        
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+            margin: 16px 0 12px 0;
+            color: var(--color-text-primary);
+        }
+        
+        .markdown-content p {
+            margin: 8px 0;
+        }
+        
+        .markdown-content ul, .markdown-content ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+        
+        .markdown-content strong {
+            font-weight: 600;
+            color: #4a9eff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Teste do Merfin Rich Markup (MRM)</h1>
+        
+        <div class="status" id="status">
+            ⏳ Carregando bibliotecas...
+        </div>
+        
+        <div class="controls">
+            <button onclick="testarCard()">Testar Card</button>
+            <button onclick="testarProgress()">Testar Progress</button>
+            <button onclick="testarChart()">Testar Gráfico</button>
+            <button onclick="testarCompleto()">Teste Completo</button>
+            <button onclick="limparResultados()">Limpar</button>
+        </div>
+        
+        <!-- TESTE 1: CARD -->
+        <div class="test-section">
+            <h2 class="test-title">1. Componente Card</h2>
+            <div class="code-block">
+                <code>@card[tipo=sucesso,icone=✓]
+**Meta Alcançada!**
+Você economizou R$ 2.000 este mês. Continue assim!
+@/card</code>
+            </div>
+            <div class="result-container" id="result-card"></div>
+        </div>
+        
+        <!-- TESTE 2: PROGRESS -->
+        <div class="test-section">
+            <h2 class="test-title">2. Componente Progress</h2>
+            <div class="code-block">
+                <code>@progress[valor=7500,meta=10000,label=Fundo de Emergência]</code>
+            </div>
+            <div class="result-container" id="result-progress"></div>
+        </div>
+        
+        <!-- TESTE 3: CHART -->
+        <div class="test-section">
+            <h2 class="test-title">3. Componente Chart</h2>
+            <div class="code-block">
+                <code>@chart[tipo=line,titulo=Receitas vs Despesas 2025,formato=moeda]
+{
+  "labels": ["Jan", "Fev", "Mar", "Abr"],
+  "datasets": [
+    {
+      "label": "Receitas",
+      "data": [5000, 6000, 5500, 6200],
+      "borderColor": "#4a9eff",
+      "backgroundColor": "rgba(74, 158, 255, 0.1)",
+      "tension": 0.4
+    },
+    {
+      "label": "Despesas",
+      "data": [3000, 3200, 2800, 3100],
+      "borderColor": "#ff6b9d",
+      "backgroundColor": "rgba(255, 107, 157, 0.1)",
+      "tension": 0.4
+    }
+  ]
+}
+@/chart</code>
+            </div>
+            <div class="result-container" id="result-chart"></div>
+        </div>
+        
+        <!-- TESTE 4: COMPLETO -->
+        <div class="test-section">
+            <h2 class="test-title">4. Teste Completo (Markdown + Componentes)</h2>
+            <div class="result-container" id="result-completo"></div>
+        </div>
+    </div>
+    
+    <!-- Bibliotecas -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- MRM System -->
+    <script src="../js/markdown/mrm-parser.js"></script>
+    <script src="../js/markdown/components/card.js"></script>
+    <script src="../js/markdown/components/progress.js"></script>
+    <script src="../js/markdown/components/chart.js"></script>
+    <script src="../js/markdown/mrm-init.js"></script>
+    
+    <script>
+        // Configurar Marked
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+                tables: true,
+                smartLists: true,
+                smartypants: true
+            });
+        }
+        
+        // Verificar se tudo carregou
+        setTimeout(() => {
+            const status = document.getElementById('status');
+            if (typeof window.mrmParser !== 'undefined') {
+                status.innerHTML = '✅ Sistema MRM carregado com sucesso!';
+                status.style.background = 'rgba(39, 174, 96, 0.1)';
+                status.style.borderColor = 'rgba(39, 174, 96, 0.3)';
+                status.style.color = '#27ae60';
+            } else {
+                status.innerHTML = '❌ Erro ao carregar sistema MRM';
+                status.style.background = 'rgba(231, 76, 60, 0.1)';
+                status.style.borderColor = 'rgba(231, 76, 60, 0.3)';
+                status.style.color = '#e74c3c';
+            }
+        }, 500);
+        
+        // Funções de teste
+        function testarCard() {
+            const mrm = `@card[tipo=sucesso,icone=✓]
+**Meta Alcançada!**
+Você economizou R$ 2.000 este mês. Continue assim!
+@/card`;
+            
+            document.getElementById('result-card').innerHTML = window.mrmParser.parse(mrm);
+        }
+        
+        function testarProgress() {
+            const mrm = `@progress[valor=7500,meta=10000,label=Fundo de Emergência]`;
+            document.getElementById('result-progress').innerHTML = window.mrmParser.parse(mrm);
+        }
+        
+        function testarChart() {
+            const mrm = `@chart[tipo=line,titulo=Receitas vs Despesas 2025,formato=moeda]
+{
+  "labels": ["Jan", "Fev", "Mar", "Abr"],
+  "datasets": [
+    {
+      "label": "Receitas",
+      "data": [5000, 6000, 5500, 6200],
+      "borderColor": "#4a9eff",
+      "backgroundColor": "rgba(74, 158, 255, 0.1)",
+      "tension": 0.4
+    },
+    {
+      "label": "Despesas",
+      "data": [3000, 3200, 2800, 3100],
+      "borderColor": "#ff6b9d",
+      "backgroundColor": "rgba(255, 107, 157, 0.1)",
+      "tension": 0.4
+    }
+  ]
+}
+@/chart`;
+            
+            document.getElementById('result-chart').innerHTML = window.mrmParser.parse(mrm);
+        }
+        
+        function testarCompleto() {
+            const mrm = `# 📊 Análise Financeira de Abril 2025
+
+Aqui está sua análise completa do mês:
+
+## Resumo Geral
+
+@card[tipo=info,icone=💰]
+**Saldo do Mês**
+Você teve um saldo positivo de **R$ 2.800** em Abril!
+@/card
+
+## Evolução no Ano
+
+@chart[tipo=line,titulo=Evolução Financeira 2025,formato=moeda]
+{
+  "labels": ["Jan", "Fev", "Mar", "Abr"],
+  "datasets": [
+    {
+      "label": "Receitas",
+      "data": [5000, 6000, 5500, 6200],
+      "borderColor": "#4a9eff",
+      "backgroundColor": "rgba(74, 158, 255, 0.1)",
+      "tension": 0.4
+    },
+    {
+      "label": "Despesas",
+      "data": [3000, 3200, 2800, 3100],
+      "borderColor": "#ff6b9d",
+      "backgroundColor": "rgba(255, 107, 157, 0.1)",
+      "tension": 0.4
+    }
+  ]
+}
+@/chart
+
+## Progresso das Metas
+
+@progress[valor=7500,meta=10000,label=Fundo de Emergência]
+
+@progress[valor=12000,meta=50000,label=Entrada do Apartamento]
+
+@progress[valor=3200,meta=5000,label=Viagem de Férias]
+
+## Próximos Passos
+
+@card[tipo=alerta,icone=💡]
+**Atenção aos Gastos**
+Suas despesas aumentaram 10% em relação ao mês anterior. Considere revisar gastos com *Alimentação* e *Entretenimento*.
+@/card
+
+---
+
+### Observações
+
+- ✅ Você manteve o orçamento sob controle
+- ✅ Investiu R$ 1.000 este mês
+- ⚠️ Gasto com cartão de crédito subiu 15%
+
+**Quer criar um planejamento detalhado para o próximo mês?**`;
+            
+            document.getElementById('result-completo').innerHTML = window.mrmParser.parse(mrm);
+        }
+        
+        function limparResultados() {
+            document.getElementById('result-card').innerHTML = '';
+            document.getElementById('result-progress').innerHTML = '';
+            document.getElementById('result-chart').innerHTML = '';
+            document.getElementById('result-completo').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

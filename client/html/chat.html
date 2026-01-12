@@ -191,8 +191,8 @@
         });
     }
 
-    // Função para renderizar Markdown
-    function renderMarkdown(text) {
+    // Função para renderizar Markdown (GLOBAL para permitir MRM substituir)
+    window.renderMarkdown = function(text) {
         if (typeof marked === 'undefined') {
             console.warn('Marked.js não carregado, retornando texto plano');
             return text;
@@ -208,7 +208,7 @@
             console.error('Erro ao renderizar markdown:', error);
             return `<div class="markdown-content">${text}</div>`;
         }
-    }
+    };
 
     // Inicializar histórico de conversas
     initChatHistory();
@@ -359,7 +359,18 @@
             messages.appendChild(el);
             
             // Renderizar markdown primeiro
-            const markdownHtml = renderMarkdown(text);
+            const markdownHtml = window.renderMarkdown(text);
+            
+            // 🔥 OTIMIZAÇÃO: Se tem componentes MRM, mostrar instantaneamente
+            const hasMRMComponents = /@(chart|card|progress)\[/.test(text);
+            
+            if (hasMRMComponents) {
+                console.log('⚡ Componente MRM detectado - renderização instantânea');
+                el.classList.remove('typing');
+                el.innerHTML = markdownHtml;
+                messages.scrollTop = messages.scrollHeight;
+                return;
+            }
             
             // Criar elemento temporário para extrair apenas o texto para efeito de digitação
             const tempDiv = document.createElement('div');
@@ -640,5 +651,10 @@
             </form>
         </div>
     </div>
+    <script src="../js/markdown/mrm-parser.js"></script>
+<script src="../js/markdown/components/card.js"></script>
+<script src="../js/markdown/components/progress.js"></script>
+<script src="../js/markdown/components/chart.js"></script>
+<script src="../js/markdown/mrm-init.js"></script>
 </body>
 </html>

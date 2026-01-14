@@ -35,18 +35,80 @@ class PlanejadorFinanceiro {
         card.id = 'planner-entry-card';
         card.className = 'planner-card';
         card.innerHTML = `
-            <h3 class="planner-card-title">Planejador Financeiro</h3>
-            <p class="planner-card-description">
-                Planeje objetivos financeiros com inteligência: viagens, compras, investimentos e muito mais.
-            </p>
-        `;
+            <div class="card-financeiro">
+                <header class="card-header">
+                    <span class="header-title">PLANEJAMENTO FINANCEIRO</span>
+                    <div class="header-icon">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                </header>
 
-        card.addEventListener('click', () => this.ativarPlanejador());
+                <main class="card-content">
+                    
+                    
+                    <div class="objetivos-lista">
+                        <div class="objetivo-item">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-plane"></i>
+                            </div>
+                            <div class="objetivo-info">
+                                <div class="objetivo-topo">
+                                    <span>Planeje suas viagens</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="objetivo-item">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-house"></i>
+                            </div>
+                            <div class="objetivo-info">
+                                <div class="objetivo-topo">
+                                    <span>Planeje a entrada do apê</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="objetivo-item">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-car"></i>
+                            </div>
+                            <div class="objetivo-info">
+                                <div class="objetivo-topo">
+                                    <span>planeje a troca do carro</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CTA button placed as a grid item but not wrapped as a card -->
+                        <button class="btn-gerenciar objetivo-cta-button">PLANEJAR <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </main>
+
+                <footer class="card-footer">
+                </footer>
+            </div>
+        `;
         
-        // Inserir DENTRO do placeholder, após o texto
-        const placeholder = document.getElementById('chat-placeholder');
-        if (placeholder) {
-            placeholder.appendChild(card);
+        // Inserir no slot dedicado dentro do container de cards
+        const plannerSlot = document.getElementById('planner-card-slot');
+        if (plannerSlot) {
+            plannerSlot.appendChild(card);
+        } else {
+            // Fallback: inserir no placeholder diretamente
+            const placeholder = document.getElementById('chat-placeholder');
+            if (placeholder) {
+                placeholder.appendChild(card);
+            }
+        }
+
+        // Vincular ativação do planejador somente ao botão "Começar"
+        const btn = card.querySelector('.btn-gerenciar');
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.ativarPlanejador();
+            });
         }
     }
 

@@ -994,6 +994,9 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Executar setup
     setupAuthListeners();
+    
+    // Inicializar calendário de transações
+    initCalendar();
 });
 
 // ========== MODAL DE ONBOARDING (PRIMEIRA VEZ) ==========
@@ -1369,6 +1372,168 @@ function checkChatPlaceholder() {
     
     const hasMessages = messages.children.length > 0;
     toggleChatPlaceholder(!hasMessages);
+}
+
+// ========== CALENDÁRIO DE TRANSAÇÕES ==========
+
+let calendarStartDate = new Date();
+
+function generateCalendar(date) {
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    
+    const calendarGrid = document.getElementById('calendar-grid');
+    if (!calendarGrid) return;
+    
+    // Limpar dias anteriores (mantém labels)
+    const dayLabels = Array.from(calendarGrid.children).slice(0, 7);
+    calendarGrid.innerHTML = '';
+    dayLabels.forEach(label => calendarGrid.appendChild(label));
+    
+    const today = new Date();
+    
+    // Encontrar o domingo da semana do startDate
+    let currentDay = new Date(date);
+    const dayOfWeek = currentDay.getDay();
+    currentDay.setDate(currentDay.getDate() - dayOfWeek);
+    
+    // Atualizar título com o período (exibe 14 dias)
+    const endDay = new Date(currentDay);
+    endDay.setDate(endDay.getDate() + 13);
+    
+    const startMonth = monthNames[currentDay.getMonth()];
+    const endMonth = monthNames[endDay.getMonth()];
+    
+    const monthYearEl = document.getElementById('current-month-year');
+    if (monthYearEl) {
+        // Exibir apenas o nome do mês (minusculo), por exemplo: "janeiro"
+        monthYearEl.textContent = monthNames[date.getMonth()].toLowerCase();
+    }
+    
+    // Adicionar 14 dias (2 semanas)
+    for (let i = 0; i < 14; i++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'day';
+        
+        const dayNum = currentDay.getDate();
+        
+        // Marcar dias passados
+        if (currentDay < today && currentDay.toDateString() !== today.toDateString()) {
+            dayDiv.classList.add('past-day');
+        }
+
+        // Marcar dia atual para manter o efeito sempre visível
+        if (currentDay.toDateString() === today.toDateString()) {
+            dayDiv.classList.add('today');
+        }
+        
+        dayDiv.innerHTML = `<span class="date-num">${dayNum}</span>`;
+        
+        // Adicionar o valor fixo no dia 29 (exemplo)
+        if (dayNum === 29) {
+            dayDiv.innerHTML += `
+                <div class="icon-placeholder blue"></div>
+                <span class="amount">R$2.3k</span>
+            `;
+        }
+        
+        calendarGrid.appendChild(dayDiv);
+        
+        // Avançar para o próximo dia
+        currentDay.setDate(currentDay.getDate() + 1);
+    }
+    
+    // Adicionar evento de clique
+    const days = document.querySelectorAll('.calendar-grid .day');
+    days.forEach(day => {
+        day.addEventListener('click', (e) => {
+            const isSelected = day.classList.contains('selected');
+            days.forEach(d => d.classList.remove('selected'));
+            if (!isSelected) day.classList.add('selected');
+        });
+    });
+}
+
+function initCalendar() {
+    const calendarCard = document.getElementById('calendar-card');
+    if (!calendarCard) return;
+    
+    generateCalendar(calendarStartDate);
+    
+    // Inicializar seletor customizado de meses
+    const shortMonths = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const monthToggle = document.getElementById('month-toggle');
+    const monthGrid = document.getElementById('month-grid');
+    const monthCells = Array.from(document.querySelectorAll('#month-grid .month-cell'));
+
+    function updateMonthToggle() {
+        if (monthToggle) {
+            const yy = String(calendarStartDate.getFullYear()).slice(-2);
+            monthToggle.textContent = `${shortMonths[calendarStartDate.getMonth()]}/${yy}`;
+        }
+    }
+
+    updateMonthToggle();
+
+    // Prev/Next semana
+    const prevBtn = document.getElementById('prev-month');
+    const nextBtn = document.getElementById('next-month');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            calendarStartDate.setDate(calendarStartDate.getDate() - 14);
+            generateCalendar(calendarStartDate);
+            updateMonthToggle();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            calendarStartDate.setDate(calendarStartDate.getDate() + 14);
+            generateCalendar(calendarStartDate);
+            updateMonthToggle();
+        });
+    }
+
+    // Abrir/fechar grid
+    if (monthToggle && monthGrid) {
+        monthToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = monthGrid.getAttribute('aria-hidden') === 'true';
+            monthGrid.setAttribute('aria-hidden', String(!open));
+            monthToggle.setAttribute('aria-expanded', String(open));
+        });
+    }
+
+    // Seleção de mês na grade
+    monthCells.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const m = parseInt(btn.getAttribute('data-month'));
+            calendarStartDate.setMonth(m);
+            calendarStartDate.setDate(1);
+            generateCalendar(calendarStartDate);
+            updateMonthToggle();
+            if (monthGrid) {
+                monthGrid.setAttribute('aria-hidden', 'true');
+            }
+            if (monthToggle) {
+                monthToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    });
+
+    // Fechar ao clicar fora
+    document.addEventListener('click', (e) => {
+        const wrapper = document.querySelector('#calendar-card .month-dropdown-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            if (monthGrid) {
+                monthGrid.setAttribute('aria-hidden', 'true');
+            }
+            if (monthToggle) {
+                monthToggle.setAttribute('aria-expanded', 'false');
+            }
+        }
+    });
 }
 
 // ========== GERENCIAMENTO DE HISTÓRICO DE CONVERSAS ==========

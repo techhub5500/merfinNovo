@@ -1,0 +1,131 @@
+/* Configurações Gerais */
+body {
+    background-color: #a67c52; /* Cor de fundo similar à imagem */
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Container Principal */
+.card-financeiro {
+    background-color: #4b3621; /* Marrom escuro */
+    width: 350px;
+    padding: 25px;
+    border-radius: 24px;
+    color: #ffffff;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Cabeçalho */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #c4b5a4;
+    font-weight: 600;
+}
+
+.header-icon {
+    background-color: rgba(255, 255, 255, 0.1);
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    color: #c4b5a4;
+}
+
+/* Valor e Status */
+.valor-total {
+    font-size: 2.2px; /* reduzido 15% de 32px */
+    margin: 0;
+    font-weight: 600;
+}
+
+.status-total {
+    font-size: 14px;
+    color: #c4b5a4;
+    margin: 8px 0 35px 0;
+}
+
+/* Lista de Objetivos */
+.objetivos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.objetivo-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.icon-container {
+    background-color: rgba(255, 255, 255, 0.1);
+    min-width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #c4b5a4;
+    font-size: 14px;
+}
+
+.objetivo-info {
+    flex-grow: 1;
+}
+
+.objetivo-topo {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #ffffff;
+}
+
+/* Barras de Progresso */
+.barra-progresso-fundo {
+    display: none;
+}
+
+.barra-progresso-preenchimento {
+    display: none;
+}
+
+/* Rodapé e Botão */
+.card-footer {
+    margin-top: 35px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-gerenciar {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 15px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.3s;
+}
+
+.btn-gerenciar:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
